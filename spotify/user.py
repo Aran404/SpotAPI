@@ -23,6 +23,7 @@ class User(Login):
 
         return self._user_plan["plan"]["name"] != "Spotify Free"
 
+    # Gets user plan info via /api/account/v2/plan
     def get_plan_info(self) -> Mapping[str, Any]:
         url = "https://www.spotify.com/ca-en/api/account/v2/plan/"
         resp = self.client.get(url)
@@ -38,6 +39,7 @@ class User(Login):
         self._user_plan = resp.response
         return resp.response
 
+    # Gets accounts user info via /api/account-settings/v1/profile
     def get_user_info(self) -> Mapping[str, Any]:
         url = "https://www.spotify.com/api/account-settings/v1/profile"
         resp = self.client.get(url)
@@ -50,6 +52,9 @@ class User(Login):
 
         return resp.response
 
+    # Edits account user info via /api/account-settings/v1/profile
+    # For this function to work, dump must be the entire profile dump.
+    # You can get this dump from get_user_info, then change the fields you want.
     def edit_user_info(self, dump: Mapping[str, Any]) -> None:
         captcha_response = self.solver.solve_captcha(
             "https://www.spotify.com",

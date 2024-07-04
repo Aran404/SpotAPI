@@ -101,6 +101,7 @@ class PublicPlaylist:
             '"'
         )[0]
 
+    # Gets the public playlist information
     def get_playlist_info(self, limit: Optional[int] = 25) -> Mapping[str, Any]:
         if not self.sha256_hash:
             self.__get_sha256_hash()
