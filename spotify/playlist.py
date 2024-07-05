@@ -34,7 +34,7 @@ class PublicPlaylist:
         )
 
         if resp.fail:
-            raise PlaylistError("Could not get playlist", error=resp.error.error_string)
+            raise PlaylistError("Could not get playlist", error=resp.error.string)
 
         pattern = r"https:\/\/open\.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
         self.js_pack = re.findall(pattern, resp.response)[1]
@@ -72,9 +72,7 @@ class PublicPlaylist:
         resp = self.client.post(url, json=payload, headers=headers)
 
         if resp.fail:
-            raise PlaylistError(
-                "Could not get client token", error=resp.error.error_string
-            )
+            raise PlaylistError("Could not get client token", error=resp.error.string)
 
         if resp.response.get("response_type") != "RESPONSE_GRANTED_TOKEN_RESPONSE":
             raise PlaylistError(
@@ -93,16 +91,14 @@ class PublicPlaylist:
         resp = self.client.get(self.js_pack)
 
         if resp.fail:
-            raise PlaylistError(
-                "Could not get playlist hash", error=resp.error.error_string
-            )
+            raise PlaylistError("Could not get playlist hash", error=resp.error.string)
 
         self.sha256_hash = resp.response.split('"fetchPlaylist","query","')[1].split(
             '"'
         )[0]
 
-    # Gets the public playlist information
     def get_playlist_info(self, limit: Optional[int] = 25) -> Mapping[str, Any]:
+        """Gets the public playlist information"""
         if not self.sha256_hash:
             self.__get_sha256_hash()
 
@@ -131,9 +127,7 @@ class PublicPlaylist:
         resp = self.client.post(url, headers=headers, params=params)
 
         if resp.fail:
-            raise PlaylistError(
-                "Could not get playlist info", error=resp.error.error_string
-            )
+            raise PlaylistError("Could not get playlist info", error=resp.error.string)
 
         if not isinstance(resp.response, Mapping):
             raise PlaylistError("Invalid JSON")

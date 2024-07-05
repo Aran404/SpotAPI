@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Type
-from spotify.types.interfaces import CaptchaProtocol, LoggerProtocol
+from spotify.interfaces import CaptchaProtocol, LoggerProtocol
 from spotify.http.request import TLSClient
 
 

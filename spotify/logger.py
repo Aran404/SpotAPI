@@ -1,5 +1,5 @@
 from colorama import Fore, Style, init
-from spotify.types.interfaces import LoggerProtocol
+from spotify.interfaces import LoggerProtocol
 from datetime import datetime
 import os
 import time

@@ -1,13 +1,18 @@
 from __future__ import annotations
 from spotify.data import Config
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Type
 from spotify.utils.strings import parse_json_string
 from spotify.exceptions import LoginError
+from spotify.interfaces import SaverProtocol
 from urllib.parse import urlencode
 from http.cookiejar import Cookie
 
 
 class Login:
+    """
+    Base class for logging in to Spotify.
+    """
+
     def __init__(
         self,
         cfg: Config,
@@ -32,6 +37,40 @@ class Login:
         self.client.fail_exception = LoginError
         self._authorized = False
 
+    @classmethod
+    def from_cookies(cls, dump: dict[str, Any], cfg: Config) -> Login:
+        """
+        Constructs a Login instance using cookie data and configuration.
+        """
+        password = dump.get("password")
+        cred = dump.get("identifier")
+        cookies: List[dict[str, Any]] = dump.get("cookies")
+
+        if not (password and cred and cookies):
+            raise ValueError("Invalid dump format: must contain 'password', 'identifier', and 'cookies'")
+
+        cfg.client.cookies.clear()
+        for cookie in cookies:
+            cfg.client.cookies.set(**cookie)
+
+        instantiated = cls(cfg, password, email=cred, username=cred)
+        instantiated.logged_in = True
+        
+        return instantiated
+
+
+    @classmethod
+    def from_saver(
+        cls, saver: Type[SaverProtocol], cfg: Config, identifier: str
+    ) -> Login:
+        """
+        Loads a session from a Saver Class.
+
+        Note: Kwargs are not used, make sure the defaults for the savers are what you want (or just implement this method yourself).
+        """
+        dump = saver.load(query={"identifier": identifier})
+        return cls.from_cookies(dump, cfg)
+
     @property
     def logged_in(self) -> bool:
         return self._authorized
@@ -39,19 +78,6 @@ class Login:
     @logged_in.setter
     def logged_in(self, value: bool):
         self._authorized = value
-
-    @classmethod
-    def from_cookies(cls, dump: dict[str, Any], cfg: Config) -> Login:
-        password = dump.get("password")
-        cred = dump.get("identifier")
-        cookies: List[dict[str, Any]] = dump.get("cookies")
-
-        cfg.client.cookies.clear()
-
-        for cookie in cookies:
-            cfg.client.cookies.set(**cookie)
-
-        return cls(cfg, password, email=cred, username=cred)
 
     def __str__(self) -> str:
         return f"Login(password={self.password!r}, identifier_credentials={self.identifier_credentials!r})"
@@ -61,7 +87,7 @@ class Login:
         resp = self.client.get(url)
 
         if resp.fail:
-            raise LoginError("Could not get session", error=resp.error.error_string)
+            raise LoginError("Could not get session", error=resp.error.string)
 
         self.csrf_token = resp.raw.cookies.get("sp_sso_csrf_token")
         self.flow_id = parse_json_string(resp.response, "flowCtx")
@@ -98,7 +124,7 @@ class Login:
         resp = self.client.post(url, data=payload, headers=headers)
 
         if resp.fail:
-            raise LoginError("Could not submit password", error=resp.error.error_string)
+            raise LoginError("Could not submit password", error=resp.error.string)
 
         self.csrf_token = resp.raw.cookies.get("sp_sso_csrf_token")
         self.handle_login_error(resp.response)
@@ -123,6 +149,10 @@ class Login:
             case _:
                 raise LoginError(f"Unforseen Error", error=f"{str(self)}: {error_type}")
 
+    def verify_login(self) -> None:
+        """Verifies if the user is logged in (useful for checking if cookies are still valid)"""
+
     def login(self) -> None:
+        """Logins the user"""
         self.__get_session()
         self.__submit_password()

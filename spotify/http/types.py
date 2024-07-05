@@ -27,7 +27,7 @@ class Response:
 class Error:
     status_code: int
     response: Union[str, dict]
-    error_string: str
+    string: str
 
     @property
     def is_success(self) -> bool:

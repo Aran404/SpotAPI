@@ -4,6 +4,8 @@ from spotify.logger import Logger
 from spotify.solvers import solver_clients
 from spotify.user import User
 from spotify.playlist import PublicPlaylist
+from spotify.saver import JSONSaver
+from asyncio import Lock
 
 
 # login = Login(
@@ -19,5 +21,6 @@ from spotify.playlist import PublicPlaylist
 # login.login()
 
 # user = User(login)
-# print(user.has_premium)
-print(PublicPlaylist("37i9dQZF1DWXT8uSSn6PRy").get_playlist_info())
+# print(user.edit_user_info)
+# print(PublicPlaylist("37i9dQZF1DWXT8uSSn6PRy").__get_playlist())
+print(JSONSaver("test.json").delete({"a": 1}, all_instances=False))

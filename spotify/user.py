@@ -1,7 +1,7 @@
 from __future__ import annotations
 from spotify.login import Login
 from spotify.exceptions import UserError
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping
 
 
 class User(Login):
@@ -23,15 +23,13 @@ class User(Login):
 
         return self._user_plan["plan"]["name"] != "Spotify Free"
 
-    # Gets user plan info via /api/account/v2/plan
     def get_plan_info(self) -> Mapping[str, Any]:
+        """Gets user plan info."""
         url = "https://www.spotify.com/ca-en/api/account/v2/plan/"
         resp = self.client.get(url)
 
         if resp.fail:
-            raise UserError(
-                "Could not get user plan info", error=resp.error.error_string
-            )
+            raise UserError("Could not get user plan info", error=resp.error.string)
 
         if not isinstance(resp.response, Mapping):
             raise UserError("Invalid JSON")
@@ -39,23 +37,34 @@ class User(Login):
         self._user_plan = resp.response
         return resp.response
 
-    # Gets accounts user info via /api/account-settings/v1/profile
+    def verify_login(self) -> bool:
+        try:
+            self.get_plan_info()
+        except Exception as e:
+            if "401" in str(e):
+                return False
+        else:
+            return True
+
     def get_user_info(self) -> Mapping[str, Any]:
+        """Gets accounts user info."""
         url = "https://www.spotify.com/api/account-settings/v1/profile"
         resp = self.client.get(url)
 
         if resp.fail:
-            raise UserError("Could not get user info", error=resp.error.error_string)
+            raise UserError("Could not get user info", error=resp.error.string)
 
         if not isinstance(resp.response, Mapping):
             raise UserError("Invalid JSON")
 
         return resp.response
 
-    # Edits account user info via /api/account-settings/v1/profile
-    # For this function to work, dump must be the entire profile dump.
-    # You can get this dump from get_user_info, then change the fields you want.
     def edit_user_info(self, dump: Mapping[str, Any]) -> None:
+        """
+        Edits account user account info.
+        For this function to work, dump must be the entire profile dump.
+        You can get this dump from get_user_info, then change the fields you want.
+        """
         captcha_response = self.solver.solve_captcha(
             "https://www.spotify.com",
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
@@ -76,4 +85,4 @@ class User(Login):
         resp = self.client.put(url, json=payload, headers=headers)
 
         if resp.fail:
-            raise UserError("Could not edit user info", error=resp.error.error_string)
+            raise UserError("Could not edit user info", error=resp.error.string)

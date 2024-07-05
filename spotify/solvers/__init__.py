@@ -3,7 +3,7 @@ from spotify.solvers.capsolver import *
 
 # from spotify.solvers.ezcaptcha import *
 # from spotify.solvers.rockcaptcha import *
-from spotify.types.interfaces import CaptchaProtocol
+from spotify.interfaces import CaptchaProtocol
 
 # solver_clients: Final[
 #     Dict[str, Type[CaptchaProtocol]]

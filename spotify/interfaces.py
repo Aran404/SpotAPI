@@ -1,4 +1,4 @@
-from typing import Optional, Protocol, Literal
+from typing import Optional, Protocol, Literal, Any, List
 from typing_extensions import runtime_checkable
 from spotify.http.request import StdClient
 
@@ -28,6 +28,7 @@ class CaptchaProtocol(Protocol):
         ...
 
 
+@runtime_checkable
 class LoggerProtocol(Protocol):
     @staticmethod
     def info(s: str, **extra) -> None:
@@ -39,4 +40,16 @@ class LoggerProtocol(Protocol):
 
     @staticmethod
     def fatal(s: str, **extra) -> None:
+        ...
+
+
+@runtime_checkable
+class SaverProtocol(Protocol):
+    def save(self, data: List[dict[str, Any]], **kwargs) -> None:
+        ...
+
+    def load(self, query: dict[str, Any], **kwargs) -> dict[str, Any]:
+        ...
+
+    def delete(self, query: dict[str, Any], **kwargs) -> None:
         ...
