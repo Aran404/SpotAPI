@@ -47,7 +47,9 @@ class Login:
         cookies: List[dict[str, Any]] = dump.get("cookies")
 
         if not (password and cred and cookies):
-            raise ValueError("Invalid dump format: must contain 'password', 'identifier', and 'cookies'")
+            raise ValueError(
+                "Invalid dump format: must contain 'password', 'identifier', and 'cookies'"
+            )
 
         cfg.client.cookies.clear()
         for cookie in cookies:
@@ -55,9 +57,8 @@ class Login:
 
         instantiated = cls(cfg, password, email=cred, username=cred)
         instantiated.logged_in = True
-        
-        return instantiated
 
+        return instantiated
 
     @classmethod
     def from_saver(
