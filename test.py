@@ -39,3 +39,6 @@ for i in c:
         r += 1
 
 print(r)
+
+
+#TODO: Proxy support, custom profiles, fix Aran's config gayness

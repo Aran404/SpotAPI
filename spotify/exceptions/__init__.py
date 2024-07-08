@@ -1,4 +1,4 @@
-from .exceptions import (
+from spotify.exceptions.exceptions import (
     BaseClientError,
     CaptchaException,
     LoginError,

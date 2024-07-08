@@ -1,8 +1,9 @@
+import json
 from typing import Any, Generator, List, Mapping, Optional, Tuple
 
 from spotify.exceptions import SongError
 from spotify.http.request import TLSClient
-from spotify.playlist import BaseClient, Login, PrivatePlaylist, PublicPlaylist
+from spotify.playlist import BaseClient, PrivatePlaylist, PublicPlaylist
 
 
 class Song(BaseClient):
@@ -29,16 +30,26 @@ class Song(BaseClient):
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
             "operationName": "searchDesktop",
-            "variables": '{"searchTerm":"'
-            + query
-            + '","offset":'
-            + str(offset)
-            + ',"limit":'
-            + str(limit)
-            + ',"numberOfTopResults":5,"includeAudiobooks":true,"includeArtistHasConcertsField":false,"includePreReleases":true,"includeLocalConcertsField":false}',
-            "extensions": '{"persistedQuery":{"version":1,"sha256Hash":"'
-            + self.part_hash("searchDesktop")
-            + '"}}',
+            "variables": json.dumps(
+                {
+                    "searchTerm": query,
+                    "offset": offset,
+                    "limit": limit,
+                    "numberOfTopResults": 5,
+                    "includeAudiobooks": True,
+                    "includeArtistHasConcertsField": False,
+                    "includePreReleases": True,
+                    "includeLocalConcertsField": False,
+                }
+            ),
+            "extensions": json.dumps(
+                {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": self.part_hash("searchDesktop"),
+                    }
+                }
+            ),
         }
 
         resp = self.client.post(url, params=params, authenticate=True)
@@ -84,8 +95,8 @@ class Song(BaseClient):
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         payload = {
             "variables": {
-                "uris": ["spotify:track:" + song_id],
-                "playlistUri": "spotify:playlist:" + self.playlist.playlist_id,
+                "uris": [f"spotify:track:{song_id}"],
+                "playlistUri": f"spotify:playlist:{self.playlist.playlist_id}",
                 "newPosition": {"moveType": "BOTTOM_OF_PLAYLIST", "fromUid": None},
             },
             "operationName": "addToPlaylist",
@@ -105,7 +116,7 @@ class Song(BaseClient):
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         payload = {
             "variables": {
-                "playlistUri": "spotify:playlist:" + self.playlist.playlist_id,
+                "playlistUri": f"spotify:playlist:{self.playlist.playlist_id}",
                 "uids": uids,
             },
             "operationName": "removeFromPlaylist",
@@ -116,6 +127,7 @@ class Song(BaseClient):
                 }
             },
         }
+
         resp = self.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:

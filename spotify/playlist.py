@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import time
 from typing import Any, Generator, Mapping, Optional
@@ -38,16 +39,21 @@ class PublicPlaylist(BaseClient):
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
             "operationName": "fetchPlaylist",
-            "variables": '{"uri":"spotify:playlist:'
-            + self.playlist_id
-            + '","offset":'
-            + str(offset)
-            + ',"limit":'
-            + str(limit)
-            + "}",
-            "extensions": '{"persistedQuery":{"version":1,"sha256Hash":"'
-            + self.part_hash("fetchPlaylist")
-            + '"}}',
+            "variables": json.dumps(
+                {
+                    "uri": f"spotify:playlist:{self.playlist_id}",
+                    "offset": offset,
+                    "limit": limit,
+                }
+            ),
+            "extensions": json.dumps(
+                {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": self.part_hash("fetchPlaylist"),
+                    }
+                }
+            ),
         }
 
         resp = self.client.post(url, params=params, authenticate=True)
@@ -142,7 +148,7 @@ class PrivatePlaylist(BaseClient, Login):
                             "add": {
                                 "items": [
                                     {
-                                        "uri": "spotify:playlist:" + self.playlist_id,
+                                        "uri": f"spotify:playlist:{self.playlist_id}",
                                         "attributes": {
                                             "timestamp": int(time.time()),
                                             "formatAttributes": [],
@@ -183,7 +189,7 @@ class PrivatePlaylist(BaseClient, Login):
                             "kind": 3,
                             "rem": {
                                 "items": [
-                                    {"uri": "spotify:playlist:" + self.playlist_id}
+                                    {"uri": f"spotify:playlist:{self.playlist_id}"}
                                 ],
                                 "itemsAsKey": True,
                             },
@@ -215,12 +221,28 @@ class PrivatePlaylist(BaseClient, Login):
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
             "operationName": "libraryV3",
-            "variables": '{"filters":[],"order":null,"textFilter":"","features":["LIKED_SONGS","YOUR_EPISODES","PRERELEASES"],"limit":'
-            + str(limit)
-            + ',"offset":0,"flatten":false,"expandedFolders":[],"folderUri":null,"includeFoldersWhenFlattening":true}',
-            "extensions": '{"persistedQuery":{"version":1,"sha256Hash":"'
-            + self.part_hash("libraryV3")
-            + '"}}',
+            "variables": json.dumps(
+                {
+                    "filters": [],
+                    "order": None,
+                    "textFilter": "",
+                    "features": ["LIKED_SONGS", "YOUR_EPISODES", "PRERELEASES"],
+                    "limit": limit,
+                    "offset": 0,
+                    "flatten": False,
+                    "expandedFolders": [],
+                    "folderUri": None,
+                    "includeFoldersWhenFlattening": True,
+                }
+            ),
+            "extensions": json.dumps(
+                {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": self.part_hash("libraryV3"),
+                    }
+                }
+            ),
         }
 
         resp = self.client.post(url, params=params, authenticate=True)

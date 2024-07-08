@@ -247,10 +247,8 @@ class LoginChallenge:
 
     def __complete_challenge(self) -> None:
         # We need to grab the cookies
-        url = (
-            "https://accounts.spotify.com/login/challenge-completed?sessionId=%s&interactRef=%s&hash=%s"
-            % (self.session_id, self.interaction_reference, self.interaction_hash)
-        )
+        url = f"https://accounts.spotify.com/login/challenge-completed?sessionId={self.session_id}&interactRef={self.interaction_reference}&hash={self.interaction_hash}"
+
         resp = self.l.client.get(url)
 
         if resp.fail:
