@@ -66,19 +66,22 @@ class PublicPlaylist(BaseClient):
 
         Note: If total_tracks <= 353, then there is no need to paginate
         """
+        UPPER_LIMIT: int = 353
         # We need to get the total songs first
-        playlist = self.get_playlist_info(limit=353)
+        playlist = self.get_playlist_info(limit=UPPER_LIMIT)
         total_count: int = playlist["data"]["playlistV2"]["content"]["totalCount"]
 
-        yield playlist
+        yield playlist["data"]["playlistV2"]["content"]
 
-        if total_count <= 353:
+        if total_count <= UPPER_LIMIT:
             return
 
-        offset = 353
+        offset = UPPER_LIMIT
         while offset < total_count:
-            yield self.get_playlist_info(limit=353, offset=offset)
-            offset += 353
+            yield self.get_playlist_info(limit=UPPER_LIMIT, offset=offset)["data"][
+                "playlistV2"
+            ]["content"]
+            offset += UPPER_LIMIT
 
 
 class PrivatePlaylist(BaseClient, Login):

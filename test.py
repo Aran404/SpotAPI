@@ -1,7 +1,7 @@
 import sys
 from asyncio import Lock
 
-from spotify.data.data import Config
+from spotify.data import Config
 from spotify.login import Login
 from spotify.playlist import PrivatePlaylist, PublicPlaylist
 from spotify.solvers import solver_clients
@@ -30,6 +30,12 @@ login.login()
 #     ),
 # )
 
-
+r = 0
 a = PublicPlaylist("6xe4HqyIkcSYv3wOHb2mry")
-print(Song(a).query_songs("Gay"))
+c = Song(a).paginate_songs("Gay")
+for i in c:
+    for b in i:
+        print(b["item"]["data"]["name"])
+        r += 1
+
+print(r)

@@ -46,27 +46,33 @@ class Song(BaseClient):
         if resp.fail:
             raise SongError("Could not get songs", error=resp.error.string)
 
+        if not isinstance(resp.response, Mapping):
+            raise SongError("Invalid JSON")
+
         return resp.response
 
-    def paginate_songs(self) -> Generator[Mapping[str, Any], None, None]:
+    def paginate_songs(self, query: str, /) -> Generator[Mapping[str, Any], None, None]:
         """
-        Generator that fetches playlist information in chunks
+        Generator that fetches songs in chunks
 
-        Note: If total_tracks <= 353, then there is no need to paginate
+        Note: If total_tracks <= 100, then there is no need to paginate
         """
+        UPPER_LIMIT: int = 100
         # We need to get the total songs first
-        playlist = self.query_songs(limit=353)
-        total_count: int = playlist["data"]["searchV2"]["content"]["totalCount"]
+        songs = self.query_songs(query, limit=UPPER_LIMIT)
+        total_count: int = songs["data"]["searchV2"]["tracksV2"]["totalCount"]
 
-        yield playlist
+        yield songs["data"]["searchV2"]["tracksV2"]["items"]
 
-        if total_count <= 353:
+        if total_count <= UPPER_LIMIT:
             return
 
-        offset = 353
+        offset = UPPER_LIMIT
         while offset < total_count:
-            yield self.get_playlist_info(limit=353, offset=offset)
-            offset += 353
+            yield self.query_songs(query, limit=UPPER_LIMIT, offset=offset)["data"][
+                "searchV2"
+            ]["tracksV2"]["items"]
+            offset += UPPER_LIMIT
 
     def add_song_to_playlist(self, song_id: str) -> None:
         if not self.playlist or not hasattr(self.playlist, "playlist_id"):
@@ -164,13 +170,14 @@ class Song(BaseClient):
 
         uids: List[str] = []
         for playlist_chunk in playlist:
-            items = playlist_chunk["data"]["playlistV2"]["content"]["items"]
+            items = playlist_chunk["items"]
             extended_uids, stop = self.__parse_playlist_items(
                 items, song_id=song_id, song_name=song_name, all_instances=all_instances
             )
             uids.extend(extended_uids)
 
             if stop:
+                playlist.close()
                 break
 
         if len(uids) == 0:

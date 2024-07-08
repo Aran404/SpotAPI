@@ -8,8 +8,8 @@ from spotify.utils.logger import NoopLogger
 
 @dataclass
 class Config:
-    logger: Type[LoggerProtocol]
-    solver: Type[CaptchaProtocol] = field(default=NoopLogger())
+    solver: Type[CaptchaProtocol]
+    logger: Type[LoggerProtocol] = field(default=NoopLogger())
     client: TLSClient = field(default=TLSClient("chrome_120", "", auto_retries=3))
 
 

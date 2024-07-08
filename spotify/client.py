@@ -7,7 +7,7 @@ from spotify.utils.strings import parse_json_string
 
 
 class BaseClient:
-    def __init__(self, *, client: TLSClient) -> None:
+    def __init__(self, client: TLSClient) -> None:
         self.client = client
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)
 
@@ -124,7 +124,7 @@ class BaseClient:
 
         if resp.fail:
             raise BaseClientError(
-                "Could not get playlist hash", error=resp.error.string
+                "Could not get playlist hashes", error=resp.error.string
             )
 
         self.raw_hashes = resp.response
@@ -133,7 +133,14 @@ class BaseClient:
         self.xpui_route_num = resp.response.split(':"xpui-routes-search"')[0].split(
             ","
         )[-1]
-        print(self.xpui_route_num)
         pattern = rf'{self.xpui_route_num}:"([^"]*)"'
         self.xpui_route = re.findall(pattern, resp.response)[-1]
-        print(self.xpui_route)
+
+        resp = self.client.get(
+            f"https://open.spotifycdn.com/cdn/build/web-player/xpui-routes-search.{self.xpui_route}.js"
+        )
+
+        if resp.fail:
+            raise BaseClientError("Could not get xpui hashes", error=resp.error.string)
+
+        self.raw_hashes += resp.response
