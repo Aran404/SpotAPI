@@ -1,9 +1,8 @@
 import json
 from typing import Any, Generator, List, Mapping, Optional, Tuple
 
+from spotify import BaseClient, PrivatePlaylist, PublicPlaylist, TLSClient
 from spotify.exceptions import SongError
-from spotify.http.request import TLSClient
-from spotify.playlist import BaseClient, PrivatePlaylist, PublicPlaylist
 
 
 class Song(BaseClient):
@@ -25,7 +24,7 @@ class Song(BaseClient):
         self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0
     ) -> Mapping[str, Any]:
         """
-        Searches for songs in the spotify catalog.
+        Searches for songs in the Spotify catalog.
         """
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
@@ -85,7 +84,8 @@ class Song(BaseClient):
             ]["tracksV2"]["items"]
             offset += UPPER_LIMIT
 
-    def add_song_to_playlist(self, song_id: str) -> None:
+    def add_song_to_playlist(self, song_id: str, /) -> None:
+        """Adds a song to the playlist"""
         if not self.playlist or not hasattr(self.playlist, "playlist_id"):
             raise ValueError("Playlist not set")
 
@@ -169,6 +169,9 @@ class Song(BaseClient):
         Removes a song from the playlist.
         If all_instances is True, only song_name can be used.
         """
+        if song_id and "track" in song_id:
+            song_id = song_id.split("track:")[1]
+
         if not (song_id or song_name):
             raise ValueError("Must provide either song_id or song_name")
 
@@ -196,3 +199,27 @@ class Song(BaseClient):
             raise SongError("Song not found in playlist")
 
         self.__stage_remove_song(uids)
+
+    def like_song(self, song_id: str, /) -> None:
+        if not self.playlist or not hasattr(self.playlist, "playlist_id"):
+            raise ValueError("Playlist not set")
+
+        if song_id and "track" in song_id:
+            song_id = song_id.split("track:")[1]
+
+        url = "https://api-partner.spotify.com/pathfinder/v1/query"
+        payload = {
+            "variables": {"uris": [f"spotify:track:{song_id}"]},
+            "operationName": "addToLibrary",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": self.part_hash("addToLibrary"),
+                }
+            },
+        }
+
+        resp = self.client.post(url, json=payload, authenticate=True)
+
+        if resp.fail:
+            raise SongError("Could not like song", error=resp.error.string)

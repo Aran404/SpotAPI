@@ -1,7 +1,9 @@
-from spotify.exceptions.exceptions import (
+from .errors import (
+    ArtistError,
     BaseClientError,
     CaptchaException,
     LoginError,
+    ParentException,
     PlaylistError,
     SaverError,
     SolverError,

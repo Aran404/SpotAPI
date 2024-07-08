@@ -4,7 +4,7 @@ import time
 from typing import Any, Mapping, Optional, Type
 from urllib.parse import urlencode
 
-from spotify.data.data import Config
+from spotify.data import Config
 from spotify.data.interfaces import SaverProtocol
 from spotify.exceptions import LoginError
 from spotify.utils.strings import parse_json_string

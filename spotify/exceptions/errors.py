@@ -39,6 +39,11 @@ class SongError(ParentException):
     pass
 
 
+# Artist.py exceptions
+class ArtistError(ParentException):
+    pass
+
+
 # client.py exceptions
 class BaseClientError(ParentException):
     pass
