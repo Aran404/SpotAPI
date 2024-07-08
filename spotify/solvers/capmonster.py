@@ -46,7 +46,7 @@ class Capmonster:
 
         if int(resp["errorId"]) != 0:
             raise CaptchaException(
-                "Could not retrieve balance.", error=resp["errorDescription"]
+                "Could not retrieve balance.", error=resp["errorCode"]
             )
 
         return resp["balance"]
@@ -85,9 +85,7 @@ class Capmonster:
         resp = request.response
 
         if int(resp["errorId"]) != 0:
-            raise CaptchaException(
-                "Could not create task.", error=resp["errorDescription"]
-            )
+            raise CaptchaException("Could not create task.", error=resp["errorCode"])
 
         return str(resp["taskId"])
 
@@ -107,7 +105,8 @@ class Capmonster:
 
             if int(resp["errorId"]) != 0:
                 raise CaptchaException(
-                    "Could not get task result.", error=resp["errorDescription"]
+                    "Could not get task result.",
+                    error=resp["errorCode"],
                 )
 
             if resp["status"] == "ready":
