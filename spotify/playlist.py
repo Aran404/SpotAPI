@@ -1,12 +1,14 @@
 from __future__ import annotations
-from spotify.exceptions import PlaylistError
-from spotify.http.request import TLSClient
-from typing import Mapping, Any, Optional, Generator
-from spotify.client import BaseClient
-from spotify.login import Login
-from spotify.user import User
+
 import re
 import time
+from typing import Any, Generator, Mapping, Optional
+
+from spotify.client import BaseClient
+from spotify.exceptions import PlaylistError
+from spotify.http.request import TLSClient
+from spotify.login import Login
+from spotify.user import User
 
 
 class PublicPlaylist(BaseClient):
@@ -29,14 +31,18 @@ class PublicPlaylist(BaseClient):
             )
             self.playlist_link = f"https://open.spotify.com/playlist/{self.playlist_id}"
 
-    def get_playlist_info(self, limit: Optional[int] = 25, *, offset: Optional[int] = 0) -> Mapping[str, Any]:
+    def get_playlist_info(
+        self, limit: Optional[int] = 25, *, offset: Optional[int] = 0
+    ) -> Mapping[str, Any]:
         """Gets the public playlist information"""
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
             "operationName": "fetchPlaylist",
             "variables": '{"uri":"spotify:playlist:'
             + self.playlist_id
-            + '","offset":'+str(offset)+',"limit":'
+            + '","offset":'
+            + str(offset)
+            + ',"limit":'
             + str(limit)
             + "}",
             "extensions": '{"persistedQuery":{"version":1,"sha256Hash":"'
@@ -57,24 +63,24 @@ class PublicPlaylist(BaseClient):
     def paginate_playlist(self) -> Generator[Mapping[str, Any], None, None]:
         """
         Generator that fetches playlist information in chunks
-        
+
         Note: If total_tracks <= 353, then there is no need to paginate
         """
         # We need to get the total songs first
         playlist = self.get_playlist_info(limit=353)
         total_count: int = playlist["data"]["playlistV2"]["content"]["totalCount"]
-        
+
         yield playlist
-        
+
         if total_count <= 353:
-            return 
-             
-        offset = 353 
+            return
+
+        offset = 353
         while offset < total_count:
             yield self.get_playlist_info(limit=353, offset=offset)
             offset += 353
 
-         
+
 class PrivatePlaylist(BaseClient, Login):
     """
     Methods on playlists that you can only do whilst logged in.

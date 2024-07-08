@@ -1,7 +1,8 @@
 import re
 from typing import Mapping
-from spotify.http.request import TLSClient
+
 from spotify.exceptions import BaseClientError
+from spotify.http.request import TLSClient
 from spotify.utils.strings import parse_json_string
 
 
@@ -129,8 +130,10 @@ class BaseClient:
         self.raw_hashes = resp.response
         self.client_version = resp.response.split('clientVersion:"')[1].split('"')[0]
         # Maybe it's static? Let's not take chances.
-        self.xpui_route_num = resp.response.split(':"xpui-routes-search"')[0].split(",")[-1]
+        self.xpui_route_num = resp.response.split(':"xpui-routes-search"')[0].split(
+            ","
+        )[-1]
         print(self.xpui_route_num)
-        pattern = fr'{self.xpui_route_num}:"([^"]*)"' 
+        pattern = rf'{self.xpui_route_num}:"([^"]*)"'
         self.xpui_route = re.findall(pattern, resp.response)[-1]
         print(self.xpui_route)

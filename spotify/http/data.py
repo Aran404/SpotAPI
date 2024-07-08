@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Union
+
 from tls_client.response import Response as TLSResponse
+
 
 # Dataclass needs to be here to avoid circular imports
 @dataclass

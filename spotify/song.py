@@ -1,7 +1,8 @@
-from spotify.playlist import PrivatePlaylist, Login, BaseClient, PublicPlaylist
-from typing import Optional, Mapping, Any, List, Tuple, Generator
+from typing import Any, Generator, List, Mapping, Optional, Tuple
+
 from spotify.exceptions import SongError
 from spotify.http.request import TLSClient
+from spotify.playlist import BaseClient, Login, PrivatePlaylist, PublicPlaylist
 
 
 class Song(BaseClient):
@@ -19,7 +20,9 @@ class Song(BaseClient):
         self.playlist = playlist
         super().__init__(client=playlist.client if playlist else client)
 
-    def query_songs(self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0) -> Mapping[str, Any]:
+    def query_songs(
+        self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0
+    ) -> Mapping[str, Any]:
         """
         Searches for songs in the spotify catalog.
         """
@@ -28,7 +31,9 @@ class Song(BaseClient):
             "operationName": "searchDesktop",
             "variables": '{"searchTerm":"'
             + query
-            + '","offset":'+str(offset)+',"limit":'
+            + '","offset":'
+            + str(offset)
+            + ',"limit":'
             + str(limit)
             + ',"numberOfTopResults":5,"includeAudiobooks":true,"includeArtistHasConcertsField":false,"includePreReleases":true,"includeLocalConcertsField":false}',
             "extensions": '{"persistedQuery":{"version":1,"sha256Hash":"'
@@ -42,23 +47,23 @@ class Song(BaseClient):
             raise SongError("Could not get songs", error=resp.error.string)
 
         return resp.response
-    
+
     def paginate_songs(self) -> Generator[Mapping[str, Any], None, None]:
         """
         Generator that fetches playlist information in chunks
-        
+
         Note: If total_tracks <= 353, then there is no need to paginate
         """
         # We need to get the total songs first
         playlist = self.query_songs(limit=353)
         total_count: int = playlist["data"]["searchV2"]["content"]["totalCount"]
-        
+
         yield playlist
-        
+
         if total_count <= 353:
-            return 
-             
-        offset = 353 
+            return
+
+        offset = 353
         while offset < total_count:
             yield self.get_playlist_info(limit=353, offset=offset)
             offset += 353
@@ -111,9 +116,9 @@ class Song(BaseClient):
             raise SongError(
                 "Could not remove song from playlist", error=resp.error.string
             )
-            
+
     def __parse_playlist_items(
-        self, 
+        self,
         items: List[Mapping[str, Any]],
         song_id: Optional[str] = None,
         song_name: Optional[str] = None,
@@ -122,14 +127,17 @@ class Song(BaseClient):
         uids: List[str] = []
         for item in items:
             is_song_id = song_id and song_id in item["itemV2"]["data"]["uri"]
-            is_song_name = song_name and song_name.lower() in str(item["itemV2"]["data"]["name"]).lower()
+            is_song_name = (
+                song_name
+                and song_name.lower() in str(item["itemV2"]["data"]["name"]).lower()
+            )
 
             if is_song_id or is_song_name:
                 uids.append(item["uid"])
 
                 if all_instances:
                     return uids, True
-                
+
         return uids, False
 
     def remove_song_from_playlist(
@@ -153,7 +161,7 @@ class Song(BaseClient):
             raise ValueError("Playlist not set")
 
         playlist = PublicPlaylist(self.playlist.playlist_id).paginate_playlist()
-        
+
         uids: List[str] = []
         for playlist_chunk in playlist:
             items = playlist_chunk["data"]["playlistV2"]["content"]["items"]
@@ -161,7 +169,7 @@ class Song(BaseClient):
                 items, song_id=song_id, song_name=song_name, all_instances=all_instances
             )
             uids.extend(extended_uids)
-            
+
             if stop:
                 break
 

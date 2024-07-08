@@ -1,7 +1,9 @@
 from __future__ import annotations
-from spotify.login import Login
-from spotify.exceptions import UserError
+
 from typing import Any, Mapping
+
+from spotify.exceptions import UserError
+from spotify.login import Login
 
 
 class User(Login):

@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
 from typing import Type
-from spotify.logger import NoopLogger
-from spotify.interfaces import CaptchaProtocol, LoggerProtocol
+
+from spotify.data.interfaces import CaptchaProtocol, LoggerProtocol
 from spotify.http.request import TLSClient
+from spotify.utils.logger import NoopLogger
 
 
 @dataclass

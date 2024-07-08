@@ -1,11 +1,13 @@
 from __future__ import annotations
-from spotify.data import Config
-from typing import Optional, Any, Type, Mapping
-from spotify.utils.strings import parse_json_string
-from spotify.exceptions import LoginError
-from spotify.interfaces import SaverProtocol
-from urllib.parse import urlencode
+
 import time
+from typing import Any, Mapping, Optional, Type
+from urllib.parse import urlencode
+
+from spotify.data.data import Config
+from spotify.data.interfaces import SaverProtocol
+from spotify.exceptions import LoginError
+from spotify.utils.strings import parse_json_string
 
 
 class Login:

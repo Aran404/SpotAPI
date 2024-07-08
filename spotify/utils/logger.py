@@ -1,8 +1,10 @@
-from colorama import Fore, Style, init
-from spotify.interfaces import LoggerProtocol
-from datetime import datetime
 import os
 import time
+from datetime import datetime
+
+from colorama import Fore, Style, init
+
+from spotify.data.interfaces import LoggerProtocol
 
 init(autoreset=True)
 
@@ -58,17 +60,13 @@ class Logger(LoggerProtocol):
 
 class NoopLogger(LoggerProtocol):
     @staticmethod
-    def error(s: str, **extra) -> None:
-        ...
+    def error(s: str, **extra) -> None: ...
 
     @staticmethod
-    def info(s: str, **extra) -> None:
-        ...
+    def info(s: str, **extra) -> None: ...
 
     @staticmethod
-    def fatal(s: str, **extra) -> None:
-        ...
+    def fatal(s: str, **extra) -> None: ...
 
     @staticmethod
-    def attempt(s: str, **extra) -> None:
-        ...
+    def attempt(s: str, **extra) -> None: ...

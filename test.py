@@ -1,16 +1,14 @@
-from spotify.login import Login
-from spotify.data import Config
-from spotify.logger import Logger
-from spotify.solvers import solver_clients
-from spotify.user import User
-from spotify.playlist import PublicPlaylist, PrivatePlaylist
-from spotify.song import Song
-from spotify.saver import JSONSaver
-from asyncio import Lock
 import sys
+from asyncio import Lock
+
+from spotify.data.data import Config
+from spotify.login import Login
+from spotify.playlist import PrivatePlaylist, PublicPlaylist
+from spotify.solvers import solver_clients
 from spotify.song import Song
-
-
+from spotify.user import User
+from spotify.utils.logger import Logger
+from spotify.utils.saver import JSONSaver
 
 login = Login(
     cfg=Config(
@@ -23,7 +21,7 @@ login = Login(
     username="adgaaadgagd@gmail.com",
 )
 login.login()
-# login = Login.from_cookies(JSONSaver().load({"identifier": "adgaaadgagd@gmail.com"}), 
+# login = Login.from_cookies(JSONSaver().load({"identifier": "adgaaadgagd@gmail.com"}),
 #     cfg=Config(
 #         logger=Logger(),
 #         solver=solver_clients.Capsolver(

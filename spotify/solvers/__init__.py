@@ -1,9 +1,9 @@
 from typing import Dict, Final, Type
-from spotify.solvers.capsolver import *
 
 # from spotify.solvers.ezcaptcha import *
 # from spotify.solvers.rockcaptcha import *
-from spotify.interfaces import CaptchaProtocol
+from spotify.data.interfaces import CaptchaProtocol
+from spotify.solvers.capsolver import *
 
 # solver_clients: Final[
 #     Dict[str, Type[CaptchaProtocol]]

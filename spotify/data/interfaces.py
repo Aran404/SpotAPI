@@ -1,5 +1,7 @@
-from typing import Optional, Protocol, Literal, Any, List
+from typing import Any, List, Literal, Optional, Protocol
+
 from typing_extensions import runtime_checkable
+
 from spotify.http.request import StdClient
 
 
@@ -12,11 +14,9 @@ class CaptchaProtocol(Protocol):
         *,
         proxy: Optional[str] = None,
         retries: Optional[int] = 120,
-    ) -> None:
-        ...
+    ) -> None: ...
 
-    def get_balance(self) -> float | None:
-        ...
+    def get_balance(self) -> float | None: ...
 
     def solve_captcha(
         self,
@@ -24,36 +24,28 @@ class CaptchaProtocol(Protocol):
         site_key: str,
         action: str,
         task: Literal["v2", "v3"],
-    ) -> str:
-        ...
+    ) -> str: ...
 
 
 @runtime_checkable
 class LoggerProtocol(Protocol):
     @staticmethod
-    def info(s: str, **extra) -> None:
-        ...
+    def info(s: str, **extra) -> None: ...
 
     @staticmethod
-    def attempt(s: str, **extra) -> None:
-        ...
+    def attempt(s: str, **extra) -> None: ...
 
     @staticmethod
-    def error(s: str, **extra) -> None:
-        ...
+    def error(s: str, **extra) -> None: ...
 
     @staticmethod
-    def fatal(s: str, **extra) -> None:
-        ...
+    def fatal(s: str, **extra) -> None: ...
 
 
 @runtime_checkable
 class SaverProtocol(Protocol):
-    def save(self, data: List[dict[str, Any]], **kwargs) -> None:
-        ...
+    def save(self, data: List[dict[str, Any]], **kwargs) -> None: ...
 
-    def load(self, query: dict[str, Any], **kwargs) -> dict[str, Any]:
-        ...
+    def load(self, query: dict[str, Any], **kwargs) -> dict[str, Any]: ...
 
-    def delete(self, query: dict[str, Any], **kwargs) -> None:
-        ...
+    def delete(self, query: dict[str, Any], **kwargs) -> None: ...

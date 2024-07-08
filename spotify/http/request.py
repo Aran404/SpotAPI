@@ -1,12 +1,14 @@
-import json
 import atexit
+import json
+from typing import Any, Callable, Type, Union
+
 import requests
 from tls_client import Session
-from typing import Any, Callable, Type, Union
 from tls_client.exceptions import TLSClientExeption
 from tls_client.response import Response as TLSResponse
-from spotify.http.types import Response
+
 from spotify.exceptions import ParentException
+from spotify.http.data import Response
 
 
 class StdClient(requests.Session):

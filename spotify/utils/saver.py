@@ -3,18 +3,18 @@ Saver.py contains a few saver implementations using the SaverProtocol interface.
 These are popular savers that are used for session storing, but if you need a different saver, you can implement it yourself quite easily.
 """
 
-from spotify.exceptions import SaverError
-from spotify.interfaces import SaverProtocol
-from readerwriterlock import rwlock
-from typing import Any, List, Optional, Mapping
-from psycopg2.extras import RealDictCursor
-import psycopg2
-import sqlite3
-import pymongo
 import atexit
-import redis
 import json
 import os
+import sqlite3
+from typing import Any, List, Mapping, Optional
+
+import pymongo
+import redis
+from readerwriterlock import rwlock
+
+from spotify.data.interfaces import SaverProtocol
+from spotify.exceptions import SaverError
 
 
 class JSONSaver(SaverProtocol):
@@ -274,75 +274,6 @@ class MongoSaver(SaverProtocol):
             raise ValueError("Query dictionary cannot be empty")
 
         self.collection.delete_one(query)
-
-
-class PostgresSaver(SaverProtocol):
-    def __init__(self, dsn: str) -> None:
-        self.conn = psycopg2.connect(dsn)
-        self.cursor = self.conn.cursor(cursor_factory=RealDictCursor)
-        self._create_table()
-
-        atexit.register(self.conn.close)
-
-    def _create_table(self):
-        self.cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS sessions (
-                identifier TEXT PRIMARY KEY,
-                password TEXT NOT NULL,
-                cookies JSONB
-            )
-        """
-        )
-        self.conn.commit()
-
-    def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
-        if len(data) == 0:
-            raise ValueError("No data to save")
-
-        overwrite = kwargs.get("overwrite", False)
-        if overwrite:
-            self.cursor.execute("DELETE FROM sessions")
-            self.conn.commit()
-
-        for item in data:
-            self.cursor.execute(
-                "INSERT INTO sessions (identifier, password, cookies) VALUES (%s, %s, %s) ON CONFLICT (identifier) DO UPDATE SET password = EXCLUDED.password, cookies = EXCLUDED.cookies",
-                (item["identifier"], item["password"], json.dumps(item["cookies"])),
-            )
-
-        self.conn.commit()
-
-    def load(self, query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
-        if not query:
-            raise ValueError("Query dictionary cannot be empty")
-
-        sql = "SELECT * FROM sessions WHERE "
-        params = []
-        for key, value in query.items():
-            sql += f"{key} = %s AND "
-            params.append(value)
-
-        self.cursor.execute(sql[:-5], params)
-        result = self.cursor.fetchone()
-
-        if result is None:
-            raise SaverError("Item not found")
-
-        return result
-
-    def delete(self, query: Mapping[str, Any], **kwargs) -> None:
-        if not query:
-            raise ValueError("Query dictionary cannot be empty")
-
-        sql = "DELETE FROM sessions WHERE "
-        params = []
-        for key, value in query.items():
-            sql += f"{key} = %s AND "
-            params.append(value)
-
-        self.cursor.execute(sql[:-5], params)
-        self.conn.commit()
 
 
 class RedisSaver(SaverProtocol):

@@ -1,8 +1,9 @@
 import json
 import time
-from typing import Optional, Literal
-from spotify.http.request import StdClient
+from typing import Literal, Optional
+
 from spotify.exceptions import CaptchaException, SolverError
+from spotify.http.request import StdClient
 
 
 class Capsolver:
