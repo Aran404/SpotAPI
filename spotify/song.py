@@ -1,8 +1,9 @@
 import json
 from typing import Any, Generator, List, Mapping, Optional, Tuple
 
-from spotify import BaseClient, PrivatePlaylist, PublicPlaylist, TLSClient
 from spotify.exceptions import SongError
+from spotify.http.request import TLSClient
+from spotify.playlist import BaseClient, PrivatePlaylist, PublicPlaylist
 
 
 class Song(BaseClient):

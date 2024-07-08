@@ -1,7 +1,8 @@
 import re
 from typing import Mapping
 
-from spotify import BaseClientError, TLSClient
+from spotify.exceptions import BaseClientError
+from spotify.http.request import TLSClient
 from spotify.utils.strings import parse_json_string
 
 

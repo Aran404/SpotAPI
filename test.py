@@ -1,14 +1,10 @@
 import sys
 from asyncio import Lock
 
-from spotify import Artist
+from spotify import Artist, Login, PrivatePlaylist, PublicPlaylist, Song, User
 from spotify.data import Config
 from spotify.http.request import TLSClient
-from spotify.login import Login
-from spotify.playlist import PrivatePlaylist, PublicPlaylist
 from spotify.solvers import solver_clients
-from spotify.song import Song
-from spotify.user import User
 from spotify.utils.logger import Logger
 from spotify.utils.saver import JSONSaver
 
@@ -46,5 +42,5 @@ r = 0
 c = Artist(login).paginate_artists("Drake")
 for i in c:
     for b in i:
-        print(b["data"]["profile"]["name"])
+        print(b["item"]["data"]["name"])
         r += 1

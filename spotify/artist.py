@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from typing import Any, Generator, Literal, Mapping, Optional
 
-from spotify import ArtistError, BaseClient, Login, TLSClient
+from spotify.client import BaseClient
+from spotify.exceptions import ArtistError
+from spotify.http.request import TLSClient
+from spotify.login import Login
 
 
 class Artist(BaseClient, Login):
