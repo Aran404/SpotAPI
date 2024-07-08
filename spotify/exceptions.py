@@ -32,3 +32,13 @@ class PlaylistError(ParentException):
 # Saver.py exceptions
 class SaverError(ParentException):
     pass
+
+
+# Song.py exceptions
+class SongError(ParentException):
+    pass
+
+
+# client.py exceptions
+class BaseClientError(ParentException):
+    pass

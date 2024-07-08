@@ -6,7 +6,7 @@ These are popular savers that are used for session storing, but if you need a di
 from spotify.exceptions import SaverError
 from spotify.interfaces import SaverProtocol
 from readerwriterlock import rwlock
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Mapping
 from psycopg2.extras import RealDictCursor
 import psycopg2
 import sqlite3
@@ -29,7 +29,7 @@ class JSONSaver(SaverProtocol):
         self.rlock = self.rwlock.gen_rlock()
         self.wlock = self.rwlock.gen_wlock()
 
-    def save(self, data: List[dict[str, Any]], **kwargs) -> None:
+    def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         """
         Save data to a JSON file
 
@@ -57,7 +57,7 @@ class JSONSaver(SaverProtocol):
             with open(self.path, "w") as f:
                 json.dump(current, f, indent=4)
 
-    def load(self, query: dict[str, Any], **kwargs) -> dict[str, Any]:
+    def load(self, query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
         """
         Load data from a JSON file given a query
 
@@ -74,7 +74,7 @@ class JSONSaver(SaverProtocol):
                 data = json.load(f)
 
             allow_collisions = kwargs.get("allow_collisions", False)
-            matches: List[dict[str, Any]] = []
+            matches: List[Mapping[str, Any]] = []
 
             for item in data:
                 if all(item[key] == query[key] for key in query):
@@ -88,7 +88,7 @@ class JSONSaver(SaverProtocol):
 
             raise SaverError("Item not found")
 
-    def delete(self, query: dict[str, Any], **kwargs) -> None:
+    def delete(self, query: Mapping[str, Any], **kwargs) -> None:
         """
         Delete data from a JSON file given a query
 
@@ -157,7 +157,7 @@ class SqliteSaver(SaverProtocol):
         self.rlock = self.rwlock.gen_rlock()
         self.wlock = self.rwlock.gen_wlock()
 
-    def save(self, data: List[dict[str, Any]], **kwargs) -> None:
+    def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         """
         Saves data to a SQLite3 database
 
@@ -190,7 +190,7 @@ class SqliteSaver(SaverProtocol):
                 self.conn.rollback()
                 raise SaverError(e)
 
-    def load(self, query: dict[str, Any], **kwargs) -> dict[str, Any]:
+    def load(self, query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
         """
         Loads data from a SQLite3 database given a query
         """
@@ -215,7 +215,7 @@ class SqliteSaver(SaverProtocol):
 
             return result[0]
 
-    def delete(self, query: dict[str, Any], **kwargs) -> None:
+    def delete(self, query: Mapping[str, Any], **kwargs) -> None:
         """
         Deletes data from a SQLite3 database given a query
         """
@@ -252,13 +252,13 @@ class MongoSaver(SaverProtocol):
 
         atexit.register(self.conn.close)
 
-    def save(self, data: List[dict[str, Any]], **kwargs) -> None:
+    def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         if len(data) == 0:
             raise ValueError("No data to save")
 
         self.collection.insert_many(data)
 
-    def load(self, query: dict[str, Any], **kwargs) -> dict[str, Any]:
+    def load(self, query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
         if not query:
             raise ValueError("Query dictionary cannot be empty")
 
@@ -269,7 +269,7 @@ class MongoSaver(SaverProtocol):
 
         return result
 
-    def delete(self, query: dict[str, Any], **kwargs) -> None:
+    def delete(self, query: Mapping[str, Any], **kwargs) -> None:
         if not query:
             raise ValueError("Query dictionary cannot be empty")
 
@@ -296,7 +296,7 @@ class PostgresSaver(SaverProtocol):
         )
         self.conn.commit()
 
-    def save(self, data: List[dict[str, Any]], **kwargs) -> None:
+    def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         if len(data) == 0:
             raise ValueError("No data to save")
 
@@ -313,7 +313,7 @@ class PostgresSaver(SaverProtocol):
 
         self.conn.commit()
 
-    def load(self, query: dict[str, Any], **kwargs) -> dict[str, Any]:
+    def load(self, query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
         if not query:
             raise ValueError("Query dictionary cannot be empty")
 
@@ -331,7 +331,7 @@ class PostgresSaver(SaverProtocol):
 
         return result
 
-    def delete(self, query: dict[str, Any], **kwargs) -> None:
+    def delete(self, query: Mapping[str, Any], **kwargs) -> None:
         if not query:
             raise ValueError("Query dictionary cannot be empty")
 
@@ -352,14 +352,14 @@ class RedisSaver(SaverProtocol):
         self.client = redis.StrictRedis(host=host, port=port, db=db)
         atexit.register(self.client.close)
 
-    def save(self, data: List[dict[str, Any]], **kwargs) -> None:
+    def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         if len(data) == 0:
             raise ValueError("No data to save")
 
         for item in data:
             self.client.set(item["identifier"], json.dumps(item))
 
-    def load(self, query: dict[str, Any], **kwargs) -> dict[str, Any]:
+    def load(self, query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
         """
         Loads data from a Redis database given a query.
 
@@ -378,7 +378,7 @@ class RedisSaver(SaverProtocol):
 
         return json.loads(result)
 
-    def delete(self, query: dict[str, Any], **kwargs) -> None:
+    def delete(self, query: Mapping[str, Any], **kwargs) -> None:
         if not query:
             raise ValueError("Query dictionary cannot be empty")
 

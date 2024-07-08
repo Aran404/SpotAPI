@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Any, Union
 from tls_client.response import Response as TLSResponse
@@ -9,7 +11,7 @@ class Response:
     status_code: int
     response: Any
 
-    error: "Error" = field(init=False)
+    error: Error = field(init=False)
     success: bool = field(init=False)
     fail: bool = field(init=False)
 

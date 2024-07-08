@@ -1,5 +1,8 @@
 colorama==0.4.6
+psycopg2==2.9.9
+pymongo==4.8.0
 readerwriterlock==1.0.9
+redis==5.0.7
 requests==2.31.0
 tls_client==1.0
 typing_extensions==4.12.2

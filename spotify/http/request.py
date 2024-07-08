@@ -161,6 +161,6 @@ class TLSClient(Session):
         response = self.build_request("POST", url, **kwargs)
 
         if response is None:
-            return
+            raise TLSClientExeption("Request kept failing after retries.")
 
         return self.parse_response(response, "POST", danger)

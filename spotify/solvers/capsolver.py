@@ -36,7 +36,7 @@ class Capsolver:
 
         if request.fail:
             raise CaptchaException(
-                "Could not retrieve balance.", error=request.error.error_string
+                "Could not retrieve balance.", error=request.error.string
             )
 
         resp = request.response
@@ -78,9 +78,7 @@ class Capsolver:
         request = self.client.post(endpoint, authenticate=True, json=payload)
 
         if request.fail:
-            raise CaptchaException(
-                "Could not create task.", error=request.error.error_string
-            )
+            raise CaptchaException("Could not create task.", error=request.error.string)
 
         resp = request.response
 
@@ -100,7 +98,7 @@ class Capsolver:
 
             if request.fail:
                 raise CaptchaException(
-                    "Could not get task result", error=request.error.error_string
+                    "Could not get task result", error=request.error.string
                 )
 
             resp = request.response

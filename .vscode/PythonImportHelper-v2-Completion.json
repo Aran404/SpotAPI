@@ -1,0 +1,1209 @@
+[
+    {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
+        "label": "atexit",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "atexit",
+        "description": "atexit",
+        "detail": "atexit",
+        "documentation": {}
+    },
+    {
+        "label": "requests",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "requests",
+        "description": "requests",
+        "detail": "requests",
+        "documentation": {}
+    },
+    {
+        "label": "Session",
+        "importPath": "tls_client",
+        "description": "tls_client",
+        "isExtraImport": true,
+        "detail": "tls_client",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Callable",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Type",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Union",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Union",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Literal",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Mapping",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Type",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Protocol",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Literal",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Type",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Mapping",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Mapping",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Generator",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Mapping",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Mapping",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Tuple",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Mapping",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "TLSClientExeption",
+        "importPath": "tls_client.exceptions",
+        "description": "tls_client.exceptions",
+        "isExtraImport": true,
+        "detail": "tls_client.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "Response",
+        "importPath": "tls_client.response",
+        "description": "tls_client.response",
+        "isExtraImport": true,
+        "detail": "tls_client.response",
+        "documentation": {}
+    },
+    {
+        "label": "Response",
+        "importPath": "tls_client.response",
+        "description": "tls_client.response",
+        "isExtraImport": true,
+        "detail": "tls_client.response",
+        "documentation": {}
+    },
+    {
+        "label": "Response",
+        "importPath": "spotify.http.types",
+        "description": "spotify.http.types",
+        "isExtraImport": true,
+        "detail": "spotify.http.types",
+        "documentation": {}
+    },
+    {
+        "label": "ParentException",
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "isExtraImport": true,
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "CaptchaException",
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "isExtraImport": true,
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "SolverError",
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "isExtraImport": true,
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "BaseClientError",
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "isExtraImport": true,
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "LoginError",
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "isExtraImport": true,
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "PlaylistError",
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "isExtraImport": true,
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "SaverError",
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "isExtraImport": true,
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "SongError",
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "isExtraImport": true,
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "UserError",
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "isExtraImport": true,
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "dataclass",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
+        "documentation": {}
+    },
+    {
+        "label": "field",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
+        "documentation": {}
+    },
+    {
+        "label": "dataclass",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
+        "documentation": {}
+    },
+    {
+        "label": "field",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
+        "documentation": {}
+    },
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "StdClient",
+        "importPath": "spotify.http.request",
+        "description": "spotify.http.request",
+        "isExtraImport": true,
+        "detail": "spotify.http.request",
+        "documentation": {}
+    },
+    {
+        "label": "TLSClient",
+        "importPath": "spotify.http.request",
+        "description": "spotify.http.request",
+        "isExtraImport": true,
+        "detail": "spotify.http.request",
+        "documentation": {}
+    },
+    {
+        "label": "TLSClient",
+        "importPath": "spotify.http.request",
+        "description": "spotify.http.request",
+        "isExtraImport": true,
+        "detail": "spotify.http.request",
+        "documentation": {}
+    },
+    {
+        "label": "StdClient",
+        "importPath": "spotify.http.request",
+        "description": "spotify.http.request",
+        "isExtraImport": true,
+        "detail": "spotify.http.request",
+        "documentation": {}
+    },
+    {
+        "label": "TLSClient",
+        "importPath": "spotify.http.request",
+        "description": "spotify.http.request",
+        "isExtraImport": true,
+        "detail": "spotify.http.request",
+        "documentation": {}
+    },
+    {
+        "label": "TLSClient",
+        "importPath": "spotify.http.request",
+        "description": "spotify.http.request",
+        "isExtraImport": true,
+        "detail": "spotify.http.request",
+        "documentation": {}
+    },
+    {
+        "label": "re",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "re",
+        "description": "re",
+        "detail": "re",
+        "documentation": {}
+    },
+    {
+        "label": "parse_json_string",
+        "importPath": "spotify.utils.strings",
+        "description": "spotify.utils.strings",
+        "isExtraImport": true,
+        "detail": "spotify.utils.strings",
+        "documentation": {}
+    },
+    {
+        "label": "parse_json_string",
+        "importPath": "spotify.utils.strings",
+        "description": "spotify.utils.strings",
+        "isExtraImport": true,
+        "detail": "spotify.utils.strings",
+        "documentation": {}
+    },
+    {
+        "label": "NoopLogger",
+        "importPath": "spotify.logger",
+        "description": "spotify.logger",
+        "isExtraImport": true,
+        "detail": "spotify.logger",
+        "documentation": {}
+    },
+    {
+        "label": "Logger",
+        "importPath": "spotify.logger",
+        "description": "spotify.logger",
+        "isExtraImport": true,
+        "detail": "spotify.logger",
+        "documentation": {}
+    },
+    {
+        "label": "CaptchaProtocol",
+        "importPath": "spotify.interfaces",
+        "description": "spotify.interfaces",
+        "isExtraImport": true,
+        "detail": "spotify.interfaces",
+        "documentation": {}
+    },
+    {
+        "label": "LoggerProtocol",
+        "importPath": "spotify.interfaces",
+        "description": "spotify.interfaces",
+        "isExtraImport": true,
+        "detail": "spotify.interfaces",
+        "documentation": {}
+    },
+    {
+        "label": "LoggerProtocol",
+        "importPath": "spotify.interfaces",
+        "description": "spotify.interfaces",
+        "isExtraImport": true,
+        "detail": "spotify.interfaces",
+        "documentation": {}
+    },
+    {
+        "label": "SaverProtocol",
+        "importPath": "spotify.interfaces",
+        "description": "spotify.interfaces",
+        "isExtraImport": true,
+        "detail": "spotify.interfaces",
+        "documentation": {}
+    },
+    {
+        "label": "SaverProtocol",
+        "importPath": "spotify.interfaces",
+        "description": "spotify.interfaces",
+        "isExtraImport": true,
+        "detail": "spotify.interfaces",
+        "documentation": {}
+    },
+    {
+        "label": "runtime_checkable",
+        "importPath": "typing_extensions",
+        "description": "typing_extensions",
+        "isExtraImport": true,
+        "detail": "typing_extensions",
+        "documentation": {}
+    },
+    {
+        "label": "Fore",
+        "importPath": "colorama",
+        "description": "colorama",
+        "isExtraImport": true,
+        "detail": "colorama",
+        "documentation": {}
+    },
+    {
+        "label": "Style",
+        "importPath": "colorama",
+        "description": "colorama",
+        "isExtraImport": true,
+        "detail": "colorama",
+        "documentation": {}
+    },
+    {
+        "label": "init",
+        "importPath": "colorama",
+        "description": "colorama",
+        "isExtraImport": true,
+        "detail": "colorama",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "Config",
+        "importPath": "spotify.data",
+        "description": "spotify.data",
+        "isExtraImport": true,
+        "detail": "spotify.data",
+        "documentation": {}
+    },
+    {
+        "label": "Config",
+        "importPath": "spotify.data",
+        "description": "spotify.data",
+        "isExtraImport": true,
+        "detail": "spotify.data",
+        "documentation": {}
+    },
+    {
+        "label": "urlencode",
+        "importPath": "urllib.parse",
+        "description": "urllib.parse",
+        "isExtraImport": true,
+        "detail": "urllib.parse",
+        "documentation": {}
+    },
+    {
+        "label": "BaseClient",
+        "importPath": "spotify.client",
+        "description": "spotify.client",
+        "isExtraImport": true,
+        "detail": "spotify.client",
+        "documentation": {}
+    },
+    {
+        "label": "Login",
+        "importPath": "spotify.login",
+        "description": "spotify.login",
+        "isExtraImport": true,
+        "detail": "spotify.login",
+        "documentation": {}
+    },
+    {
+        "label": "Login",
+        "importPath": "spotify.login",
+        "description": "spotify.login",
+        "isExtraImport": true,
+        "detail": "spotify.login",
+        "documentation": {}
+    },
+    {
+        "label": "Login",
+        "importPath": "spotify.login",
+        "description": "spotify.login",
+        "isExtraImport": true,
+        "detail": "spotify.login",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "spotify.user",
+        "description": "spotify.user",
+        "isExtraImport": true,
+        "detail": "spotify.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "spotify.user",
+        "description": "spotify.user",
+        "isExtraImport": true,
+        "detail": "spotify.user",
+        "documentation": {}
+    },
+    {
+        "label": "rwlock",
+        "importPath": "readerwriterlock",
+        "description": "readerwriterlock",
+        "isExtraImport": true,
+        "detail": "readerwriterlock",
+        "documentation": {}
+    },
+    {
+        "label": "RealDictCursor",
+        "importPath": "psycopg2.extras",
+        "description": "psycopg2.extras",
+        "isExtraImport": true,
+        "detail": "psycopg2.extras",
+        "documentation": {}
+    },
+    {
+        "label": "psycopg2",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "psycopg2",
+        "description": "psycopg2",
+        "detail": "psycopg2",
+        "documentation": {}
+    },
+    {
+        "label": "sqlite3",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sqlite3",
+        "description": "sqlite3",
+        "detail": "sqlite3",
+        "documentation": {}
+    },
+    {
+        "label": "pymongo",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pymongo",
+        "description": "pymongo",
+        "detail": "pymongo",
+        "documentation": {}
+    },
+    {
+        "label": "redis",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "redis",
+        "description": "redis",
+        "detail": "redis",
+        "documentation": {}
+    },
+    {
+        "label": "PrivatePlaylist",
+        "importPath": "spotify.playlist",
+        "description": "spotify.playlist",
+        "isExtraImport": true,
+        "detail": "spotify.playlist",
+        "documentation": {}
+    },
+    {
+        "label": "Login",
+        "importPath": "spotify.playlist",
+        "description": "spotify.playlist",
+        "isExtraImport": true,
+        "detail": "spotify.playlist",
+        "documentation": {}
+    },
+    {
+        "label": "BaseClient",
+        "importPath": "spotify.playlist",
+        "description": "spotify.playlist",
+        "isExtraImport": true,
+        "detail": "spotify.playlist",
+        "documentation": {}
+    },
+    {
+        "label": "PublicPlaylist",
+        "importPath": "spotify.playlist",
+        "description": "spotify.playlist",
+        "isExtraImport": true,
+        "detail": "spotify.playlist",
+        "documentation": {}
+    },
+    {
+        "label": "PublicPlaylist",
+        "importPath": "spotify.playlist",
+        "description": "spotify.playlist",
+        "isExtraImport": true,
+        "detail": "spotify.playlist",
+        "documentation": {}
+    },
+    {
+        "label": "PrivatePlaylist",
+        "importPath": "spotify.playlist",
+        "description": "spotify.playlist",
+        "isExtraImport": true,
+        "detail": "spotify.playlist",
+        "documentation": {}
+    },
+    {
+        "label": "solver_clients",
+        "importPath": "spotify.solvers",
+        "description": "spotify.solvers",
+        "isExtraImport": true,
+        "detail": "spotify.solvers",
+        "documentation": {}
+    },
+    {
+        "label": "Song",
+        "importPath": "spotify.song",
+        "description": "spotify.song",
+        "isExtraImport": true,
+        "detail": "spotify.song",
+        "documentation": {}
+    },
+    {
+        "label": "Song",
+        "importPath": "spotify.song",
+        "description": "spotify.song",
+        "isExtraImport": true,
+        "detail": "spotify.song",
+        "documentation": {}
+    },
+    {
+        "label": "JSONSaver",
+        "importPath": "spotify.saver",
+        "description": "spotify.saver",
+        "isExtraImport": true,
+        "detail": "spotify.saver",
+        "documentation": {}
+    },
+    {
+        "label": "Lock",
+        "importPath": "asyncio",
+        "description": "asyncio",
+        "isExtraImport": true,
+        "detail": "asyncio",
+        "documentation": {}
+    },
+    {
+        "label": "sys",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sys",
+        "description": "sys",
+        "detail": "sys",
+        "documentation": {}
+    },
+    {
+        "label": "StdClient",
+        "kind": 6,
+        "importPath": "spotify.http.request",
+        "description": "spotify.http.request",
+        "peekOfCode": "class StdClient(requests.Session):\n    def __init__(\n        self, auto_retries: int = 0, auth_rule: Callable[[dict[Any, Any]], dict] = None\n    ) -> None:\n        super().__init__()\n        self.auto_retries = auto_retries + 1\n        self.authenticate = auth_rule\n        atexit.register(self.close)\n    def __call__(\n        self, method: str, url: str, **kwargs",
+        "detail": "spotify.http.request",
+        "documentation": {}
+    },
+    {
+        "label": "TLSClient",
+        "kind": 6,
+        "importPath": "spotify.http.request",
+        "description": "spotify.http.request",
+        "peekOfCode": "class TLSClient(Session):\n    def __init__(\n        self,\n        profile: str,\n        proxy: str,\n        *,\n        auto_retries: int = 0,\n        auth_rule: Callable[[dict[Any, Any]], dict] = None,\n    ) -> None:\n        super().__init__(client_identifier=profile, random_tls_extension_order=True)",
+        "detail": "spotify.http.request",
+        "documentation": {}
+    },
+    {
+        "label": "Response",
+        "kind": 6,
+        "importPath": "spotify.http.types",
+        "description": "spotify.http.types",
+        "peekOfCode": "class Response:\n    raw: TLSResponse\n    status_code: int\n    response: Any\n    error: Error = field(init=False)\n    success: bool = field(init=False)\n    fail: bool = field(init=False)\n    def __post_init__(self):\n        self.error = Error(\n            self.status_code,",
+        "detail": "spotify.http.types",
+        "documentation": {}
+    },
+    {
+        "label": "Error",
+        "kind": 6,
+        "importPath": "spotify.http.types",
+        "description": "spotify.http.types",
+        "peekOfCode": "class Error:\n    status_code: int\n    response: Union[str, dict]\n    string: str\n    @property\n    def is_success(self) -> bool:\n        return 200 <= self.status_code <= 302\n    @property\n    def is_fail(self) -> bool:\n        return not self.is_success",
+        "detail": "spotify.http.types",
+        "documentation": {}
+    },
+    {
+        "label": "Capsolver",
+        "kind": 6,
+        "importPath": "spotify.solvers.capsolver",
+        "description": "spotify.solvers.capsolver",
+        "peekOfCode": "class Capsolver:\n    BaseURL = \"https://api.capsolver.com/\"\n    def __init__(\n        self,\n        api_key: str,\n        client: Optional[StdClient] = StdClient(3),\n        *,\n        proxy: Optional[str] = None,\n        retries: Optional[int] = 120,\n    ) -> None:",
+        "detail": "spotify.solvers.capsolver",
+        "documentation": {}
+    },
+    {
+        "label": "parse_json_string",
+        "kind": 2,
+        "importPath": "spotify.utils.strings",
+        "description": "spotify.utils.strings",
+        "peekOfCode": "def parse_json_string(b: str, s: str) -> str:\n    start_index = b.find(f'{s}\":\"')\n    if start_index == -1:\n        raise ValueError(f'Substring \"{s}\":\" not found in JSON string')\n    value_start_index = start_index + len(s) + 3\n    value_end_index = b.find('\"', value_start_index)\n    if value_end_index == -1:\n        raise ValueError(f'Closing double quote not found after \"{s}\":\"')\n    return b[value_start_index:value_end_index]",
+        "detail": "spotify.utils.strings",
+        "documentation": {}
+    },
+    {
+        "label": "BaseClient",
+        "kind": 6,
+        "importPath": "spotify.client",
+        "description": "spotify.client",
+        "peekOfCode": "class BaseClient:\n    def __init__(self, *, client: TLSClient) -> None:\n        self.client = client\n        self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)\n        self.js_pack: str = None\n        self.client_version: str = None\n        self.access_token: str = None\n        self.client_token: str = None\n        self.client_id: str = None\n        self.device_id: str = None",
+        "detail": "spotify.client",
+        "documentation": {}
+    },
+    {
+        "label": "Config",
+        "kind": 6,
+        "importPath": "spotify.data",
+        "description": "spotify.data",
+        "peekOfCode": "class Config:\n    logger: Type[LoggerProtocol]\n    solver: Type[CaptchaProtocol] = field(default=NoopLogger())\n    client: TLSClient = field(default=TLSClient(\"chrome_120\", \"\", auto_retries=3))\n@dataclass\nclass SolverConfig:\n    api_key: str\n    captcha_service: str\n    retries: int = field(default=120)",
+        "detail": "spotify.data",
+        "documentation": {}
+    },
+    {
+        "label": "SolverConfig",
+        "kind": 6,
+        "importPath": "spotify.data",
+        "description": "spotify.data",
+        "peekOfCode": "class SolverConfig:\n    api_key: str\n    captcha_service: str\n    retries: int = field(default=120)",
+        "detail": "spotify.data",
+        "documentation": {}
+    },
+    {
+        "label": "ParentException",
+        "kind": 6,
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "peekOfCode": "class ParentException(Exception):\n    def __init__(self, message: str, error: str = str) -> None:\n        super().__init__(message)\n        self.error = error\n# Runtime exceptions (API errors)\nclass CaptchaException(ParentException):\n    pass\n# Final exceptions\nclass SolverError(ParentException):\n    pass",
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "CaptchaException",
+        "kind": 6,
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "peekOfCode": "class CaptchaException(ParentException):\n    pass\n# Final exceptions\nclass SolverError(ParentException):\n    pass\n# Login.py exceptions\nclass LoginError(ParentException):\n    pass\n# User.py exceptions\nclass UserError(ParentException):",
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "SolverError",
+        "kind": 6,
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "peekOfCode": "class SolverError(ParentException):\n    pass\n# Login.py exceptions\nclass LoginError(ParentException):\n    pass\n# User.py exceptions\nclass UserError(ParentException):\n    pass\n# Playlist.py exceptions\nclass PlaylistError(ParentException):",
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "LoginError",
+        "kind": 6,
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "peekOfCode": "class LoginError(ParentException):\n    pass\n# User.py exceptions\nclass UserError(ParentException):\n    pass\n# Playlist.py exceptions\nclass PlaylistError(ParentException):\n    pass\n# Saver.py exceptions\nclass SaverError(ParentException):",
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "UserError",
+        "kind": 6,
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "peekOfCode": "class UserError(ParentException):\n    pass\n# Playlist.py exceptions\nclass PlaylistError(ParentException):\n    pass\n# Saver.py exceptions\nclass SaverError(ParentException):\n    pass\n# Song.py exceptions\nclass SongError(ParentException):",
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "PlaylistError",
+        "kind": 6,
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "peekOfCode": "class PlaylistError(ParentException):\n    pass\n# Saver.py exceptions\nclass SaverError(ParentException):\n    pass\n# Song.py exceptions\nclass SongError(ParentException):\n    pass\n# client.py exceptions\nclass BaseClientError(ParentException):",
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "SaverError",
+        "kind": 6,
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "peekOfCode": "class SaverError(ParentException):\n    pass\n# Song.py exceptions\nclass SongError(ParentException):\n    pass\n# client.py exceptions\nclass BaseClientError(ParentException):\n    pass",
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "SongError",
+        "kind": 6,
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "peekOfCode": "class SongError(ParentException):\n    pass\n# client.py exceptions\nclass BaseClientError(ParentException):\n    pass",
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "BaseClientError",
+        "kind": 6,
+        "importPath": "spotify.exceptions",
+        "description": "spotify.exceptions",
+        "peekOfCode": "class BaseClientError(ParentException):\n    pass",
+        "detail": "spotify.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "CaptchaProtocol",
+        "kind": 6,
+        "importPath": "spotify.interfaces",
+        "description": "spotify.interfaces",
+        "peekOfCode": "class CaptchaProtocol(Protocol):\n    def __init__(\n        self,\n        api_key: str,\n        client: Optional[StdClient] = StdClient(3),\n        *,\n        proxy: Optional[str] = None,\n        retries: Optional[int] = 120,\n    ) -> None:\n        ...",
+        "detail": "spotify.interfaces",
+        "documentation": {}
+    },
+    {
+        "label": "LoggerProtocol",
+        "kind": 6,
+        "importPath": "spotify.interfaces",
+        "description": "spotify.interfaces",
+        "peekOfCode": "class LoggerProtocol(Protocol):\n    @staticmethod\n    def info(s: str, **extra) -> None:\n        ...\n    @staticmethod\n    def attempt(s: str, **extra) -> None:\n        ...\n    @staticmethod\n    def error(s: str, **extra) -> None:\n        ...",
+        "detail": "spotify.interfaces",
+        "documentation": {}
+    },
+    {
+        "label": "SaverProtocol",
+        "kind": 6,
+        "importPath": "spotify.interfaces",
+        "description": "spotify.interfaces",
+        "peekOfCode": "class SaverProtocol(Protocol):\n    def save(self, data: List[dict[str, Any]], **kwargs) -> None:\n        ...\n    def load(self, query: dict[str, Any], **kwargs) -> dict[str, Any]:\n        ...\n    def delete(self, query: dict[str, Any], **kwargs) -> None:\n        ...",
+        "detail": "spotify.interfaces",
+        "documentation": {}
+    },
+    {
+        "label": "Logger",
+        "kind": 6,
+        "importPath": "spotify.logger",
+        "description": "spotify.logger",
+        "peekOfCode": "class Logger(LoggerProtocol):\n    @staticmethod\n    def __fmt_time() -> str:\n        t = datetime.now().strftime(\"%H:%M:%S\")\n        return f\"[{Style.BRIGHT}{Fore.BLUE}{str(t)}{Style.RESET_ALL}]\"\n    @staticmethod\n    def error(s: str, **extra) -> None:\n        fields = [\n            f\"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}\" for k, v in extra.items()\n        ]",
+        "detail": "spotify.logger",
+        "documentation": {}
+    },
+    {
+        "label": "NoopLogger",
+        "kind": 6,
+        "importPath": "spotify.logger",
+        "description": "spotify.logger",
+        "peekOfCode": "class NoopLogger(LoggerProtocol):\n    @staticmethod\n    def error(s: str, **extra) -> None:\n        ...\n    @staticmethod\n    def info(s: str, **extra) -> None:\n        ...\n    @staticmethod\n    def fatal(s: str, **extra) -> None:\n        ...",
+        "detail": "spotify.logger",
+        "documentation": {}
+    },
+    {
+        "label": "Login",
+        "kind": 6,
+        "importPath": "spotify.login",
+        "description": "spotify.login",
+        "peekOfCode": "class Login:\n    \"\"\"\n    Base class for logging in to Spotify.\n    \"\"\"\n    def __init__(\n        self,\n        cfg: Config,\n        password: str,\n        *,\n        email: Optional[str] = None,",
+        "detail": "spotify.login",
+        "documentation": {}
+    },
+    {
+        "label": "LoginChallenge",
+        "kind": 6,
+        "importPath": "spotify.login",
+        "description": "spotify.login",
+        "peekOfCode": "class LoginChallenge:\n    def __init__(self, login: Login, dump: Mapping[str, Any]) -> None:\n        self.l = login\n        self.dump = dump\n        self.challenge_url = self.dump[\"data\"][\"redirect_url\"]\n        self.interaction_hash: str = None\n        self.interaction_reference: str = None\n        self.challenge_session_id: str = None\n    def __get_challenge(self) -> None:\n        resp = self.l.client.get(self.challenge_url)",
+        "detail": "spotify.login",
+        "documentation": {}
+    },
+    {
+        "label": "PublicPlaylist",
+        "kind": 6,
+        "importPath": "spotify.playlist",
+        "description": "spotify.playlist",
+        "peekOfCode": "class PublicPlaylist(BaseClient):\n    \"\"\"\n    Allows you to get all public information on a playlist.\n    No login is required.\n    \"\"\"\n    def __init__(\n        self,\n        playlist: Optional[str] = None,\n        /,\n        client: Optional[TLSClient] = TLSClient(\"chrome_120\", \"\", auto_retries=3),",
+        "detail": "spotify.playlist",
+        "documentation": {}
+    },
+    {
+        "label": "PrivatePlaylist",
+        "kind": 6,
+        "importPath": "spotify.playlist",
+        "description": "spotify.playlist",
+        "peekOfCode": "class PrivatePlaylist(BaseClient, Login):\n    \"\"\"\n    Methods on playlists that you can only do whilst logged in.\n    \"\"\"\n    def __new__(\n        cls,\n        login: Login,\n        playlist: Optional[str] = None,\n    ) -> PrivatePlaylist:\n        instance = super().__new__(cls)",
+        "detail": "spotify.playlist",
+        "documentation": {}
+    },
+    {
+        "label": "JSONSaver",
+        "kind": 6,
+        "importPath": "spotify.saver",
+        "description": "spotify.saver",
+        "peekOfCode": "class JSONSaver(SaverProtocol):\n    \"\"\"\n    CRUD methods for JSON files\n    \"\"\"\n    def __init__(self, path: Optional[str] = \"sessions.json\") -> None:\n        self.path = path\n        self.rwlock = rwlock.RWLockFairD()\n        self.rlock = self.rwlock.gen_rlock()\n        self.wlock = self.rwlock.gen_wlock()\n    def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:",
+        "detail": "spotify.saver",
+        "documentation": {}
+    },
+    {
+        "label": "SqliteSaver",
+        "kind": 6,
+        "importPath": "spotify.saver",
+        "description": "spotify.saver",
+        "peekOfCode": "class SqliteSaver(SaverProtocol):\n    \"\"\"\n    CRUD methods for SQLite3 files\n    \"\"\"\n    def __init__(self, path: str = \"sessions.db\") -> None:\n        self.path = path\n        self.conn = sqlite3.connect(self.path, check_same_thread=False)\n        self.cursor = self.conn.cursor()\n        # Create table\n        self.cursor.execute(",
+        "detail": "spotify.saver",
+        "documentation": {}
+    },
+    {
+        "label": "MongoSaver",
+        "kind": 6,
+        "importPath": "spotify.saver",
+        "description": "spotify.saver",
+        "peekOfCode": "class MongoSaver(SaverProtocol):\n    \"\"\"\n    CRUD methods for MongoDB\n    \"\"\"\n    def __init__(\n        self,\n        host: Optional[str] = \"mongodb://localhost:27017/\",\n        database_name: Optional[str] = \"spotify\",\n        collection: Optional[str] = \"sessions\",\n    ) -> None:",
+        "detail": "spotify.saver",
+        "documentation": {}
+    },
+    {
+        "label": "PostgresSaver",
+        "kind": 6,
+        "importPath": "spotify.saver",
+        "description": "spotify.saver",
+        "peekOfCode": "class PostgresSaver(SaverProtocol):\n    def __init__(self, dsn: str) -> None:\n        self.conn = psycopg2.connect(dsn)\n        self.cursor = self.conn.cursor(cursor_factory=RealDictCursor)\n        self._create_table()\n        atexit.register(self.conn.close)\n    def _create_table(self):\n        self.cursor.execute(\n            \"\"\"\n            CREATE TABLE IF NOT EXISTS sessions (",
+        "detail": "spotify.saver",
+        "documentation": {}
+    },
+    {
+        "label": "RedisSaver",
+        "kind": 6,
+        "importPath": "spotify.saver",
+        "description": "spotify.saver",
+        "peekOfCode": "class RedisSaver(SaverProtocol):\n    def __init__(\n        self, host: Optional[str] = \"localhost\", port: int = 6379, db: int = 0\n    ) -> None:\n        self.client = redis.StrictRedis(host=host, port=port, db=db)\n        atexit.register(self.client.close)\n    def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:\n        if len(data) == 0:\n            raise ValueError(\"No data to save\")\n        for item in data:",
+        "detail": "spotify.saver",
+        "documentation": {}
+    },
+    {
+        "label": "Song",
+        "kind": 6,
+        "importPath": "spotify.song",
+        "description": "spotify.song",
+        "peekOfCode": "class Song(BaseClient):\n    \"\"\"\n    Extends the PrivatePlaylist class with methods that can only be used while logged in.\n    These methods interact with songs and tend to be used in the context of a playlist.\n    \"\"\"\n    def __init__(\n        self,\n        playlist: Optional[PrivatePlaylist] = None,\n        *,\n        client: Optional[TLSClient] = TLSClient(\"chrome_120\", \"\", auto_retries=3),",
+        "detail": "spotify.song",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "kind": 6,
+        "importPath": "spotify.user",
+        "description": "spotify.user",
+        "peekOfCode": "class User(Login):\n    def __new__(cls, login: Login) -> User:\n        instance = super(User, cls).__new__(cls)\n        instance.__dict__ = login.__dict__.copy()\n        return instance\n    def __init__(self, login: Login) -> None:\n        if not login.logged_in:\n            raise ValueError(\"Must be logged in\")\n        self._user_plan: Mapping[str, Any] = None\n        self._user_info: Mapping[str, Any] = None",
+        "detail": "spotify.user",
+        "documentation": {}
+    },
+    {
+        "label": "login",
+        "kind": 5,
+        "importPath": "a",
+        "description": "a",
+        "peekOfCode": "login = Login(\n    cfg=Config(\n        logger=Logger(),\n        solver=solver_clients.Capsolver(\n            \"CAP-CD143A2A67149C5C67022C08A32769B2\",\n        ),\n    ),\n    password=\"adgaaadgagd@gmail.com\",\n    username=\"adgaaadgagd@gmail.com\",\n)",
+        "detail": "a",
+        "documentation": {}
+    },
+    {
+        "label": "a",
+        "kind": 5,
+        "importPath": "a",
+        "description": "a",
+        "peekOfCode": "a = PublicPlaylist(\"6xe4HqyIkcSYv3wOHb2mry\")\nSong(a).remove_song_from_playlist(song_name=\"Sensual Jazz\")",
+        "detail": "a",
+        "documentation": {}
+    }
+]

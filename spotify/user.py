@@ -15,6 +15,7 @@ class User(Login):
             raise ValueError("Must be logged in")
 
         self._user_plan: Mapping[str, Any] = None
+        self._user_info: Mapping[str, Any] = None
 
     @property
     def has_premium(self) -> bool:
@@ -22,6 +23,13 @@ class User(Login):
             self.get_plan_info()
 
         return self._user_plan["plan"]["name"] != "Spotify Free"
+
+    @property
+    def username(self) -> str:
+        if self._user_info is None:
+            self._user_info = self.get_user_info()
+
+        return self._user_info["profile"]["username"]
 
     def get_plan_info(self) -> Mapping[str, Any]:
         """Gets user plan info."""

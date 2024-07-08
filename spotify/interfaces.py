@@ -35,6 +35,10 @@ class LoggerProtocol(Protocol):
         ...
 
     @staticmethod
+    def attempt(s: str, **extra) -> None:
+        ...
+
+    @staticmethod
     def error(s: str, **extra) -> None:
         ...
 

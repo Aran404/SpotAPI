@@ -24,6 +24,16 @@ class Logger(LoggerProtocol):
         )
 
     @staticmethod
+    def attempt(s: str, **extra) -> None:
+        fields = [
+            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
+        ]
+        print(
+            f"{Logger.__fmt_time()} {Fore.YELLOW}{s}{Style.RESET_ALL} "
+            + " ".join(fields)
+        )
+
+    @staticmethod
     def info(s: str, **extra) -> None:
         fields = [
             f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
@@ -57,4 +67,8 @@ class NoopLogger(LoggerProtocol):
 
     @staticmethod
     def fatal(s: str, **extra) -> None:
+        ...
+
+    @staticmethod
+    def attempt(s: str, **extra) -> None:
         ...
