@@ -21,7 +21,7 @@ class Logger(LoggerProtocol):
             f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
         ]
         print(
-            f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.RED}{s}{Style.RESET_ALL} "
+            f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.LIGHTRED_EX}{s}{Fore.RESET}{Style.RESET_ALL} "
             + " ".join(fields)
         )
 
@@ -31,7 +31,7 @@ class Logger(LoggerProtocol):
             f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
         ]
         print(
-            f"{Logger.__fmt_time()} {Fore.YELLOW}{s}{Style.RESET_ALL} "
+            f"{Logger.__fmt_time()} {Fore.LIGHTYELLOW_EX}{s}{Fore.RESET}{Style.RESET_ALL} "
             + " ".join(fields)
         )
 
@@ -41,7 +41,7 @@ class Logger(LoggerProtocol):
             f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
         ]
         print(
-            f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.MAGENTA}{s}{Style.RESET_ALL} "
+            f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.LIGHTMAGENTA_EX}{s}{Fore.RESET}{Style.RESET_ALL} "
             + " ".join(fields)
         )
 
@@ -51,7 +51,7 @@ class Logger(LoggerProtocol):
             f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
         ]
         print(
-            f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.RED}{s}{Style.RESET_ALL} "
+            f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.LIGHTRED_EX}{s}{Fore.RESET}{Style.RESET_ALL} "
             + " ".join(fields)
         )
         time.sleep(5)
