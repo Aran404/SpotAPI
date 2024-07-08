@@ -7,7 +7,7 @@ from tls_client import Session
 from tls_client.exceptions import TLSClientExeption
 from tls_client.response import Response as TLSResponse
 
-from spotify.exceptions import ParentException
+from spotify.exceptions import ParentException, RequestError
 from spotify.http.data import Response
 
 
@@ -28,14 +28,16 @@ class StdClient(requests.Session):
     def build_request(
         self, method: str, url: str, **kwargs
     ) -> Union[requests.Response, None]:
+        err = "Unknown"
         for _ in range(self.auto_retries):
             try:
                 response = super().request(method.upper(), url, **kwargs)
-            except Exception:
+            except Exception as err:
+                err = err
                 continue
             else:
                 return response
-        return
+        raise RequestError("Failed to complete request.", error=err)
 
     def parse_response(self, response: requests.Response) -> Response:
         body: Union[str, dict, None] = response.text
@@ -96,16 +98,17 @@ class TLSClient(Session):
     def build_request(
         self, method: str, url: str, **kwargs
     ) -> Union[TLSResponse, None]:
+        err = "Unknown"
         for _ in range(self.auto_retries):
             try:
                 response = self.execute_request(method.upper(), url, **kwargs)
             except TLSClientExeption as err:
-                # TODO: Display error
+                err = err
                 continue
             else:
                 return response
 
-        return
+        raise RequestError("Failed to complete request.", error=err)
 
     def parse_response(
         self, response: TLSResponse, method: str, danger: bool

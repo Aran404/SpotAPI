@@ -6,8 +6,8 @@ from spotify.exceptions import CaptchaException, SolverError
 from spotify.http.request import StdClient
 
 
-class Capsolver:
-    BaseURL = "https://api.capsolver.com/"
+class Capmonster:
+    BaseURL = "https://api.capmonster.cloud/"
 
     def __init__(
         self,
@@ -20,6 +20,8 @@ class Capsolver:
         self.api_key = api_key
         self.client = client
         self.proxy = proxy
+        if self.proxy:
+            raise CaptchaException("Only Proxyless mode is supported with capmonster.")
         self.retries = retries
 
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)

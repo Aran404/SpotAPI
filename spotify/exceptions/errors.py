@@ -47,3 +47,8 @@ class ArtistError(ParentException):
 # client.py exceptions
 class BaseClientError(ParentException):
     pass
+
+
+# request.py exceptions
+class RequestError(ParentException):
+    pass

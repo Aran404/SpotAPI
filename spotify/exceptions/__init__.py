@@ -5,6 +5,7 @@ from .errors import (
     LoginError,
     ParentException,
     PlaylistError,
+    RequestError,
     SaverError,
     SolverError,
     SongError,

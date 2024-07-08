@@ -19,11 +19,12 @@ class BaseClient:
         self.device_id: str = None
         self.raw_hashes: str = None
 
+        self.browser_version = self.client.client_identifier.split("_")[1]
         self.client.headers.update(
             {
-                "content-type": "application/json;charset=UTF-8",
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "sec-ch-ua": '"Chromium";v="120", "Not(A:Brand";v="24", "Google Chrome";v="120"',
+                "Content-Type": "application/json;charset=UTF-8",
+                "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{self.browser_version}.0.0.0 Safari/537.36",
+                "Sec-Ch-Ua": f'"Chromium";v="{self.browser_version}", "Not(A:Brand";v="24", "Google Chrome";v="{self.browser_version}"',
             }
         )
 
@@ -39,9 +40,9 @@ class BaseClient:
 
         kwargs["headers"].update(
             {
-                "authorization": "Bearer " + self.access_token,
-                "client-token": self.client_token,
-                "spotify-app-version": self.client_version,
+                "Authorization": "Bearer " + self.access_token,
+                "Client-Token": self.client_token,
+                "Spotify-App-Version": self.client_version,
             }
         )
 
@@ -51,7 +52,7 @@ class BaseClient:
         resp = self.client.get(
             "https://open.spotify.com",
             headers={
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{self.browser_version}.0.0.0 Safari/537.36"
             },
         )
 
@@ -87,9 +88,9 @@ class BaseClient:
             }
         }
         headers = {
-            "authority": "clienttoken.spotify.com",
-            "content-type": "application/json",
-            "accept": "application/json",
+            "Authority": "clienttoken.spotify.com",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
         }
 
         resp = self.client.post(url, json=payload, headers=headers)
