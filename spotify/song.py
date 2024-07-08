@@ -1,5 +1,5 @@
 from spotify.playlist import PrivatePlaylist, Login, BaseClient, PublicPlaylist
-from typing import Optional, Mapping, Any, List, Tuple
+from typing import Optional, Mapping, Any, List, Tuple, Generator
 from spotify.exceptions import SongError
 from spotify.http.request import TLSClient
 
@@ -19,7 +19,7 @@ class Song(BaseClient):
         self.playlist = playlist
         super().__init__(client=playlist.client if playlist else client)
 
-    def query_songs(self, query: str, limit: Optional[int] = 10) -> Mapping[str, Any]:
+    def query_songs(self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0) -> Mapping[str, Any]:
         """
         Searches for songs in the spotify catalog.
         """
@@ -28,7 +28,7 @@ class Song(BaseClient):
             "operationName": "searchDesktop",
             "variables": '{"searchTerm":"'
             + query
-            + '","offset":0,"limit":'
+            + '","offset":'+str(offset)+',"limit":'
             + str(limit)
             + ',"numberOfTopResults":5,"includeAudiobooks":true,"includeArtistHasConcertsField":false,"includePreReleases":true,"includeLocalConcertsField":false}',
             "extensions": '{"persistedQuery":{"version":1,"sha256Hash":"'
@@ -42,6 +42,26 @@ class Song(BaseClient):
             raise SongError("Could not get songs", error=resp.error.string)
 
         return resp.response
+    
+    def paginate_songs(self) -> Generator[Mapping[str, Any], None, None]:
+        """
+        Generator that fetches playlist information in chunks
+        
+        Note: If total_tracks <= 353, then there is no need to paginate
+        """
+        # We need to get the total songs first
+        playlist = self.query_songs(limit=353)
+        total_count: int = playlist["data"]["searchV2"]["content"]["totalCount"]
+        
+        yield playlist
+        
+        if total_count <= 353:
+            return 
+             
+        offset = 353 
+        while offset < total_count:
+            yield self.get_playlist_info(limit=353, offset=offset)
+            offset += 353
 
     def add_song_to_playlist(self, song_id: str) -> None:
         if not self.playlist or not hasattr(self.playlist, "playlist_id"):

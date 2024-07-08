@@ -291,6 +291,14 @@
         "documentation": {}
     },
     {
+        "label": "Generator",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "Any",
         "importPath": "typing",
         "description": "typing",
@@ -1202,7 +1210,7 @@
         "kind": 5,
         "importPath": "a",
         "description": "a",
-        "peekOfCode": "a = PublicPlaylist(\"6xe4HqyIkcSYv3wOHb2mry\")\nSong(a).remove_song_from_playlist(song_name=\"Sensual Jazz\")",
+        "peekOfCode": "a = PublicPlaylist(\"6xe4HqyIkcSYv3wOHb2mry\")\nprint(Song(a).query_songs(\"Gay\"))",
         "detail": "a",
         "documentation": {}
     }

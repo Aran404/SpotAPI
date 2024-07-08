@@ -34,4 +34,4 @@ login.login()
 
 
 a = PublicPlaylist("6xe4HqyIkcSYv3wOHb2mry")
-Song(a).remove_song_from_playlist(song_name="Sensual Jazz")
+print(Song(a).query_songs("Gay"))
