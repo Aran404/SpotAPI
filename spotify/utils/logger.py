@@ -19,7 +19,7 @@ class Logger(LoggerProtocol):
     @staticmethod
     def error(s: str, **extra) -> None:
         fields = [
-            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
+            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTRED_EX}{v}" for k, v in extra.items()
         ]
         print(
             f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.LIGHTRED_EX}{s}{Style.RESET_ALL} "
@@ -29,7 +29,8 @@ class Logger(LoggerProtocol):
     @staticmethod
     def attempt(s: str, **extra) -> None:
         fields = [
-            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
+            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTYELLOW_EX}{v}"
+            for k, v in extra.items()
         ]
         print(
             f"{Logger.__fmt_time()} {Fore.LIGHTYELLOW_EX}{s}{Style.RESET_ALL} "
@@ -39,7 +40,8 @@ class Logger(LoggerProtocol):
     @staticmethod
     def info(s: str, **extra) -> None:
         fields = [
-            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
+            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTMAGENTA_EX}{v}"
+            for k, v in extra.items()
         ]
         print(
             f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.LIGHTMAGENTA_EX}{s}{Style.RESET_ALL} "
@@ -49,7 +51,7 @@ class Logger(LoggerProtocol):
     @staticmethod
     def fatal(s: str, **extra) -> None:
         fields = [
-            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTBLACK_EX}{v}" for k, v in extra.items()
+            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTRED_EX}{v}" for k, v in extra.items()
         ]
         print(
             f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.LIGHTRED_EX}{s}{Style.RESET_ALL} "
@@ -61,17 +63,13 @@ class Logger(LoggerProtocol):
 
 class NoopLogger(LoggerProtocol):
     @staticmethod
-    def error(s: str, **extra) -> None:
-        ...
+    def error(s: str, **extra) -> None: ...
 
     @staticmethod
-    def info(s: str, **extra) -> None:
-        ...
+    def info(s: str, **extra) -> None: ...
 
     @staticmethod
-    def fatal(s: str, **extra) -> None:
-        ...
+    def fatal(s: str, **extra) -> None: ...
 
     @staticmethod
-    def attempt(s: str, **extra) -> None:
-        ...
+    def attempt(s: str, **extra) -> None: ...
