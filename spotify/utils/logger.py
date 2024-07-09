@@ -4,7 +4,7 @@ from datetime import datetime
 
 from colorama import Fore, Style, init
 
-from spotify.data.interfaces import LoggerProtocol
+from spotify.data import LoggerProtocol
 
 os.system("")
 init(autoreset=True)
@@ -14,12 +14,13 @@ class Logger(LoggerProtocol):
     @staticmethod
     def __fmt_time() -> str:
         t = datetime.now().strftime("%H:%M:%S")
-        return f"[{Style.BRIGHT}{Fore.BLUE}{str(t)}{Style.RESET_ALL}]"
+        return f"[{Style.BRIGHT}{Fore.LIGHTCYAN_EX}{str(t)}{Style.RESET_ALL}]"
 
     @staticmethod
     def error(s: str, **extra) -> None:
         fields = [
-            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTRED_EX}{v}" for k, v in extra.items()
+            f"{Style.BRIGHT}{Fore.LIGHTBLUE_EX}{k}={Fore.LIGHTRED_EX}{v}{Style.RESET_ALL}"
+            for k, v in extra.items()
         ]
         print(
             f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.LIGHTRED_EX}{s}{Style.RESET_ALL} "
@@ -27,20 +28,20 @@ class Logger(LoggerProtocol):
         )
 
     @staticmethod
-    def attempt(s: str, **extra) -> None:
+    def debug(s: str, **extra) -> None:
         fields = [
-            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTYELLOW_EX}{v}"
+            f"{Style.BRIGHT}{Fore.LIGHTBLUE_EX}{k}={Fore.LIGHTYELLOW_EX}{v}{Style.RESET_ALL}"
             for k, v in extra.items()
         ]
         print(
-            f"{Logger.__fmt_time()} {Fore.LIGHTYELLOW_EX}{s}{Style.RESET_ALL} "
+            f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.LIGHTYELLOW_EX}{s}{Style.RESET_ALL} "
             + " ".join(fields)
         )
 
     @staticmethod
     def info(s: str, **extra) -> None:
         fields = [
-            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTMAGENTA_EX}{v}"
+            f"{Style.BRIGHT}{Fore.LIGHTBLUE_EX}{k}={Fore.LIGHTMAGENTA_EX}{v}{Style.RESET_ALL}"
             for k, v in extra.items()
         ]
         print(
@@ -51,7 +52,8 @@ class Logger(LoggerProtocol):
     @staticmethod
     def fatal(s: str, **extra) -> None:
         fields = [
-            f"{Fore.LIGHTBLACK_EX}{k}={Fore.LIGHTRED_EX}{v}" for k, v in extra.items()
+            f"{Style.BRIGHT}{Fore.LIGHTBLUE_EX}{k}={Fore.LIGHTRED_EX}{v}{Style.RESET_ALL}"
+            for k, v in extra.items()
         ]
         print(
             f"{Logger.__fmt_time()} {Style.BRIGHT}{Fore.LIGHTRED_EX}{s}{Style.RESET_ALL} "
