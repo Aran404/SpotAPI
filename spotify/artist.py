@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from typing import Any, Generator, Literal, Mapping, Optional
-
+from typing_extensions import Self
 from spotify.client import BaseClient
 from spotify.exceptions import ArtistError
 from spotify.http.request import TLSClient
@@ -10,7 +10,7 @@ from spotify.login import Login
 
 
 class Artist(BaseClient, Login):
-    def __new__(cls, login: Optional[Login] = None) -> Artist:
+    def __new__(cls, login: Optional[Login] = None) -> Self:
         instance = super(Artist, cls).__new__(cls)
         if login:
             instance.__dict__ = login.__dict__.copy()

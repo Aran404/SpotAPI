@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from typing import Any, Mapping
-
+from typing_extensions import Self
 from spotify.exceptions import UserError
 from spotify.login import Login
 
 
 class User(Login):
-    def __new__(cls, login: Login) -> User:
+    def __new__(cls, login: Login) -> Self:
         instance = super(User, cls).__new__(cls)
         instance.__dict__ = login.__dict__.copy()
         return instance

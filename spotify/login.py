@@ -22,7 +22,7 @@ class Login:
         *,
         email: Optional[str] = None,
         username: Optional[str] = None,
-    ):
+    ) -> None:
         self.solver = cfg.solver
         self.client = cfg.client
         self.logger = cfg.logger
