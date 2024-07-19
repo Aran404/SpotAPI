@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 from typing_extensions import Self
 from spotify.exceptions import UserError
-from spotify.login import Login
+from spotify import Login
 
 
 class User(Login):

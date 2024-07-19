@@ -1,7 +1,12 @@
-test.py
-*.pyc 
+# Ignore compiled Python files
+*.pyc
+*.*.pyc
+
 build/
 dist/
-.vscode/
-__pycache__
-*.*.pyc
+
+# Ignore VSC Files
+.vscode/*
+
+# Ignore __pycache__ directories
+__pycache__/

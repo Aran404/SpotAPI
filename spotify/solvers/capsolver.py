@@ -72,6 +72,9 @@ class Capsolver:
             },
         }
 
+        if task == "v2":
+            payload["task"]["isInvisible"] = True
+
         if proxy:
             payload["task"]["proxy"] = proxy
 

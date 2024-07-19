@@ -4,3 +4,4 @@ from spotify.login import Login
 from spotify.playlist import PrivatePlaylist, PublicPlaylist
 from spotify.song import Song
 from spotify.user import User
+from spotify.creator import Creator

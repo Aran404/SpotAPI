@@ -5,11 +5,9 @@ import re
 import time
 from typing import Any, Generator, Mapping, Optional
 
-from spotify.client import BaseClient
 from spotify.exceptions import PlaylistError
 from spotify.http.request import TLSClient
-from spotify.login import Login
-from spotify.user import User
+from spotify import Login, BaseClient, User
 
 
 class PublicPlaylist(BaseClient):

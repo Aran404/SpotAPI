@@ -52,3 +52,8 @@ class BaseClientError(ParentException):
 # request.py exceptions
 class RequestError(ParentException):
     pass
+
+
+# generator.py exceptions
+class GeneratorError(ParentException):
+    pass

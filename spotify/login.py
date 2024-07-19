@@ -124,6 +124,7 @@ class Login:
             "continue": "https://accounts.spotify.com/en/status",
             "flowCtx": self.flow_id,
         }
+        print(query)
         return urlencode(query)
 
     def __submit_password(self) -> None:
