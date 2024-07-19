@@ -11,6 +11,10 @@ from spotify.client import BaseClient
 
 
 class Artist(BaseClient, Login):
+    """
+    A class that represents an artist in the Spotify catalog.
+    """
+
     def __new__(cls, login: Optional[Login] = None) -> Artist:
         instance = super(Artist, cls).__new__(cls)
         if login:

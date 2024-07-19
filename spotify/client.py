@@ -7,6 +7,11 @@ from spotify.utils.strings import parse_json_string
 
 
 class BaseClient:
+    """
+    A base class that all the Spotify classes extend.
+    This base class contains all the common methods used by the Spotify classes.
+    """
+
     def __init__(self, client: TLSClient) -> None:
         self.client = client
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)

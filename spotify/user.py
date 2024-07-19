@@ -7,6 +7,10 @@ from spotify.login import Login
 
 
 class User(Login):
+    """
+    Represents a Spotify user.
+    """
+
     def __new__(cls, login: Login) -> User:
         instance = super(User, cls).__new__(cls)
         instance.__dict__ = login.__dict__.copy()
