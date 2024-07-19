@@ -13,6 +13,9 @@ from spotify.utils.strings import (
 
 
 class Creator:
+    """
+    Creates a new Spotify account.
+    """
     def __init__(
         self,
         cfg: Config,
