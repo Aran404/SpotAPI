@@ -22,6 +22,7 @@ class PublicPlaylist(BaseClient):
         self,
         playlist: Optional[str] = None,
         /,
+        *,
         client: Optional[TLSClient] = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         super().__init__(client=client)

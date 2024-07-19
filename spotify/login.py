@@ -45,9 +45,6 @@ class Login:
         if not self.logged_in:
             raise ValueError("Cannot save session if it is not logged in")
 
-        if not saver:
-            raise ValueError("Must provide a Saver Class")
-
         saver.save(
             [
                 {
