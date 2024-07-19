@@ -3,13 +3,15 @@ from __future__ import annotations
 import json
 from typing import Any, Generator, Literal, Mapping, Optional
 from typing_extensions import Self
+
+from spotify.client import BaseClient
 from spotify.exceptions import ArtistError
 from spotify.http.request import TLSClient
 from spotify import Login, BaseClient
 
 
 class Artist(BaseClient, Login):
-    def __new__(cls, login: Optional[Login] = None) -> Self:
+    def __new__(cls, login: Optional[Login] = None) -> Artist:
         instance = super(Artist, cls).__new__(cls)
         if login:
             instance.__dict__ = login.__dict__.copy()
