@@ -4,8 +4,7 @@ import time
 from typing import Any, Mapping, Optional, Type
 from urllib.parse import urlencode
 
-from spotify.data.data import Config
-from spotify.data.interfaces import SaverProtocol
+from spotify.data import Config, SaverProtocol
 from spotify.exceptions import LoginError
 from spotify.utils.strings import parse_json_string
 
@@ -124,7 +123,6 @@ class Login:
             "continue": "https://accounts.spotify.com/en/status",
             "flowCtx": self.flow_id,
         }
-        print(query)
         return urlencode(query)
 
     def __submit_password(self) -> None:

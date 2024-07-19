@@ -1,9 +1,7 @@
 import os
 import time
 from datetime import datetime
-
 from colorama import Fore, Style, init
-
 from spotify.data import LoggerProtocol
 
 os.system("")
@@ -65,13 +63,17 @@ class Logger(LoggerProtocol):
 
 class NoopLogger(LoggerProtocol):
     @staticmethod
-    def error(s: str, **extra) -> None: ...
+    def error(s: str, **extra) -> None:
+        ...
 
     @staticmethod
-    def info(s: str, **extra) -> None: ...
+    def info(s: str, **extra) -> None:
+        ...
 
     @staticmethod
-    def fatal(s: str, **extra) -> None: ...
+    def fatal(s: str, **extra) -> None:
+        ...
 
     @staticmethod
-    def attempt(s: str, **extra) -> None: ...
+    def attempt(s: str, **extra) -> None:
+        ...

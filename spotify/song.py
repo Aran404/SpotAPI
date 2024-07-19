@@ -3,7 +3,8 @@ from typing import Any, Generator, List, Mapping, Optional, Tuple
 
 from spotify.exceptions import SongError
 from spotify.http.request import TLSClient
-from spotify import BaseClient, PrivatePlaylist, PublicPlaylist
+from spotify.client import BaseClient
+from spotify.playlist import PrivatePlaylist, PublicPlaylist
 
 
 class Song(BaseClient):

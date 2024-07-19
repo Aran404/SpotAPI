@@ -1,7 +1,7 @@
 import time
 import uuid
-from typing import Any, Optional
-from spotify.data.data import Config
+from typing import Optional
+from spotify.data import Config
 from spotify.exceptions.errors import GeneratorError
 from spotify.http.request import TLSClient
 from spotify.utils.strings import (
@@ -27,7 +27,7 @@ class Creator:
         self.submission_id = str(uuid.uuid4())
 
     def __get_session(self) -> None:
-        url = "https://www.spotify.com/us-en/signup"
+        url = "https://www.spotify.com/ca-en/signup"
         request = self.client.get(url)
 
         if request.fail:
@@ -87,7 +87,7 @@ class Creator:
     def register(self) -> None:
         self.__get_session()
         captcha_token = self.cfg.solver.solve_captcha(
-            self.api_key,
+            "https://www.spotify.com/ca-en/signup",
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
             "website/signup/submit_email",
             "v3",

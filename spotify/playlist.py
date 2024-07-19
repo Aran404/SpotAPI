@@ -7,7 +7,9 @@ from typing import Any, Generator, Mapping, Optional
 
 from spotify.exceptions import PlaylistError
 from spotify.http.request import TLSClient
-from spotify import Login, BaseClient, User
+from spotify.login import Login
+from spotify.client import BaseClient
+from spotify.user import User
 
 
 class PublicPlaylist(BaseClient):

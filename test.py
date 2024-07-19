@@ -18,10 +18,11 @@ try:
             ),
         ),
         password="adgaaadgaaagd@gmail.com",
-        username="adgaaadgaaagd@gmail.com",
+        email="adgaaadgaaagd@gmail.com",
     )
     login.register()
 except Exception as err:
+    print(err)
     print(err.error)
 # login = Login.from_cookies(JSONSaver().load({"identifier": "adgaaadgagd@gmail.com"}),
 #     cfg=Config(

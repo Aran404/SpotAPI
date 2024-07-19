@@ -6,7 +6,8 @@ from typing import Any, Generator, Literal, Mapping, Optional
 from spotify.client import BaseClient
 from spotify.exceptions import ArtistError
 from spotify.http.request import TLSClient
-from spotify import Login, BaseClient
+from spotify.login import Login
+from spotify.client import BaseClient
 
 
 class Artist(BaseClient, Login):
@@ -121,6 +122,7 @@ class Artist(BaseClient, Login):
         }
 
         resp = self.client.post(url, json=payload, authenticate=True)
+        print(resp.response)
 
         if resp.fail:
             raise ArtistError("Could not follow artist", error=resp.error.string)

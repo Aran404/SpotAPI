@@ -1,7 +1,5 @@
 from typing import Any, List, Literal, Mapping, Optional, Protocol
-
 from typing_extensions import runtime_checkable
-
 from spotify.http.request import StdClient
 
 
