@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from typing import Any, Generator, Literal, Mapping, Optional
-from typing_extensions import Self
 
 from spotify.client import BaseClient
 from spotify.exceptions import ArtistError
