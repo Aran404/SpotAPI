@@ -10,4 +10,5 @@ from .errors import (
     SolverError,
     SongError,
     UserError,
+    GeneratorError,
 )

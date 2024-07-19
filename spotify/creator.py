@@ -2,7 +2,7 @@ import time
 import uuid
 from typing import Optional
 from spotify.data import Config
-from spotify.exceptions.errors import GeneratorError
+from spotify.exceptions import GeneratorError
 from spotify.http.request import TLSClient
 from spotify.utils.strings import (
     random_email,
