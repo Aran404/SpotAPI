@@ -74,7 +74,7 @@ class PublicPlaylist(BaseClient):
         Note: If total_tracks <= 353, then there is no need to paginate
         """
         UPPER_LIMIT: int = 353
-        # We need to get the total songs first
+        # We need to get the total playlists first
         playlist = self.get_playlist_info(limit=UPPER_LIMIT)
         total_count: int = playlist["data"]["playlistV2"]["content"]["totalCount"]
 

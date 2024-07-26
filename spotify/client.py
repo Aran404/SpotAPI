@@ -150,3 +150,6 @@ class BaseClient:
             raise BaseClientError("Could not get xpui hashes", error=resp.error.string)
 
         self.raw_hashes += resp.response
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(...)"

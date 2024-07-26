@@ -22,12 +22,12 @@ class Creator:
         cfg: Config,
         email: Optional[str] = random_email(),
         password: Optional[str] = random_string(10, True),
-        client: Optional[TLSClient] = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
-        self.client = client
         self.email = email
         self.password = password
         self.cfg = cfg
+        
+        self.client = self.cfg.client
         self.submission_id = str(uuid.uuid4())
 
     def __get_session(self) -> None:

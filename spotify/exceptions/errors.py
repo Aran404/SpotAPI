@@ -57,3 +57,7 @@ class RequestError(ParentException):
 # generator.py exceptions
 class GeneratorError(ParentException):
     pass
+
+# password.py exceptions
+class PasswordError(ParentException):
+    pass

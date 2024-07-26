@@ -122,18 +122,8 @@ class Login:
         }
         return urlencode(query)
 
-    def __submit_password(self) -> None:
-        captcha_response = self.solver.solve_captcha(
-            "https://accounts.spotify.com/en/login",
-            "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
-            "accounts/login",
-            "v3",
-        )
-
-        if not captcha_response:
-            raise LoginError("Could not solve captcha")
-
-        payload = self.__password_payload(captcha_response)
+    def __submit_password(self, token: str) -> None:
+        payload = self.__password_payload(token)
         url = "https://accounts.spotify.com/login/password"
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -179,7 +169,20 @@ class Login:
         """Logins the user"""
         now = time.time()
         self.__get_session()
-        self.__submit_password()
+        
+        self.logger.attempt("Solving captcha...")
+        captcha_response = self.solver.solve_captcha(
+            "https://accounts.spotify.com/en/login",
+            "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
+            "accounts/login",
+            "v3",
+        )
+
+        if not captcha_response:
+            raise LoginError("Could not solve captcha")
+        
+        self.logger.info("Solved Captcha", time_taken=f"{int(time.time() - now)}s")
+        self.__submit_password(captcha_response)
         self.logger.info(
             "Logged in successfully", time_taken=f"{int(time.time() - now)}s"
         )
