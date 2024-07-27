@@ -11,5 +11,5 @@ from .errors import (
     SongError,
     UserError,
     GeneratorError,
-    PasswordError
+    PasswordError,
 )

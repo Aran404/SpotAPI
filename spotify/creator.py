@@ -26,7 +26,7 @@ class Creator:
         self.email = email
         self.password = password
         self.cfg = cfg
-        
+
         self.client = self.cfg.client
         self.submission_id = str(uuid.uuid4())
 

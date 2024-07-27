@@ -12,10 +12,12 @@ init(autoreset=True)
 # If there are multiple instances of your program, you may need to use a custom logger implementation that doesn't rely on staticmethods
 LOCK = Lock()
 
+
 class Logger(LoggerProtocol):
     """
     A simple Stdout logger that can be used internally.
     """
+
     @staticmethod
     def __fmt_time() -> str:
         t = datetime.now().strftime("%H:%M:%S")

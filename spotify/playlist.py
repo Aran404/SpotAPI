@@ -37,6 +37,9 @@ class PublicPlaylist(BaseClient):
         self, limit: Optional[int] = 25, *, offset: Optional[int] = 0
     ) -> Mapping[str, Any]:
         """Gets the public playlist information"""
+        if not self.playlist_id:
+            raise ValueError("Playlist ID not set")
+
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
             "operationName": "fetchPlaylist",
@@ -71,9 +74,9 @@ class PublicPlaylist(BaseClient):
         """
         Generator that fetches playlist information in chunks
 
-        Note: If total_tracks <= 353, then there is no need to paginate
+        Note: If total_tracks <= 343, then there is no need to paginate
         """
-        UPPER_LIMIT: int = 353
+        UPPER_LIMIT: int = 343
         # We need to get the total playlists first
         playlist = self.get_playlist_info(limit=UPPER_LIMIT)
         total_count: int = playlist["data"]["playlistV2"]["content"]["totalCount"]

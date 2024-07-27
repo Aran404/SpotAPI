@@ -163,6 +163,7 @@ class Song(BaseClient):
     def remove_song_from_playlist(
         self,
         *,
+        uid: Optional[str] = None,
         song_id: Optional[str] = None,
         song_name: Optional[str] = None,
         all_instances: Optional[bool] = False,
@@ -174,8 +175,8 @@ class Song(BaseClient):
         if song_id and "track" in song_id:
             song_id = song_id.split("track:")[1]
 
-        if not (song_id or song_name):
-            raise ValueError("Must provide either song_id or song_name")
+        if not (song_id or song_name or uid):
+            raise ValueError("Must provide either song_id or song_name or uid")
 
         if all_instances and song_id:
             raise ValueError("Cannot provide both song_id and all_instances")
@@ -186,16 +187,19 @@ class Song(BaseClient):
         playlist = PublicPlaylist(self.playlist.playlist_id).paginate_playlist()
 
         uids: List[str] = []
-        for playlist_chunk in playlist:
-            items = playlist_chunk["items"]
-            extended_uids, stop = self.__parse_playlist_items(
-                items, song_id=song_id, song_name=song_name, all_instances=all_instances
-            )
-            uids.extend(extended_uids)
+        if not uid:
+            for playlist_chunk in playlist:
+                items = playlist_chunk["items"]
+                extended_uids, stop = self.__parse_playlist_items(
+                    items, song_id=song_id, song_name=song_name, all_instances=all_instances
+                )
+                uids.extend(extended_uids)
 
-            if stop:
-                playlist.close()
-                break
+                if stop:
+                    playlist.close()
+                    break
+        else:
+            uids.append(uid)
 
         if len(uids) == 0:
             raise SongError("Song not found in playlist")

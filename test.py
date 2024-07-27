@@ -6,24 +6,26 @@ from spotify.data import Config
 from spotify.http.request import TLSClient
 from spotify.solvers import solver_clients
 from spotify.utils.logger import Logger
-from spotify import Password
+from spotify import Creator
 from spotify.utils.saver import JSONSaver
 
 try:
-    login = Password(
+    login = Creator(
         cfg=Config(
             logger=Logger(),
             solver=solver_clients.Capsolver(
                 "CAP-CD143A2A67149C5C67022C08A32769B2",
             ),
         ),
+        password="adgaaadgaaagd@gmail.com",
         email="adgaaadgaaagd@gmail.com",
     )
-    login.reset()
+    login.register()
 except Exception as err:
     print(err)
     print(err.error)
     
+
 # login = Login.from_cookies(JSONSaver().load({"identifier": "adgaaadgagd@gmail.com"}),
 #     cfg=Config(
 #         logger=Logger(),
