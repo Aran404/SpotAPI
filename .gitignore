@@ -12,3 +12,4 @@ dist/
 __pycache__/
 
 main.py
+wrapper
