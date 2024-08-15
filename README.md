@@ -48,5 +48,9 @@ playlist.create_playlist("SpotAPI Showcase!")
 instance.save(MongoSaver())
 ```
 
-[GPL 3.0](https://choosealicense.com/licenses/gpl-3.0/)
+## Contributing
+Contributions are welcome! If you find any issues or have suggestions, please open an issue or submit a pull request.
+
+## License
+This project is licensed under the **GPL 3.0** License. See [LICENSE](https://choosealicense.com/licenses/gpl-3.0/) for details.
 
