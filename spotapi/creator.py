@@ -1,7 +1,7 @@
 import time
 import uuid
 from typing import Optional
-from spotapi.data import Config
+from spotapi.types import Config
 from spotapi.exceptions import GeneratorError
 from spotapi.http.request import TLSClient
 from spotapi.utils.strings import (
@@ -32,15 +32,16 @@ class Creator:
 
     def __get_session(self) -> None:
         url = "https://www.spotify.com/ca-en/signup"
-        request = self.client.get(url)
+        resp = self.client.get(url)
 
-        if request.fail:
-            raise GeneratorError("Could not get session", error=request.error.string)
 
-        self.api_key = parse_json_string(request.response, "signupServiceAppKey")
-        self.installation_id = parse_json_string(request.response, "spT")
-        self.csrf_token = parse_json_string(request.response, "csrfToken")
-        self.flow_id = parse_json_string(request.response, "flowId")
+        if resp.fail:
+            raise GeneratorError("Could not get session", error=resp.error.string)
+
+        self.api_key = parse_json_string(resp.response, "signupServiceAppKey")
+        self.installation_id = parse_json_string(resp.response, "spT")
+        self.csrf_token = parse_json_string(resp.response, "csrfToken")
+        self.flow_id = parse_json_string(resp.response, "flowId")
 
     def __process_register(self, captcha_token: str) -> None:
         payload = {
@@ -77,19 +78,21 @@ class Creator:
         }
         url = "https://spclient.wg.spotify.com/signup/public/v2/account/create"
 
-        request = self.client.post(url, json=payload)
+        resp = self.client.post(url, json=payload)
 
-        if request.fail:
+
+        if resp.fail:
             raise GeneratorError(
-                "Could not process registration", error=request.error.string
+                "Could not process registration", error=resp.error.string
             )
 
-        if "challenge" in request.response:
+        if "challenge" in resp.response:
             self.cfg.logger.attempt("Encountered Embedded Challenge. Defeating...")
-            AccountChallenge(self.client, request.response, self.cfg).defeat_challenge()
+            AccountChallenge(self.client, resp.response, self.cfg).defeat_challenge()
 
     def register(self) -> None:
         self.__get_session()
+        # Pylance keeps complaining about self keyword. I don't know why.
         captcha_token = self.cfg.solver.solve_captcha(
             "https://www.spotify.com/ca-en/signup",
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
@@ -109,14 +112,15 @@ class AccountChallenge:
     def __get_session(self) -> None:
         url = "https://challenge.spotify.com/api/v1/get-session"
         payload = {"session_id": self.session_id}
-        request = self.client.post(url, json=payload)
+        resp = self.client.post(url, json=payload)
 
-        if request.fail:
+
+        if resp.fail:
             raise GeneratorError(
-                "Could not get challenge session", error=request.error.string
+                "Could not get challenge session", error=resp.error.string
             )
 
-        self.challenge_url = parse_json_string(request.response, "url")
+        self.challenge_url = parse_json_string(resp.response, "url")
 
     def __submit_challenge(self, token: str) -> None:
         session_id = self.challenge_url.split("c/")[1].split("/")[0]
@@ -127,7 +131,7 @@ class AccountChallenge:
             "challenge_id": challenge_id,
             "recaptcha_challenge_v1": {"solve": {"recaptcha_token": token}},
         }
-        request = self.client.post(
+        resp = self.client.post(
             url,
             json=payload,
             headers={
@@ -135,9 +139,10 @@ class AccountChallenge:
             },
         )
 
-        if request.fail:
+
+        if resp.fail:
             raise GeneratorError(
-                "Could not submit challenge", error=request.error.string
+                "Could not submit challenge", error=resp.error.string
             )
 
     def __complete_challenge(self) -> None:
@@ -145,15 +150,16 @@ class AccountChallenge:
             "https://spclient.wg.spotify.com/signup/public/v2/account/complete-creation"
         )
         payload = {"session_id": self.session_id}
-        request = self.client.post(url, json=payload)
+        resp = self.client.post(url, json=payload)
 
-        if request.fail:
+
+        if resp.fail:
             raise GeneratorError(
-                "Could not complete challenge", error=request.error.string
+                "Could not complete challenge", error=resp.error.string
             )
 
-        if not ("success" in request.response):
-            raise GeneratorError("Could not complete challenge", error=request.response)
+        if not ("success" in resp.response):
+            raise GeneratorError("Could not complete challenge", error=resp.response)
 
     def defeat_challenge(self) -> None:
         self.__get_session()

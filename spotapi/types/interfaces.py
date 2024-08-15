@@ -6,7 +6,7 @@ from spotapi.http.request import StdClient
 @runtime_checkable
 class CaptchaProtocol(Protocol):
     def __init__(
-        self,
+        self: "CaptchaProtocol",
         api_key: str,
         client: Optional[StdClient] = StdClient(3),
         *,
@@ -14,12 +14,12 @@ class CaptchaProtocol(Protocol):
         retries: Optional[int] = 120,
     ) -> None:
         ...
-
-    def get_balance(self) -> float | None:
+    
+    def get_balance(self: "CaptchaProtocol") -> float | None:
         ...
 
     def solve_captcha(
-        self,
+        self: "CaptchaProtocol",
         url: str,
         site_key: str,
         action: str,
@@ -49,11 +49,16 @@ class LoggerProtocol(Protocol):
 
 @runtime_checkable
 class SaverProtocol(Protocol):
-    def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
+    def __init__(
+        self: "SaverProtocol", *args, **kwargs
+    ) -> None:
+        ...
+        
+    def save(self: "SaverProtocol", data: List[Mapping[str, Any]], **kwargs) -> None:
         ...
 
-    def load(self, query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
+    def load(self: "SaverProtocol", query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
         ...
 
-    def delete(self, query: Mapping[str, Any], **kwargs) -> None:
+    def delete(self: "SaverProtocol", query: Mapping[str, Any], **kwargs) -> None:
         ...

@@ -6,17 +6,13 @@ from spotapi.exceptions.errors import FamilyError
 from spotapi.utils.strings import parse_json_string
 
 
-class JoinFamily(User):
+class JoinFamily:
     """
     Wrapper class for joining a family with a user and a host provided.
     """
 
-    def __new__(cls, user_login: Login, host: "Family", country: str) -> "JoinFamily":
-        instance = super(User, cls).__new__(cls)
-        return instance
-
     def __init__(self, user_login: Login, host: "Family", country: str) -> None:
-        super().__init__(user_login)
+        self.user = User(user_login)
         self.host = host
         self.country = country
         self.client = user_login.client
@@ -30,6 +26,7 @@ class JoinFamily(User):
     def __get_session(self) -> None:
         url = f"https://www.spotify.com/ca-en/family/join/address/{self.invite_token}/"
         resp = self.client.get(url)
+
 
         if resp.fail:
             raise FamilyError("Could not get session", error=resp.error.string)
@@ -45,6 +42,7 @@ class JoinFamily(User):
         }
         resp = self.client.post(url, headers={"X-Csrf-Token": self.csrf}, json=payload)
 
+
         if resp.fail:
             raise FamilyError("Could not get address", error=resp.error.string)
 
@@ -58,6 +56,7 @@ class JoinFamily(User):
             "session_token": self.session_id,
         }
         resp = self.client.post(url, headers={"X-Csrf-Token": self.csrf}, json=payload)
+
 
         self.csrf = resp.raw.headers.get("X-Csrf-Token")
         if resp.fail:
@@ -84,6 +83,7 @@ class JoinFamily(User):
         }
         resp = self.client.post(url, headers={"X-Csrf-Token": self.csrf}, json=payload)
 
+
         if resp.fail:
             raise FamilyError("Could not add to family", error=resp.error.string)
 
@@ -103,11 +103,12 @@ class Family(User):
         if not self.has_premium:
             raise ValueError("Must have premium to use this class")
 
-        self._user_family: Mapping[str, Any] = None
+        self._user_family: Mapping[str, Any] | None = None
 
     def get_family_home(self) -> Mapping[str, Any]:
         url = "https://www.spotify.com/api/family/v1/family/home/"
-        resp = self.client.get(url)
+        resp = self.login.client.get(url)
+
 
         if resp.fail:
             raise FamilyError("Could not get user plan info", error=resp.error.string)
@@ -115,13 +116,12 @@ class Family(User):
         if not isinstance(resp.response, Mapping):
             raise FamilyError("Invalid JSON")
 
-        self._user_family = resp.response
         return resp.response
 
     @property
     def members(self) -> List[Mapping[str, Any]]:
         if self._user_family is None:
-            self.get_family_home()
+            self._user_family = self.get_family_home()
 
         return self._user_family["members"]
 

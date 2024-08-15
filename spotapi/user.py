@@ -6,41 +6,38 @@ from spotapi.exceptions import UserError
 from spotapi.login import Login
 
 
-class User(Login):
+class User:
     """
     Represents a Spotify user.
     """
 
-    def __new__(cls, login: Login) -> User:
-        instance = super(User, cls).__new__(cls)
-        instance.__dict__.update(login.__dict__)
-        return instance
-
     def __init__(self, login: Login) -> None:
         if not login.logged_in:
             raise ValueError("Must be logged in")
-
-        self._user_plan: Mapping[str, Any] = None
-        self._user_info: Mapping[str, Any] = None
+        
+        self.login = login
+        self._user_plan: Mapping[str, Any] | None = None
+        self._user_info: Mapping[str, Any] | None = None
 
     @property
     def has_premium(self) -> bool:
         if self._user_plan is None:
-            self.get_plan_info()
+            self._user_plan = self.get_plan_info()
 
         return self._user_plan["plan"]["name"] != "Spotify Free"
 
     @property
     def username(self) -> str:
         if self._user_info is None:
-            self._user_info = self.get_user_info()
+           self._user_info = self.get_user_info()
 
         return self._user_info["profile"]["username"]
 
     def get_plan_info(self) -> Mapping[str, Any]:
         """Gets user plan info."""
         url = "https://www.spotify.com/ca-en/api/account/v2/plan/"
-        resp = self.client.get(url)
+        resp = self.login.client.get(url)
+
 
         if resp.fail:
             raise UserError("Could not get user plan info", error=resp.error.string)
@@ -48,7 +45,6 @@ class User(Login):
         if not isinstance(resp.response, Mapping):
             raise UserError("Invalid JSON")
 
-        self._user_plan = resp.response
         return resp.response
 
     def verify_login(self) -> bool:
@@ -57,13 +53,16 @@ class User(Login):
         except Exception as e:
             if "401" in str(e):
                 return False
+            raise e
         else:
             return True
+        
 
     def get_user_info(self) -> Mapping[str, Any]:
         """Gets accounts user info."""
         url = "https://www.spotify.com/api/account-settings/v1/profile"
-        resp = self.client.get(url)
+        resp = self.login.client.get(url)
+
 
         if resp.fail:
             raise UserError("Could not get user info", error=resp.error.string)
@@ -80,7 +79,7 @@ class User(Login):
         For this function to work, dump must be the entire profile dump.
         You can get this dump from get_user_info, then change the fields you want.
         """
-        captcha_response = self.solver.solve_captcha(
+        captcha_response = self.login.solver.solve_captcha(
             "https://www.spotify.com",
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
             "account_settings/profile_update",
@@ -108,7 +107,8 @@ class User(Login):
             "X-Csrf-Token": self.csrf_token,
         }
 
-        resp = self.client.put(url, json=dump, headers=headers)
+        resp = self.login.client.put(url, json=dump, headers=headers)
+
 
         if resp.fail:
-            raise UserError("Could not edit user info", error=resp.error.string)
+            raise UserError("Could not edit  user info", error=resp.error.string)

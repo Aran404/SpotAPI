@@ -13,7 +13,7 @@ import pymongo
 import redis
 from readerwriterlock import rwlock
 
-from spotapi.data.interfaces import SaverProtocol
+from spotapi.types.interfaces import SaverProtocol
 from spotapi.exceptions import SaverError
 
 
@@ -22,7 +22,7 @@ class JSONSaver(SaverProtocol):
     CRUD methods for JSON files
     """
 
-    def __init__(self, path: Optional[str] = "sessions.json") -> None:
+    def __init__(self, path: str = "sessions.json") -> None:
         self.path = path
 
         self.rwlock = rwlock.RWLockFairD()
@@ -188,7 +188,7 @@ class SqliteSaver(SaverProtocol):
                 self.conn.commit()
             except Exception as e:
                 self.conn.rollback()
-                raise SaverError(e)
+                raise SaverError(str(e))
 
     def load(self, query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
         """
@@ -242,9 +242,9 @@ class MongoSaver(SaverProtocol):
 
     def __init__(
         self,
-        host: Optional[str] = "mongodb://localhost:27017/",
-        database_name: Optional[str] = "spotify",
-        collection: Optional[str] = "sessions",
+        host: str = "mongodb://localhost:27017/",
+        database_name: str = "spotify",
+        collection: str = "sessions",
     ) -> None:
         self.conn = pymongo.MongoClient(host)
         self.database = self.conn[database_name]
@@ -278,7 +278,7 @@ class MongoSaver(SaverProtocol):
 
 class RedisSaver(SaverProtocol):
     def __init__(
-        self, host: Optional[str] = "localhost", port: int = 6379, db: int = 0
+        self, host: str = "localhost", port: int = 6379, db: int = 0
     ) -> None:
         self.client = redis.StrictRedis(host=host, port=port, db=db)
         atexit.register(self.client.close)
@@ -307,7 +307,7 @@ class RedisSaver(SaverProtocol):
         if not result:
             raise SaverError("Item not found")
 
-        return json.loads(result)
+        return json.loads(str(result))
 
     def delete(self, query: Mapping[str, Any], **kwargs) -> None:
         if not query:

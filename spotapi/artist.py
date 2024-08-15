@@ -10,16 +10,10 @@ from spotapi.login import Login
 from spotapi.client import BaseClient
 
 
-class Artist(BaseClient, Login):
+class Artist:
     """
     A class that represents an artist in the Spotify catalog.
     """
-
-    def __new__(cls, login: Optional[Login] = None) -> Artist:
-        instance = super(Artist, cls).__new__(cls)
-        if login:
-            instance.__dict__.update(login.__dict__)
-        return instance
 
     def __init__(
         self,
@@ -31,7 +25,7 @@ class Artist(BaseClient, Login):
             raise ValueError("Must be logged in")
 
         self._login: bool = bool(login)
-        super().__init__(client=login.client if self._login else client)
+        self.base = BaseClient(client=login.client if (login is not None) else client) # type: ignore
 
     def query_artists(
         self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0
@@ -54,14 +48,15 @@ class Artist(BaseClient, Login):
                 {
                     "persistedQuery": {
                         "version": 1,
-                        "sha256Hash": self.part_hash("searchArtists"),
+                        "sha256Hash": self.base.part_hash("searchArtists"),
                     }
                 }
             ),
         }
 
-        resp = self.client.post(url, params=params, authenticate=True)
+        resp = self.base.client.post(url, params=params, authenticate=True)
 
+        
         if resp.fail:
             raise ArtistError("Could not get artists", error=resp.error.string)
 
@@ -120,12 +115,13 @@ class Artist(BaseClient, Login):
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": self.part_hash(action),
+                    "sha256Hash": self.base.part_hash(str(action)),
                 },
             },
         }
 
-        resp = self.client.post(url, json=payload, authenticate=True)
+        resp = self.base.client.post(url, json=payload, authenticate=True)
+
 
         if resp.fail:
             raise ArtistError("Could not follow artist", error=resp.error.string)

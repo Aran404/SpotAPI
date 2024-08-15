@@ -4,7 +4,7 @@ import time
 from typing import Any, Mapping, Optional, Type
 from urllib.parse import urlencode
 
-from spotapi.data import Config, SaverProtocol
+from spotapi.types import Config, SaverProtocol
 from spotapi.exceptions import LoginError
 from spotapi.utils.strings import parse_json_string
 
@@ -29,7 +29,7 @@ class Login:
         self.password = password
         self.identifier_credentials = username or email
 
-        if not self.identifier_credentials:
+        if self.identifier_credentials is None:
             raise ValueError("Must provide an email or username")
 
         if not self.solver:
@@ -38,7 +38,7 @@ class Login:
         self.client.fail_exception = LoginError
         self._authorized = False
 
-    def save(self, saver: Type[SaverProtocol]) -> None:
+    def save(self, saver: SaverProtocol) -> None:
         """
         Saves the session with the provided Saver.
         """
@@ -55,6 +55,7 @@ class Login:
             ]
         )
 
+
     @classmethod
     def from_cookies(cls, dump: Mapping[str, Any], cfg: Config) -> Login:
         """
@@ -62,7 +63,7 @@ class Login:
         """
         password = dump.get("password")
         cred = dump.get("identifier")
-        cookies: Mapping[str, Any] = dump.get("cookies")
+        cookies: Mapping[str, Any] = dict(dump.get("cookies")) # type: ignore
 
         if not (password and cred and cookies):
             raise ValueError(
@@ -80,7 +81,7 @@ class Login:
 
     @classmethod
     def from_saver(
-        cls, saver: Type[SaverProtocol], cfg: Config, identifier: str
+        cls, saver: SaverProtocol, cfg: Config, identifier: str
     ) -> Login:
         """
         Loads a session from a Saver Class.
@@ -104,10 +105,12 @@ class Login:
     def __get_session(self) -> None:
         url = "https://accounts.spotify.com/en/login"
         resp = self.client.get(url)
+        if resp is None:
+            raise ValueError("Request failed, Response is None")
 
         if resp.fail:
             raise LoginError("Could not get session", error=resp.error.string)
-
+        
         self.csrf_token = resp.raw.cookies.get("sp_sso_csrf_token")
         self.flow_id = parse_json_string(resp.response, "flowCtx")
 
@@ -132,6 +135,8 @@ class Login:
         }
 
         resp = self.client.post(url, data=payload, headers=headers)
+        if resp is None:
+            raise ValueError("Request failed, Response is None")
 
         if resp.fail:
             raise LoginError("Could not submit password", error=resp.error.string)
@@ -195,12 +200,14 @@ class LoginChallenge:
         self.dump = dump
 
         self.challenge_url = self.dump["data"]["redirect_url"]
-        self.interaction_hash: str = None
-        self.interaction_reference: str = None
-        self.challenge_session_id: str = None
+        self.interaction_hash: str | None = None
+        self.interaction_reference: str | None = None
+        self.challenge_session_id: str | None = None
 
     def __get_challenge(self) -> None:
         resp = self.l.client.get(self.challenge_url)
+        if resp is None:
+            raise ValueError("Request failed, Response is None")
 
         if resp.fail:
             raise LoginError("Could not get challenge", error=resp.error.string)
@@ -212,7 +219,7 @@ class LoginChallenge:
             "accounts/login",
             "v3",
         )
-
+ 
         if not captcha_response:
             raise LoginError("Could not solve captcha")
 
@@ -235,9 +242,12 @@ class LoginChallenge:
     def __submit_challenge(self) -> None:
         payload = self.__construct_challenge_payload()
         resp = self.l.client.post(**payload)
+        if resp is None:
+            raise ValueError("Request failed, Response is None")
 
         if resp.fail:
             raise LoginError("Could not submit challenge", error=resp.error.string)
+
 
         if not isinstance(resp.response, Mapping):
             raise LoginError("Invalid JSON")
@@ -250,6 +260,8 @@ class LoginChallenge:
         url = f"https://accounts.spotify.com/login/challenge-completed?sessionId={self.session_id}&interactRef={self.interaction_reference}&hash={self.interaction_hash}"
 
         resp = self.l.client.get(url)
+        if resp is None:
+            raise ValueError("Request failed, Response is None")
 
         if resp.fail:
             raise LoginError("Could not complete challenge", error=resp.error.string)
@@ -257,4 +269,4 @@ class LoginChallenge:
     def defeat(self) -> None:
         self.__get_challenge()
         self.__submit_challenge()
-        self.__complete_challenge()
+        self.__complete_challenge()  

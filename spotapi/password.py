@@ -1,6 +1,6 @@
 from spotapi.utils.strings import parse_json_string
 from spotapi.exceptions import PasswordError
-from spotapi.data.data import Config
+from spotapi.types.data import Config
 from typing import Optional
 import time
 import uuid
@@ -31,6 +31,7 @@ class Password:
         url = "https://accounts.spotify.com/en/password-reset"
         resp = self.client.get(url)
 
+
         if resp.fail:
             raise PasswordError("Could not get session", error=resp.error.string)
 
@@ -49,6 +50,7 @@ class Password:
         }
 
         resp = self.client.post(url, data=payload, headers=headers)
+
 
         if resp.fail:
             raise PasswordError("Could not reset password", error=resp.error.string)

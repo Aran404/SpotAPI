@@ -18,4 +18,4 @@ main.py
 wrapper
 
 # PyPi dependencies
-.egg-info
+*.egg-info

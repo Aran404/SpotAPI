@@ -1,13 +1,12 @@
 from dataclasses import dataclass, field
-from typing import Type
-from spotapi.data.interfaces import CaptchaProtocol, LoggerProtocol
+from spotapi.types.interfaces import CaptchaProtocol, LoggerProtocol
 from spotapi.http.request import TLSClient
 
 
 @dataclass
 class Config:
-    solver: Type[CaptchaProtocol]
-    logger: Type[LoggerProtocol]
+    solver: CaptchaProtocol
+    logger: LoggerProtocol
     client: TLSClient = field(default=TLSClient("chrome_120", "", auto_retries=3))
 
 

@@ -7,7 +7,7 @@ from spotapi.user import User
 from spotapi.creator import Creator
 from spotapi.password import Password
 from spotapi.solvers import solver_clients, solver_clients_str
-from spotapi.data.data import Config
+from spotapi.types.data import Config
 from spotapi.utils.logger import Logger, NoopLogger
 from spotapi.utils.saver import *
 from spotapi.websocket import WebsocketStreamer

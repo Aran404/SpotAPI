@@ -12,7 +12,7 @@ from spotapi.client import BaseClient
 from spotapi.user import User
 
 
-class PublicPlaylist(BaseClient):
+class PublicPlaylist:
     """
     Allows you to get all public information on a playlist.
     No login is required.
@@ -23,9 +23,9 @@ class PublicPlaylist(BaseClient):
         playlist: Optional[str] = None,
         /,
         *,
-        client: Optional[TLSClient] = TLSClient("chrome_120", "", auto_retries=3),
+        client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
-        super().__init__(client=client)
+        self.base = BaseClient(client=client)
 
         if playlist:
             self.playlist_id = (
@@ -54,13 +54,13 @@ class PublicPlaylist(BaseClient):
                 {
                     "persistedQuery": {
                         "version": 1,
-                        "sha256Hash": self.part_hash("fetchPlaylist"),
+                        "sha256Hash": self.base.part_hash("fetchPlaylist"),
                     }
                 }
             ),
         }
 
-        resp = self.client.post(url, params=params, authenticate=True)
+        resp = self.base.client.post(url, params=params, authenticate=True)
 
         if resp.fail:
             raise PlaylistError("Could not get playlist info", error=resp.error.string)
@@ -94,19 +94,10 @@ class PublicPlaylist(BaseClient):
             offset += UPPER_LIMIT
 
 
-class PrivatePlaylist(BaseClient, Login):
+class PrivatePlaylist:
     """
     Methods on playlists that you can only do whilst logged in.
     """
-
-    def __new__(
-        cls,
-        login: Login,
-        playlist: Optional[str] = None,
-    ) -> PrivatePlaylist:
-        instance = super().__new__(cls)
-        instance.__dict__.update(login.__dict__)
-        return instance
 
     def __init__(
         self,
@@ -121,8 +112,8 @@ class PrivatePlaylist(BaseClient, Login):
                 playlist.split("playlist/")[-1] if "playlist" in playlist else playlist
             )
 
-        super().__init__(client=login.client)
-
+        self.base = BaseClient(login.client)
+        self.login = login
         self.user = User(login)
         # We need to check if a user can use a method
         self._playlist: bool = bool(playlist)
@@ -172,7 +163,8 @@ class PrivatePlaylist(BaseClient, Login):
             "nonces": [],
         }
 
-        resp = self.client.post(url, json=payload, authenticate=True)
+        resp = self.login.client.post(url, json=payload, authenticate=True)
+
 
         if resp.fail:
             raise PlaylistError(
@@ -207,7 +199,7 @@ class PrivatePlaylist(BaseClient, Login):
             "nonces": [],
         }
 
-        resp = self.client.post(url, json=payload, authenticate=True)
+        resp = self.login.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:
             raise PlaylistError(
@@ -216,7 +208,6 @@ class PrivatePlaylist(BaseClient, Login):
 
     def delete_playlist(self) -> None:
         """Deletes the playlist from your library"""
-
         # They are the same requests
         return self.remove_from_library()
 
@@ -243,13 +234,13 @@ class PrivatePlaylist(BaseClient, Login):
                 {
                     "persistedQuery": {
                         "version": 1,
-                        "sha256Hash": self.part_hash("libraryV3"),
+                        "sha256Hash": self.base.part_hash("libraryV3"),
                     }
                 }
             ),
         }
 
-        resp = self.client.post(url, params=params, authenticate=True)
+        resp = self.login.client.post(url, params=params, authenticate=True)
 
         if resp.fail:
             raise PlaylistError("Could not get library", error=resp.error.string)
@@ -276,7 +267,7 @@ class PrivatePlaylist(BaseClient, Login):
             ]
         }
 
-        resp = self.client.post(url, json=payload, authenticate=True)
+        resp = self.login.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:
             raise PlaylistError(
@@ -324,7 +315,7 @@ class PrivatePlaylist(BaseClient, Login):
             "nonces": [],
         }
 
-        resp = self.client.post(url, json=payload, authenticate=True)
+        resp = self.login.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:
             raise PlaylistError("Could not create playlist", error=resp.error.string)

@@ -1,6 +1,6 @@
 from typing import Dict, Final, Type
 
-from spotapi.data.interfaces import CaptchaProtocol
+from spotapi.types.interfaces import CaptchaProtocol
 from spotapi.solvers.capmonster import *
 from spotapi.solvers.capsolver import *
 

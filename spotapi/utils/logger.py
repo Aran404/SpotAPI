@@ -3,7 +3,7 @@ import time
 from threading import Lock
 from datetime import datetime
 from colorama import Fore, Style, init
-from spotapi.data import LoggerProtocol
+from spotapi.types import LoggerProtocol
 
 os.system("")
 init(autoreset=True)

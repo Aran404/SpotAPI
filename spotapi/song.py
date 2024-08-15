@@ -7,7 +7,7 @@ from spotapi.client import BaseClient
 from spotapi.playlist import PrivatePlaylist, PublicPlaylist
 
 
-class Song(BaseClient):
+class Song:
     """
     Extends the PrivatePlaylist class with methods that can only be used while logged in.
     These methods interact with songs and tend to be used in the context of a playlist.
@@ -20,7 +20,7 @@ class Song(BaseClient):
         client: Optional[TLSClient] = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         self.playlist = playlist
-        super().__init__(client=playlist.client if playlist else client)
+        self.base = BaseClient(client=playlist.client if (playlist is not None) else client) # type: ignore
 
     def query_songs(
         self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0
@@ -47,13 +47,13 @@ class Song(BaseClient):
                 {
                     "persistedQuery": {
                         "version": 1,
-                        "sha256Hash": self.part_hash("searchDesktop"),
+                        "sha256Hash": self.base.part_hash("searchDesktop"),
                     }
                 }
             ),
         }
 
-        resp = self.client.post(url, params=params, authenticate=True)
+        resp = self.base.client.post(url, params=params, authenticate=True)
 
         if resp.fail:
             raise SongError("Could not get songs", error=resp.error.string)
@@ -105,16 +105,19 @@ class Song(BaseClient):
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": self.part_hash("addToPlaylist"),
+                    "sha256Hash": self.base.part_hash("addToPlaylist"),
                 }
             },
         }
-        resp = self.client.post(url, json=payload, authenticate=True)
+        resp = self.base.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:
             raise SongError("Could not add song to playlist", error=resp.error.string)
 
     def __stage_remove_song(self, uids: List[str]) -> None:
+        # If None, something internal went wrong
+        assert self.playlist is not None, "Playlist not set"
+        
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         payload = {
             "variables": {
@@ -125,12 +128,12 @@ class Song(BaseClient):
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": self.part_hash("removeFromPlaylist"),
+                    "sha256Hash": self.base.part_hash("removeFromPlaylist"),
                 }
             },
         }
 
-        resp = self.client.post(url, json=payload, authenticate=True)
+        resp = self.base.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:
             raise SongError(
@@ -223,12 +226,12 @@ class Song(BaseClient):
             "extensions": {
                 "persistedQuery": {
                     "version": 1,
-                    "sha256Hash": self.part_hash("addToLibrary"),
+                    "sha256Hash": self.base.part_hash("addToLibrary"),
                 }
             },
         }
 
-        resp = self.client.post(url, json=payload, authenticate=True)
+        resp = self.base.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:
             raise SongError("Could not like song", error=resp.error.string)
