@@ -43,5 +43,8 @@ playlist.create_playlist("Spotapi Showcase!")
 instance.save(MongoSaver())
 ```
 
+## Contributing
+Contributions are welcome! If you find any issues or have suggestions, please open an issue or submit a pull request.
+
 [GPL 3.0](https://choosealicense.com/licenses/gpl-3.0/)
 
