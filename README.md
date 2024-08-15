@@ -9,6 +9,11 @@ Welcome to SpotAPI! This Python library is designed to interact with the private
 - **Private API Access**: Experiment with less commonly used Spotify endpoints.
 - **Browser-like Requests**: Mimics the HTTP requests Spotify makes in the browser perfectly, providing an accurate representation of what you’d see on the web interface.
 
+## Installation
+```
+pip install spotapi
+```
+
 ## Quick Example
 ```py
 from spotapi import (
