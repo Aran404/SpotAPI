@@ -14,6 +14,9 @@ __install_require__ = [
     "websockets",
 ]
 
+with open("README.md", "r") as f:
+    long_description = f.read()
+
 setup(
     name="spotapi",
     author="Aran",
@@ -47,4 +50,7 @@ setup(
         "Spotify Playlist",
         "Spotify Tracks",
     ],
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    version="0.1.0",
 )
