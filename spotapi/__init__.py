@@ -14,3 +14,4 @@ from spotapi.websocket import WebsocketStreamer
 from spotapi.family import Family, JoinFamily
 
 __author__ = "Aran"
+__license__ = "GPL 3.0"
