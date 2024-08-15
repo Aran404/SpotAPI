@@ -1,0 +1,10 @@
+requests
+colorama
+Pillow
+pymongo
+readerwriterlock
+redis
+tls_client
+typing_extensions
+validators
+websockets

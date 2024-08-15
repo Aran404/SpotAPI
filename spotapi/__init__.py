@@ -12,6 +12,10 @@ from spotapi.utils.logger import Logger, NoopLogger
 from spotapi.utils.saver import *
 from spotapi.websocket import WebsocketStreamer
 from spotapi.family import Family, JoinFamily
+from spotapi.http import *
+from spotapi.exceptions import *
+from spotapi.utils import *
+
 
 __author__ = "Aran"
 __license__ = "GPL 3.0"
