@@ -1,6 +1,6 @@
-# Spotify Wrapper
+# SpotAPI
 
-Welcome to Spotify Wrapper! This Python library is designed to interact with the private and public Spotify APIs, emulating the requests typically made through a web browser. This wrapper provides a convenient way to access Spotify’s rich set of features programmatically.
+Welcome to SpotAPI! This Python library is designed to interact with the private and public Spotify APIs, emulating the requests typically made through a web browser. This wrapper provides a convenient way to access Spotify’s rich set of features programmatically.
 
 **Note**: This project is intended solely for educational purposes and should be used responsibly. Accessing private endpoints and scraping data without proper authorization may violate Spotify's terms of service
 
@@ -11,7 +11,14 @@ Welcome to Spotify Wrapper! This Python library is designed to interact with the
 
 ## Quick Example
 ```py
-from spotapi import Login, Config, NoopLogger, solver_clients, PrivatePlaylist, MongoSaver
+from spotapi import (
+    Login, 
+    Config, 
+    NoopLogger, 
+    solver_clients, 
+    PrivatePlaylist, 
+    MongoSaver
+)
 
 cfg = Config(
     solver=solver_clients.Capsolver("YOUR_API_KEY", proxy="YOUR_PROXY"),
