@@ -50,17 +50,35 @@ instance.save(MongoSaver())
 
 ## Quick Example (Without User Authentication)
 ```py
+"""Here's the example from spotipy https://github.com/spotipy-dev/spotipy?tab=readme-ov-file#quick-start"""
 from spotapi import Song
 
-# Queries Songs (Yes this playlist also has user authenticated methods aswell but not needed here)
 song = Song()
-gen = song.paginate_songs("Drake")
+gen = song.paginate_songs("weezer")
 
 # Paginates 100 songs at a time till there's no more
 for batch in gen:
-    print(batch)
+    for idx, item in enumerate(batch):
+        print(idx, item['item']['data']['name'])
     
-# ^ ONLY 5 LINES OF CODE
+# ^ ONLY 6 LINES OF CODE
+
+# Alternatively, you can query a specfic amount
+songs = song.query_songs("weezer", limit=20)
+data = songs["data"]["searchV2"]["tracksV2"]["items"]
+for idx, item in enumerate(data):
+    print(idx, item['item']['data']['name'])
+```
+## Results
+```
+0 Island In The Sun
+1 Say It Ain't So
+2 Buddy Holly
+.
+.
+.
+18 Holiday
+19 We Are All On d***s
 ```
 
 ## Contributing
