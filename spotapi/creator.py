@@ -90,7 +90,6 @@ class Creator:
 
     def register(self) -> None:
         self.__get_session()
-        # Pylance keeps complaining about self keyword. I don't know why.
         captcha_token = self.cfg.solver.solve_captcha(
             "https://www.spotify.com/ca-en/signup",
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
