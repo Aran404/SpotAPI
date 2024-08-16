@@ -51,6 +51,13 @@ instance.save(MongoSaver())
 ## Contributing
 Contributions are welcome! If you find any issues or have suggestions, please open an issue or submit a pull request.
 
+## Roadmap
+> I'll most likely do these if the project gains some traction
+[ ] In Depth Documentation
+[ ] Websocket Listener (Is not working ATM)
+[ ] Player (Although you could just use the real API)
+[ ] More wrappers around this project
+
 ## License
 This project is licensed under the **GPL 3.0** License. See [LICENSE](https://choosealicense.com/licenses/gpl-3.0/) for details.
 
