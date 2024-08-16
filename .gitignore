@@ -16,6 +16,3 @@ __pycache__/
 
 main.py
 wrapper
-
-# PyPi dependencies
-*.egg-info

@@ -16,7 +16,7 @@ Everything you can do with Spotify, **SpotAPI** can do with just a user’s logi
 
 ## Installation
 ```
-pip install spotapi
+pip install spotapi==1.0.2
 ```
 
 ## Quick Example
