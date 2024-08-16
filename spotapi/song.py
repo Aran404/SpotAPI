@@ -27,6 +27,7 @@ class Song:
     ) -> Mapping[str, Any]:
         """
         Searches for songs in the Spotify catalog.
+        NOTE: Returns the raw result unlike paginate_songs which only returns the songs.
         """
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
