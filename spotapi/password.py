@@ -31,7 +31,6 @@ class Password:
         url = "https://accounts.spotify.com/en/password-reset"
         resp = self.client.get(url)
 
-
         if resp.fail:
             raise PasswordError("Could not get session", error=resp.error.string)
 
@@ -50,7 +49,6 @@ class Password:
         }
 
         resp = self.client.post(url, data=payload, headers=headers)
-
 
         if resp.fail:
             raise PasswordError("Could not reset password", error=resp.error.string)

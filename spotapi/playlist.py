@@ -165,7 +165,6 @@ class PrivatePlaylist:
 
         resp = self.login.client.post(url, json=payload, authenticate=True)
 
-
         if resp.fail:
             raise PlaylistError(
                 "Could not add playlist to library", error=resp.error.string

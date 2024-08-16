@@ -11,7 +11,7 @@ class BaseClient:
     """
     A base class that all the Spotify classes extend.
     This base class contains all the common methods used by the Spotify classes.
-    
+
     NOTE: Should not be used directly. Use the Spotify classes instead.
     """
 
@@ -47,7 +47,7 @@ class BaseClient:
 
         if not ("headers" in kwargs):
             kwargs["headers"] = {}
-            
+
         assert self.access_token is not None, "Access token is None"
         kwargs["headers"].update(
             {
@@ -66,7 +66,6 @@ class BaseClient:
                 "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{self.browser_version}.0.0.0 Safari/537.36"
             },
         )
-
 
         if resp.fail:
             raise BaseClientError("Could not get session", error=resp.error.string)
@@ -107,7 +106,6 @@ class BaseClient:
 
         resp = self.client.post(url, json=payload, headers=headers)
 
-
         if resp.fail:
             raise BaseClientError("Could not get client token", error=resp.error.string)
 
@@ -124,7 +122,7 @@ class BaseClient:
     def part_hash(self, name: str) -> str:
         if self.raw_hashes is None:
             self.get_sha256_hash()
-            
+
         if self.raw_hashes is None:
             raise ValueError("Could not get playlist hashes")
 
@@ -136,12 +134,11 @@ class BaseClient:
     def get_sha256_hash(self) -> None:
         if self.js_pack is None:
             self.get_session()
-            
+
         if self.js_pack is None:
             raise ValueError("Could not get playlist hashes")
 
         resp = self.client.get(self.js_pack)
-
 
         if resp.fail:
             raise BaseClientError(
@@ -149,7 +146,7 @@ class BaseClient:
             )
 
         assert isinstance(resp.response, str), "Invalid HTML response"
-        
+
         self.raw_hashes = resp.response
         self.client_version = resp.response.split('clientVersion:"')[1].split('"')[0]
         # Maybe it's static? Let's not take chances.
@@ -162,7 +159,6 @@ class BaseClient:
         resp = self.client.get(
             f"https://open.spotifycdn.com/cdn/build/web-player/xpui-routes-search.{self.xpui_route}.js"
         )
-
 
         if resp.fail:
             raise BaseClientError("Could not get xpui hashes", error=resp.error.string)

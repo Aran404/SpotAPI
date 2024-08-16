@@ -14,7 +14,7 @@ class CaptchaProtocol(Protocol):
         retries: Optional[int] = 120,
     ) -> None:
         ...
-    
+
     def get_balance(self: "CaptchaProtocol") -> float | None:
         ...
 
@@ -49,15 +49,15 @@ class LoggerProtocol(Protocol):
 
 @runtime_checkable
 class SaverProtocol(Protocol):
-    def __init__(
-        self: "SaverProtocol", *args, **kwargs
-    ) -> None:
+    def __init__(self: "SaverProtocol", *args, **kwargs) -> None:
         ...
-        
+
     def save(self: "SaverProtocol", data: List[Mapping[str, Any]], **kwargs) -> None:
         ...
 
-    def load(self: "SaverProtocol", query: Mapping[str, Any], **kwargs) -> Mapping[str, Any]:
+    def load(
+        self: "SaverProtocol", query: Mapping[str, Any], **kwargs
+    ) -> Mapping[str, Any]:
         ...
 
     def delete(self: "SaverProtocol", query: Mapping[str, Any], **kwargs) -> None:

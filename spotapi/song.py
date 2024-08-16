@@ -20,7 +20,7 @@ class Song:
         client: Optional[TLSClient] = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         self.playlist = playlist
-        self.base = BaseClient(client=playlist.client if (playlist is not None) else client) # type: ignore
+        self.base = BaseClient(client=playlist.client if (playlist is not None) else client)  # type: ignore
 
     def query_songs(
         self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0
@@ -117,7 +117,7 @@ class Song:
     def __stage_remove_song(self, uids: List[str]) -> None:
         # If None, something internal went wrong
         assert self.playlist is not None, "Playlist not set"
-        
+
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         payload = {
             "variables": {

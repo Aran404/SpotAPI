@@ -19,7 +19,7 @@ Everything you can do with Spotify, **SpotAPI** can do with just a user’s logi
 pip install spotapi==1.0.2
 ```
 
-## Quick Example
+## Quick Example (With User Authentication)
 ```py
 from spotapi import (
     Login, 
@@ -48,8 +48,50 @@ playlist.create_playlist("SpotAPI Showcase!")
 instance.save(MongoSaver())
 ```
 
+## Quick Example (Without User Authentication)
+```py
+"""Here's the example from spotipy https://github.com/spotipy-dev/spotipy?tab=readme-ov-file#quick-start"""
+from spotapi import Song
+
+song = Song()
+gen = song.paginate_songs("weezer")
+
+# Paginates 100 songs at a time till there's no more
+for batch in gen:
+    for idx, item in enumerate(batch):
+        print(idx, item['item']['data']['name'])
+    
+# ^ ONLY 6 LINES OF CODE
+
+# Alternatively, you can query a specfic amount
+songs = song.query_songs("weezer", limit=20)
+data = songs["data"]["searchV2"]["tracksV2"]["items"]
+for idx, item in enumerate(data):
+    print(idx, item['item']['data']['name'])
+```
+## Results
+```
+0 Island In The Sun
+1 Say It Ain't So
+2 Buddy Holly
+.
+.
+.
+18 Holiday
+19 We Are All On d***s
+```
+
 ## Contributing
 Contributions are welcome! If you find any issues or have suggestions, please open an issue or submit a pull request.
+
+## Roadmap
+> I'll most likely do these if the project gains some traction
+
+- [ ] No Captcha For Login (**100 Stars**)
+- [ ] In Depth Documentation
+- [ ] Websocket Listener (Is not working ATM)
+- [ ] Player (Although you could just use the real API)
+- [ ] More wrappers around this project
 
 ## License
 This project is licensed under the **GPL 3.0** License. See [LICENSE](https://choosealicense.com/licenses/gpl-3.0/) for details.

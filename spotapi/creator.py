@@ -34,7 +34,6 @@ class Creator:
         url = "https://www.spotify.com/ca-en/signup"
         resp = self.client.get(url)
 
-
         if resp.fail:
             raise GeneratorError("Could not get session", error=resp.error.string)
 
@@ -80,7 +79,6 @@ class Creator:
 
         resp = self.client.post(url, json=payload)
 
-
         if resp.fail:
             raise GeneratorError(
                 "Could not process registration", error=resp.error.string
@@ -114,7 +112,6 @@ class AccountChallenge:
         payload = {"session_id": self.session_id}
         resp = self.client.post(url, json=payload)
 
-
         if resp.fail:
             raise GeneratorError(
                 "Could not get challenge session", error=resp.error.string
@@ -139,11 +136,8 @@ class AccountChallenge:
             },
         )
 
-
         if resp.fail:
-            raise GeneratorError(
-                "Could not submit challenge", error=resp.error.string
-            )
+            raise GeneratorError("Could not submit challenge", error=resp.error.string)
 
     def __complete_challenge(self) -> None:
         url = (
@@ -151,7 +145,6 @@ class AccountChallenge:
         )
         payload = {"session_id": self.session_id}
         resp = self.client.post(url, json=payload)
-
 
         if resp.fail:
             raise GeneratorError(

@@ -12,7 +12,7 @@ dist/
 __pycache__/
 
 # PyPi dependencies
-.egg-info
+.egg-info/*
 
 main.py
 wrapper

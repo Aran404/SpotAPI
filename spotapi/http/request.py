@@ -14,7 +14,9 @@ from spotapi.http.data import Response
 
 class StdClient(requests.Session):
     def __init__(
-        self, auto_retries: int = 0, auth_rule: Callable[[dict[Any, Any]], dict] | None = None
+        self,
+        auto_retries: int = 0,
+        auth_rule: Callable[[dict[Any, Any]], dict] | None = None,
     ) -> None:
         super().__init__()
         self.auto_retries = auto_retries + 1
@@ -127,7 +129,7 @@ class TLSClient(Session):
         is_dict = True
 
         try:
-            json.loads(body) # type: ignore
+            json.loads(body)  # type: ignore
         except json.JSONDecodeError:
             is_dict = False
 
@@ -140,8 +142,10 @@ class TLSClient(Session):
 
         # Why is status_code a None type...
         assert response.status_code is not None, "Status Code is None"
-        
-        resp = Response(status_code=int(response.status_code), response=body, raw=response)
+
+        resp = Response(
+            status_code=int(response.status_code), response=body, raw=response
+        )
 
         if danger and self.fail_exception and resp.fail:
             raise self.fail_exception(
@@ -151,9 +155,7 @@ class TLSClient(Session):
 
         return resp
 
-    def get(
-        self, url: str, *, authenticate: bool = False, **kwargs
-    ) -> Response:
+    def get(self, url: str, *, authenticate: bool = False, **kwargs) -> Response:
         """Routes a GET Request"""
         if authenticate and self.authenticate is not None:
             kwargs = self.authenticate(kwargs)

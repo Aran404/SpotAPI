@@ -55,7 +55,6 @@ class Login:
             ]
         )
 
-
     @classmethod
     def from_cookies(cls, dump: Mapping[str, Any], cfg: Config) -> Login:
         """
@@ -63,7 +62,7 @@ class Login:
         """
         password = dump.get("password")
         cred = dump.get("identifier")
-        cookies: Mapping[str, Any] = dict(dump.get("cookies")) # type: ignore
+        cookies: Mapping[str, Any] = dict(dump.get("cookies"))  # type: ignore
 
         if not (password and cred and cookies):
             raise ValueError(
@@ -80,9 +79,7 @@ class Login:
         return instantiated
 
     @classmethod
-    def from_saver(
-        cls, saver: SaverProtocol, cfg: Config, identifier: str
-    ) -> Login:
+    def from_saver(cls, saver: SaverProtocol, cfg: Config, identifier: str) -> Login:
         """
         Loads a session from a Saver Class.
 
@@ -110,7 +107,7 @@ class Login:
 
         if resp.fail:
             raise LoginError("Could not get session", error=resp.error.string)
-        
+
         self.csrf_token = resp.raw.cookies.get("sp_sso_csrf_token")
         self.flow_id = parse_json_string(resp.response, "flowCtx")
 
@@ -219,7 +216,7 @@ class LoginChallenge:
             "accounts/login",
             "v3",
         )
- 
+
         if not captcha_response:
             raise LoginError("Could not solve captcha")
 
@@ -248,7 +245,6 @@ class LoginChallenge:
         if resp.fail:
             raise LoginError("Could not submit challenge", error=resp.error.string)
 
-
         if not isinstance(resp.response, Mapping):
             raise LoginError("Invalid JSON")
 
@@ -269,4 +265,4 @@ class LoginChallenge:
     def defeat(self) -> None:
         self.__get_challenge()
         self.__submit_challenge()
-        self.__complete_challenge()  
+        self.__complete_challenge()

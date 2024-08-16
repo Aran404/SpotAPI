@@ -277,9 +277,7 @@ class MongoSaver(SaverProtocol):
 
 
 class RedisSaver(SaverProtocol):
-    def __init__(
-        self, host: str = "localhost", port: int = 6379, db: int = 0
-    ) -> None:
+    def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0) -> None:
         self.client = redis.StrictRedis(host=host, port=port, db=db)
         atexit.register(self.client.close)
 

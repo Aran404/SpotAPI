@@ -27,7 +27,6 @@ class JoinFamily:
         url = f"https://www.spotify.com/ca-en/family/join/address/{self.invite_token}/"
         resp = self.client.get(url)
 
-
         if resp.fail:
             raise FamilyError("Could not get session", error=resp.error.string)
 
@@ -42,7 +41,6 @@ class JoinFamily:
         }
         resp = self.client.post(url, headers={"X-Csrf-Token": self.csrf}, json=payload)
 
-
         if resp.fail:
             raise FamilyError("Could not get address", error=resp.error.string)
 
@@ -56,7 +54,6 @@ class JoinFamily:
             "session_token": self.session_id,
         }
         resp = self.client.post(url, headers={"X-Csrf-Token": self.csrf}, json=payload)
-
 
         self.csrf = resp.raw.headers.get("X-Csrf-Token")
         if resp.fail:
@@ -83,7 +80,6 @@ class JoinFamily:
         }
         resp = self.client.post(url, headers={"X-Csrf-Token": self.csrf}, json=payload)
 
-
         if resp.fail:
             raise FamilyError("Could not add to family", error=resp.error.string)
 
@@ -108,7 +104,6 @@ class Family(User):
     def get_family_home(self) -> Mapping[str, Any]:
         url = "https://www.spotify.com/api/family/v1/family/home/"
         resp = self.login.client.get(url)
-
 
         if resp.fail:
             raise FamilyError("Could not get user plan info", error=resp.error.string)

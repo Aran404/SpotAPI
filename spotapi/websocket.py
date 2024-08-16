@@ -35,7 +35,7 @@ class WebsocketStreamer(BaseClient, Login):
         )
 
         self.rlock = threading.Lock()
-        self.ws_dump: dict| None = None
+        self.ws_dump: dict | None = None
 
         if ignore_init_packet:
             self.get_init_packet()
@@ -86,5 +86,4 @@ class WebsocketStreamer(BaseClient, Login):
     def get_player_state(self) -> dict:
         self.get_main_packet()
         payload = self.ws_dump["payload"][0]
-        return payload["cluster"]["player_state"] 
-        
+        return payload["cluster"]["player_state"]

@@ -25,7 +25,7 @@ class Artist:
             raise ValueError("Must be logged in")
 
         self._login: bool = bool(login)
-        self.base = BaseClient(client=login.client if (login is not None) else client) # type: ignore
+        self.base = BaseClient(client=login.client if (login is not None) else client)  # type: ignore
 
     def query_artists(
         self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0
@@ -56,7 +56,6 @@ class Artist:
 
         resp = self.base.client.post(url, params=params, authenticate=True)
 
-        
         if resp.fail:
             raise ArtistError("Could not get artists", error=resp.error.string)
 
@@ -121,7 +120,6 @@ class Artist:
         }
 
         resp = self.base.client.post(url, json=payload, authenticate=True)
-
 
         if resp.fail:
             raise ArtistError("Could not follow artist", error=resp.error.string)
