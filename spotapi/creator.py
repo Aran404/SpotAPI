@@ -21,10 +21,12 @@ class Creator:
         self,
         cfg: Config,
         email: Optional[str] = random_email(),
+        display_name: Optional[str] = random_string(10),
         password: Optional[str] = random_string(10, True),
     ) -> None:
         self.email = email
         self.password = password
+        self.display_name = display_name
         self.cfg = cfg
 
         self.client = self.cfg.client
@@ -51,7 +53,7 @@ class Creator:
                     "send_email": True,
                     "third_party_email": False,
                 },
-                "display_name": "Aran",
+                "display_name": self.display_name,
                 "email_and_password_identifier": {
                     "email": self.email,
                     "password": self.password,
