@@ -19,7 +19,7 @@ Everything you can do with Spotify, **SpotAPI** can do with just a user’s logi
 pip install spotapi==1.0.2
 ```
 
-## Quick Example
+## Quick Example (With User Authentication)
 ```py
 from spotapi import (
     Login, 
@@ -46,6 +46,21 @@ playlist.create_playlist("SpotAPI Showcase!")
 
 # Save the session
 instance.save(MongoSaver())
+```
+
+## Quick Example (Without User Authentication)
+```py
+from spotapi import Song
+
+# Queries Songs (Yes this playlist also has user authenticated methods aswell but not needed here)
+song = Song()
+gen = song.paginate_songs("Drake")
+
+# Paginates 100 songs at a time till there's no more
+for batch in gen:
+    print(batch)
+    
+# ^ ONLY 5 LINES OF CODE
 ```
 
 ## Contributing
