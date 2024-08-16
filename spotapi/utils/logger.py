@@ -36,7 +36,7 @@ class Logger(LoggerProtocol):
             )
 
     @staticmethod
-    def debug(s: str, **extra) -> None:
+    def attempt(s: str, **extra) -> None:
         with LOCK:
             fields = [
                 f"{Style.BRIGHT}{Fore.LIGHTBLUE_EX}{k}={Fore.LIGHTYELLOW_EX}{v}{Style.RESET_ALL}"
