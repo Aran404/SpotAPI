@@ -87,6 +87,7 @@ Contributions are welcome! If you find any issues or have suggestions, please op
 ## Roadmap
 > I'll most likely do these if the project gains some traction
 
+- [ ] No Captcha For Login (100 Stars)
 - [ ] In Depth Documentation
 - [ ] Websocket Listener (Is not working ATM)
 - [ ] Player (Although you could just use the real API)
