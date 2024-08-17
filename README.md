@@ -47,7 +47,7 @@ If you prefer not to use a third party CAPTCHA solver, you can import cookies to
        - It can be a dict[str, str] or a string representation
 
 3. **Load the Session**:
-   - Use your program to load the session manually with the saved data. This will enable you to use Spotify with a fully functional session without needing additional CAPTCHA solving.
+   - Use Login.from_saver (or your own implementation) to load the session from cache. This will enable you to use Spotify with a fully functional session without needing additional CAPTCHA solving.
 
 ## Quick Examples
 
