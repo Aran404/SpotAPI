@@ -19,7 +19,7 @@ class Artist:
         self,
         login: Optional[Login] = None,
         *,
-        client: Optional[TLSClient] = TLSClient("chrome_120", "", auto_retries=3),
+        client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         if login and not login.logged_in:
             raise ValueError("Must be logged in")
@@ -28,7 +28,7 @@ class Artist:
         self.base = BaseClient(client=login.client if (login is not None) else client)  # type: ignore
 
     def query_artists(
-        self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0
+        self, query: str, /, limit: int = 10, *, offset: int = 0
     ) -> Mapping[str, Any]:
         """Searches for an artist in the Spotify catalog"""
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
@@ -95,7 +95,7 @@ class Artist:
         artist_id: str,
         /,
         *,
-        action: Optional[Literal["addToLibrary", "removeFromLibrary"]] = "addToLibrary",
+        action: Literal["addToLibrary", "removeFromLibrary"] = "addToLibrary",
     ) -> None:
         if not self._login:
             raise ValueError("Must be logged in")

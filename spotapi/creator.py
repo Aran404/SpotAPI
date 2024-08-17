@@ -1,6 +1,5 @@
 import time
 import uuid
-from typing import Optional
 from spotapi.types import Config
 from spotapi.exceptions import GeneratorError
 from spotapi.http.request import TLSClient
@@ -20,9 +19,9 @@ class Creator:
     def __init__(
         self,
         cfg: Config,
-        email: Optional[str] = random_email(),
-        display_name: Optional[str] = random_string(10),
-        password: Optional[str] = random_string(10, True),
+        email: str = random_email(),
+        display_name: str = random_string(10),
+        password: str = random_string(10, True),
     ) -> None:
         self.email = email
         self.password = password
@@ -152,7 +151,7 @@ class AccountChallenge:
                 "Could not complete challenge", error=resp.error.string
             )
 
-        if not ("success" in resp.response):
+        if "success" not in resp.response:
             raise GeneratorError("Could not complete challenge", error=resp.response)
 
     def defeat_challenge(self) -> None:

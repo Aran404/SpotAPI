@@ -45,7 +45,7 @@ class BaseClient:
         if self.access_token is None:
             self.get_session()
 
-        if not ("headers" in kwargs):
+        if "headers" not in kwargs:
             kwargs["headers"] = {}
 
         assert self.access_token is not None, "Access token is None"

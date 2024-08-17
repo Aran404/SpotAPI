@@ -8,10 +8,10 @@ class CaptchaProtocol(Protocol):
     def __init__(
         self: "CaptchaProtocol",
         api_key: str,
-        client: Optional[StdClient] = StdClient(3),
+        client: StdClient = StdClient(3),
         *,
+        retries: int = 120,
         proxy: Optional[str] = None,
-        retries: Optional[int] = 120,
     ) -> None:
         ...
 

@@ -5,14 +5,16 @@ __install_require__ = [
     "requests",
     "colorama",
     "Pillow",
-    "pymongo",
     "readerwriterlock",
-    "redis",
     "tls_client",
     "typing_extensions",
     "validators",
-    "websockets",
 ]
+__extras__ = {
+    "websocket": ["websockets"],
+    "redis": ["redis"],
+    "pymongo": ["pymongo"],
+}
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -23,6 +25,7 @@ setup(
     description=__description__,
     packages=find_packages(),
     install_requires=__install_require__,
+    extras_require=__extras__,
     keywords=[
         "Spotify",
         "API",
@@ -52,5 +55,5 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="1.0.3",
+    version="1.0.4",
 )

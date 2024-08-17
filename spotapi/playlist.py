@@ -34,7 +34,7 @@ class PublicPlaylist:
             self.playlist_link = f"https://open.spotify.com/playlist/{self.playlist_id}"
 
     def get_playlist_info(
-        self, limit: Optional[int] = 25, *, offset: Optional[int] = 0
+        self, limit: int = 25, *, offset: int = 0
     ) -> Mapping[str, Any]:
         """Gets the public playlist information"""
         if not self.playlist_id:
@@ -210,7 +210,7 @@ class PrivatePlaylist:
         # They are the same requests
         return self.remove_from_library()
 
-    def get_library(self, limit: Optional[int] = 50) -> Mapping[str, Any]:
+    def get_library(self, limit: int = 50, /) -> Mapping[str, Any]:
         """Gets all the playlists in your library"""
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {

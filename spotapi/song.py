@@ -17,13 +17,13 @@ class Song:
         self,
         playlist: Optional[PrivatePlaylist] = None,
         *,
-        client: Optional[TLSClient] = TLSClient("chrome_120", "", auto_retries=3),
+        client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         self.playlist = playlist
         self.base = BaseClient(client=playlist.client if (playlist is not None) else client)  # type: ignore
 
     def query_songs(
-        self, query: str, /, limit: Optional[int] = 10, *, offset: Optional[int] = 0
+        self, query: str, /, limit: int = 10, *, offset: int = 0
     ) -> Mapping[str, Any]:
         """
         Searches for songs in the Spotify catalog.
@@ -144,9 +144,10 @@ class Song:
     def __parse_playlist_items(
         self,
         items: List[Mapping[str, Any]],
+        *,
         song_id: Optional[str] = None,
         song_name: Optional[str] = None,
-        all_instances: Optional[bool] = False,
+        all_instances: bool = False,
     ) -> Tuple[List[str], bool]:
         uids: List[str] = []
         for item in items:
@@ -167,10 +168,10 @@ class Song:
     def remove_song_from_playlist(
         self,
         *,
+        all_instances: bool = False,
         uid: Optional[str] = None,
         song_id: Optional[str] = None,
         song_name: Optional[str] = None,
-        all_instances: Optional[bool] = False,
     ) -> None:
         """
         Removes a song from the playlist.

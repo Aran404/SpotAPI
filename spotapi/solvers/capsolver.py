@@ -1,6 +1,5 @@
-import json
 import time
-from typing import Literal, Optional
+from typing import Literal, Optional, Dict, Any
 
 from spotapi.exceptions import CaptchaException, SolverError
 from spotapi.http.request import StdClient
@@ -12,10 +11,10 @@ class Capsolver:
     def __init__(
         self,
         api_key: str,
-        client: Optional[StdClient] = StdClient(3),
+        client: StdClient = StdClient(3),
         *,
+        retries: int = 120,
         proxy: Optional[str] = None,
-        retries: Optional[int] = 120,
     ) -> None:
         self.api_key = api_key
         self.client = client
@@ -25,7 +24,7 @@ class Capsolver:
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)
 
     def _auth_rule(self, kwargs: dict) -> dict:
-        if not ("json" in kwargs):
+        if "json" not in kwargs:
             kwargs["json"] = {}
 
         kwargs["json"]["clientKey"] = self.api_key
@@ -63,7 +62,7 @@ class Capsolver:
             if proxy
             else "ReCaptcha{}EnterpriseTaskProxyLess"
         ).format(task.upper())
-        payload = {
+        payload: Dict[str, Dict[str, Any]] = {
             "task": {
                 "type": task_type,
                 "websiteURL": url,
@@ -92,7 +91,7 @@ class Capsolver:
 
         return str(resp["taskId"])
 
-    def _harvest_task(self, task_id: str, retries: int) -> str | None:
+    def _harvest_task(self, task_id: str, retries: int) -> str:
         for _ in range(retries):
             payload = {"taskId": task_id}
             endpoint = self.BaseURL + "getTaskResult"

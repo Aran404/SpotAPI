@@ -56,7 +56,7 @@ class StdClient(requests.Session):
 
     def request(
         self, method: str, url: str, *, authenticate: bool = False, **kwargs
-    ) -> Union[Response, None]:
+    ) -> Response:
         if authenticate and self.authenticate:
             kwargs = self.authenticate(kwargs)
 
@@ -64,20 +64,16 @@ class StdClient(requests.Session):
 
         if response is not None:
             return self.parse_response(response)
+        else:
+            raise RequestError("Request kept failing after retries.")
 
-    def post(
-        self, url: str, *, authenticate: bool = False, **kwargs
-    ) -> Union[Response, None]:
+    def post(self, url: str, *, authenticate: bool = False, **kwargs) -> Response:
         return self.request("POST", url, authenticate=authenticate, **kwargs)
 
-    def get(
-        self, url: str, *, authenticate: bool = False, **kwargs
-    ) -> Union[Response, None]:
+    def get(self, url: str, *, authenticate: bool = False, **kwargs) -> Response:
         return self.request("GET", url, authenticate=authenticate, **kwargs)
 
-    def put(
-        self, url: str, *, authenticate: bool = False, **kwargs
-    ) -> Union[Response, None]:
+    def put(self, url: str, *, authenticate: bool = False, **kwargs) -> Response:
         return self.request("PUT", url, authenticate=authenticate, **kwargs)
 
 

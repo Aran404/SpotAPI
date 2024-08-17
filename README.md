@@ -4,6 +4,18 @@ Welcome to SpotAPI! This Python library is designed to interact with the private
 
 **Note**: This project is intended solely for educational purposes and should be used responsibly. Accessing private endpoints and scraping data without proper authorization may violate Spotify's terms of service
 
+## Table of Contents
+
+1. [Introduction](#spotapi)
+2. [Features](#features)
+3. [Installation](#installation)
+4. [Import Cookies](#import-cookies)
+5. [Quick Examples](#quick-examples)
+6. [Contributing](#contributing)
+7. [Roadmap](#roadmap)
+8. [License](#license)
+
+
 ## Features
 - **Public API Access**: Retrieve and manipulate public Spotify data such as playlists, albums, and tracks with ease.
 - **Private API Access**: Explore private Spotify endpoints to tailor your application to your needs.
@@ -16,10 +28,30 @@ Everything you can do with Spotify, **SpotAPI** can do with just a user’s logi
 
 ## Installation
 ```
-pip install spotapi==1.0.2
+pip install spotapi
 ```
 
-## Quick Example (With User Authentication)
+## Import Cookies
+If you prefer not to use a third party CAPTCHA solver, you can import cookies to manage your session.
+
+### Steps to Import Cookies:
+
+1. **Choose a Session Saver**:
+   - Select a session saver for storing your session data. 
+   - For simplicity, you should use `JSONSaver`, especially if performance or quantity of sessions is not a big concern.
+
+2. **Prepare Session Data**:
+   - Create an object with the following keys:
+     - **`identifier`**: This should be your email address or username.
+     - **`cookies`**: These are the cookies you obtain when logged in. To get these cookies, visit [Spotify](https://open.spotify.com/), log in, and copy the cookies from your browser.
+       - It can be a dict[str, str] or a string representation
+
+3. **Load the Session**:
+   - Use your program to load the session manually with the saved data. This will enable you to use Spotify with a fully functional session without needing additional CAPTCHA solving.
+
+## Quick Examples
+
+### With User Authentication
 ```py
 from spotapi import (
     Login, 
@@ -48,7 +80,7 @@ playlist.create_playlist("SpotAPI Showcase!")
 instance.save(MongoSaver())
 ```
 
-## Quick Example (Without User Authentication)
+### Without User Authentication
 ```py
 """Here's the example from spotipy https://github.com/spotipy-dev/spotipy?tab=readme-ov-file#quick-start"""
 from spotapi import Song
@@ -69,7 +101,7 @@ data = songs["data"]["searchV2"]["tracksV2"]["items"]
 for idx, item in enumerate(data):
     print(idx, item['item']['data']['name'])
 ```
-## Results
+### Results
 ```
 0 Island In The Sun
 1 Say It Ain't So
@@ -90,7 +122,7 @@ Contributions are welcome! If you find any issues or have suggestions, please op
 - [ ] No Captcha For Login (**100 Stars**)
 - [ ] In Depth Documentation
 - [ ] Websocket Listener (Is not working ATM)
-- [ ] Player (Although you could just use the real API)
+- [ ] Player
 - [ ] More wrappers around this project
 
 ## License

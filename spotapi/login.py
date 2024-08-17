@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Mapping, Optional, Type
+from typing import Any, Mapping, Optional
 from urllib.parse import urlencode
 
 from spotapi.types import Config, SaverProtocol
@@ -61,12 +61,25 @@ class Login:
         Constructs a Login instance using cookie data and configuration.
         """
         password = dump.get("password")
-        cred = dump.get("identifier")
-        cookies: Mapping[str, Any] = dict(dump.get("cookies"))  # type: ignore
+        password = "" if password is None else password
 
-        if not (password and cred and cookies):
+        cred = dump.get("identifier")
+        cookies = dump.get("cookies")
+
+        if isinstance(cookies, str):
+            _cookies = cookies.strip().split(";")
+            cookies = {}
+
+            for cookie in _cookies:
+                k, v = cookie.split("=")
+                cookies[k] = v
+
+        if isinstance(cookies, Mapping):
+            cookies = cookies  # autotype
+
+        if not (cred and cookies):
             raise ValueError(
-                "Invalid dump format: must contain 'password', 'identifier', and 'cookies'"
+                "Invalid dump format: must contain 'identifier', and 'cookies'"
             )
 
         cfg.client.cookies.clear()
@@ -82,8 +95,7 @@ class Login:
     def from_saver(cls, saver: SaverProtocol, cfg: Config, identifier: str) -> Login:
         """
         Loads a session from a Saver Class.
-
-        Note: Kwargs are not used, make sure the defaults for the savers are what you want (or just implement this method yourself).
+        NOTE: Kwargs are not used, make sure the defaults for the savers are what you want (or just implement this method yourself).
         """
         dump = saver.load(query={"identifier": identifier})
         return cls.from_cookies(dump, cfg)
@@ -153,7 +165,7 @@ class Login:
             # json_data will still be bad, but we know we are logged in now
             return
 
-        if not ("error" in json_data):
+        if "error" not in json_data:
             raise LoginError(f"Unexpected response format: {json_data}")
 
         error_type = json_data["error"]
@@ -170,6 +182,9 @@ class Login:
 
     def login(self) -> None:
         """Logins the user"""
+        if self.logged_in:
+            raise LoginError("User already logged in")
+
         now = time.time()
         self.__get_session()
 
