@@ -9,8 +9,8 @@ Welcome to SpotAPI! This Python library is designed to interact with the private
 1. [Introduction](#spotapi)
 2. [Features](#features)
 3. [Installation](#installation)
-4. [Import Cookies](#import-cookies)
-5. [Quick Examples](#quick-examples)
+4. [Quick Examples](#quick-examples)
+5. [Import Cookies](#import-cookies)
 6. [Contributing](#contributing)
 7. [Roadmap](#roadmap)
 8. [License](#license)
@@ -30,24 +30,6 @@ Everything you can do with Spotify, **SpotAPI** can do with just a user’s logi
 ```
 pip install spotapi
 ```
-
-## Import Cookies
-If you prefer not to use a third party CAPTCHA solver, you can import cookies to manage your session.
-
-### Steps to Import Cookies:
-
-1. **Choose a Session Saver**:
-   - Select a session saver for storing your session data. 
-   - For simplicity, you should use `JSONSaver`, especially if performance or quantity of sessions is not a big concern.
-
-2. **Prepare Session Data**:
-   - Create an object with the following keys:
-     - **`identifier`**: This should be your email address or username.
-     - **`cookies`**: These are the cookies you obtain when logged in. To get these cookies, visit [Spotify](https://open.spotify.com/), log in, and copy the cookies from your browser.
-       - It can be a dict[str, str] or a string representation
-
-3. **Load the Session**:
-   - Use `Login.from_saver` (or your own implementation) to load the session from cache. This will enable you to use Spotify with a fully functional session without needing additional **CAPTCHA solving**.
 
 ## Quick Examples
 
@@ -112,6 +94,24 @@ for idx, item in enumerate(data):
 18 Holiday
 19 We Are All On d***s
 ```
+
+## Import Cookies
+If you prefer not to use a third party CAPTCHA solver, you can import cookies to manage your session.
+
+### Steps to Import Cookies:
+
+1. **Choose a Session Saver**:
+   - Select a session saver for storing your session data. 
+   - For simplicity, you should use `JSONSaver`, especially if performance or quantity of sessions is not a big concern.
+
+2. **Prepare Session Data**:
+   - Create an object with the following keys:
+     - **`identifier`**: This should be your email address or username.
+     - **`cookies`**: These are the cookies you obtain when logged in. To get these cookies, visit [Spotify](https://open.spotify.com/), log in, and copy the cookies from your browser.
+       - It can be a dict[str, str] or a string representation
+
+3. **Load the Session**:
+   - Use `Login.from_saver` (or your own implementation) to load the session from cache. This will enable you to use Spotify with a fully functional session without needing additional **CAPTCHA solving**.
 
 ## Contributing
 Contributions are welcome! If you find any issues or have suggestions, please open an issue or submit a pull request.
