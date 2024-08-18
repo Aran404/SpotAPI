@@ -23,7 +23,7 @@ class JoinFamily:
 
         self.session_id = str(uuid.uuid4())
 
-    def __get_session(self) -> None:
+    def _get_session(self) -> None:
         url = f"https://www.spotify.com/ca-en/family/join/address/{self.invite_token}/"
         resp = self.client.get(url)
 
@@ -32,7 +32,7 @@ class JoinFamily:
 
         self.csrf = parse_json_string(resp.response, "csrfToken")
 
-    def __get_autocomplete(self, address: str) -> None:
+    def _get_autocomplete(self, address: str) -> None:
         url = "https://www.spotify.com/api/mup/addresses/v1/address/autocomplete/"
         payload = {
             "text": address,
@@ -47,7 +47,7 @@ class JoinFamily:
         self.addresses = resp.response["addresses"]
         self.csrf = resp.raw.headers.get("X-Csrf-Token")
 
-    def __try_address(self, dump: dict) -> bool:
+    def _try_address(self, dump: dict) -> bool:
         url = "https://www.spotify.com/api/mup/addresses/v1/user/confirm-user-address/"
         payload = {
             "address_google_place_id": dump["address"]["googlePlaceId"],
@@ -61,17 +61,17 @@ class JoinFamily:
 
         return True
 
-    def __get_address(self) -> str:
-        self.__get_session()
-        self.__get_autocomplete(self.address)
+    def _get_address(self) -> str:
+        self._get_session()
+        self._get_autocomplete(self.address)
 
         for address in self.addresses:
-            if self.__try_address(address):
+            if self._try_address(address):
                 return address["address"]["googlePlaceId"]
 
         raise FamilyError("Could not get address")
 
-    def __add_to_family(self, place_id: str) -> None:
+    def _add_to_family(self, place_id: str) -> None:
         url = "https://www.spotify.com/api/family/v1/family/member/"
         payload = {
             "address": self.address,
@@ -84,8 +84,8 @@ class JoinFamily:
             raise FamilyError("Could not add to family", error=resp.error.string)
 
     def add_to_family(self) -> None:
-        place_id = self.__get_address()
-        self.__add_to_family(place_id)
+        place_id = self._get_address()
+        self._add_to_family(place_id)
 
 
 class Family(User):

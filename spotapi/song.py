@@ -115,7 +115,7 @@ class Song:
         if resp.fail:
             raise SongError("Could not add song to playlist", error=resp.error.string)
 
-    def __stage_remove_song(self, uids: List[str]) -> None:
+    def _stage_remove_song(self, uids: List[str]) -> None:
         # If None, something internal went wrong
         assert self.playlist is not None, "Playlist not set"
 
@@ -141,7 +141,7 @@ class Song:
                 "Could not remove song from playlist", error=resp.error.string
             )
 
-    def __parse_playlist_items(
+    def _parse_playlist_items(
         self,
         items: List[Mapping[str, Any]],
         *,
@@ -195,7 +195,7 @@ class Song:
         if not uid:
             for playlist_chunk in playlist:
                 items = playlist_chunk["items"]
-                extended_uids, stop = self.__parse_playlist_items(
+                extended_uids, stop = self._parse_playlist_items(
                     items,
                     song_id=song_id,
                     song_name=song_name,
@@ -212,7 +212,7 @@ class Song:
         if len(uids) == 0:
             raise SongError("Song not found in playlist")
 
-        self.__stage_remove_song(uids)
+        self._stage_remove_song(uids)
 
     def like_song(self, song_id: str, /) -> None:
         if not self.playlist or not hasattr(self.playlist, "playlist_id"):

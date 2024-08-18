@@ -1,5 +1,5 @@
 class ParentException(Exception):
-    def __init__(self, message: str, error: str = str) -> None:
+    def __init__(self, message: str, error: str | None = None) -> None:
         super().__init__(message)
         self.error = error
 
@@ -64,5 +64,11 @@ class PasswordError(ParentException):
     pass
 
 
+# family.py exceptions
 class FamilyError(ParentException):
+    pass
+
+
+# websocket.py exceptions
+class WebSocketError(ParentException):
     pass

@@ -27,7 +27,7 @@ class Password:
         if not self.identifier_credentials:
             raise ValueError("Must provide an email or username")
 
-    def __get_session(self) -> None:
+    def _get_session(self) -> None:
         url = "https://accounts.spotify.com/en/password-reset"
         resp = self.client.get(url)
 
@@ -37,7 +37,7 @@ class Password:
         self.csrf = parse_json_string(resp.response, "csrf")
         self.flowID = str(uuid.uuid4())
 
-    def __reset_password(self, token: str) -> None:
+    def _reset_password(self, token: str) -> None:
         payload = {
             "captcha": token,
             "emailOrUsername": self.identifier_credentials,
@@ -54,10 +54,12 @@ class Password:
             raise PasswordError("Could not reset password", error=resp.error.string)
 
     def reset(self) -> None:
-        self.__get_session()
-
+        self._get_session()
         now = time.time()
         self.logger.attempt("Solving captcha...")
+        
+        if self.solver is None:
+            raise PasswordError("Solver not set")
 
         captcha_response = self.solver.solve_captcha(
             "https://accounts.spotify.com/en/password-reset",
@@ -70,7 +72,7 @@ class Password:
             raise PasswordError("Could not solve captcha")
 
         self.logger.info("Solved Captcha", time_taken=f"{int(time.time() - now)}s")
-        self.__reset_password(captcha_response)
+        self._reset_password(captcha_response)
         self.logger.info(
             "Successfully reset password", time_taken=f"{int(time.time() - now)}s"
         )

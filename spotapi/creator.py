@@ -31,7 +31,7 @@ class Creator:
         self.client = self.cfg.client
         self.submission_id = str(uuid.uuid4())
 
-    def __get_session(self) -> None:
+    def _get_session(self) -> None:
         url = "https://www.spotify.com/ca-en/signup"
         resp = self.client.get(url)
 
@@ -43,7 +43,7 @@ class Creator:
         self.csrf_token = parse_json_string(resp.response, "csrfToken")
         self.flow_id = parse_json_string(resp.response, "flowId")
 
-    def __process_register(self, captcha_token: str) -> None:
+    def _process_register(self, captcha_token: str) -> None:
         payload = {
             "account_details": {
                 "birthdate": random_dob(),
@@ -90,17 +90,17 @@ class Creator:
             AccountChallenge(self.client, resp.response, self.cfg).defeat_challenge()
 
     def register(self) -> None:
-        self.__get_session()   
+        self._get_session()
         if self.cfg.solver is None:
             raise GeneratorError("Solver not set")
-        
+
         captcha_token = self.cfg.solver.solve_captcha(
             "https://www.spotify.com/ca-en/signup",
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
             "website/signup/submit_email",
             "v3",
         )
-        self.__process_register(captcha_token)
+        self._process_register(captcha_token)
 
 
 class AccountChallenge:
@@ -110,7 +110,7 @@ class AccountChallenge:
         self.session_id = parse_json_string(raw_response, "session_id")
         self.cfg = cfg
 
-    def __get_session(self) -> None:
+    def _get_session(self) -> None:
         url = "https://challenge.spotify.com/api/v1/get-session"
         payload = {"session_id": self.session_id}
         resp = self.client.post(url, json=payload)
@@ -122,7 +122,7 @@ class AccountChallenge:
 
         self.challenge_url = parse_json_string(resp.response, "url")
 
-    def __submit_challenge(self, token: str) -> None:
+    def _submit_challenge(self, token: str) -> None:
         session_id = self.challenge_url.split("c/")[1].split("/")[0]
         challenge_id = self.challenge_url.split(session_id + "/")[1].split("/")[0]
         url = "https://challenge.spotify.com/api/v1/invoke-challenge-command"
@@ -142,7 +142,7 @@ class AccountChallenge:
         if resp.fail:
             raise GeneratorError("Could not submit challenge", error=resp.error.string)
 
-    def __complete_challenge(self) -> None:
+    def _complete_challenge(self) -> None:
         url = (
             "https://spclient.wg.spotify.com/signup/public/v2/account/complete-creation"
         )
@@ -158,16 +158,16 @@ class AccountChallenge:
             raise GeneratorError("Could not complete challenge", error=resp.response)
 
     def defeat_challenge(self) -> None:
-        self.__get_session()
+        self._get_session()
         if self.cfg.solver is None:
             raise GeneratorError("Solver not set")
-        
+
         token = self.cfg.solver.solve_captcha(
             self.challenge_url,
             "6LeO36obAAAAALSBZrY6RYM1hcAY7RLvpDDcJLy3",
             "challenge",
             "v2",
         )
-        self.__submit_challenge(token)
-        self.__complete_challenge()
+        self._submit_challenge(token)
+        self._complete_challenge()
         self.cfg.logger.info("Successfully defeated challenge. Account created.")

@@ -246,7 +246,7 @@ class PrivatePlaylist:
 
         return resp.response
 
-    def __stage_create_playlist(self, name: str) -> str:
+    def _stage_create_playlist(self, name: str) -> str:
         url = "https://spclient.wg.spotify.com/playlist/v2/playlist"
         payload = {
             "ops": [
@@ -283,7 +283,7 @@ class PrivatePlaylist:
 
     def create_playlist(self, name: str) -> str:
         """Creates a new playlist"""
-        playlist_id = self.__stage_create_playlist(name)
+        playlist_id = self._stage_create_playlist(name)
         url = f"https://spclient.wg.spotify.com/playlist/v2/user/{self.user.username}/rootlist/changes"
         payload = {
             "deltas": [

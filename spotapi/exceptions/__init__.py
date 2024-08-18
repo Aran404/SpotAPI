@@ -12,4 +12,5 @@ from .errors import (
     UserError,
     GeneratorError,
     PasswordError,
+    WebSocketError,
 )

@@ -90,7 +90,7 @@ class Artist:
             ]["artists"]["items"]
             offset += UPPER_LIMIT
 
-    def __do_follow(
+    def _do_follow(
         self,
         artist_id: str,
         /,
@@ -126,8 +126,8 @@ class Artist:
 
     def follow(self, artist_id: str, /) -> None:
         """Follow an artist"""
-        return self.__do_follow(artist_id)
+        return self._do_follow(artist_id)
 
     def unfollow(self, artist_id: str, /) -> None:
         """Unfollow an artist"""
-        return self.__do_follow(artist_id, action="removeFromLibrary")
+        return self._do_follow(artist_id, action="removeFromLibrary")

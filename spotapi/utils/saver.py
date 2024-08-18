@@ -51,7 +51,10 @@ class JSONSaver(SaverProtocol):
                 with open(self.path, "r") as f:
                     file_content = f.read()
                     current = json.loads(file_content) if file_content.strip() else []
-
+                    # Checks if identifier exists
+                    if current:
+                        current = [item for item in current if not any(item["identifier"] == d["identifier"] for d in data)]
+                                
             current.extend(data)
 
             with open(self.path, "w") as f:
