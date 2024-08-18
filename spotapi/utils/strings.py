@@ -1,7 +1,26 @@
+from typing import Optional
 import string
 import random
-from typing import Optional
+import base64
+import os
 
+def generate_base64(length: int) -> str:
+    def generate_random_string(length: int) -> str:
+        random_string = "".join(
+            chr(random.randint(0, 255)) for _ in range(length)
+        )
+        return random_string
+
+    random_string = generate_random_string(length)
+    encoded_string = base64.b64encode(random_string.encode('latin1')).decode('ascii')
+    
+    return encoded_string
+
+def random_hex_string(length: int):
+    num_bytes = (length + 1) // 2
+    random_bytes = os.urandom(num_bytes)
+    hex_string = random_bytes.hex()
+    return hex_string[:length]
 
 def parse_json_string(b: str, s: str) -> str:
     start_index = b.find(f'{s}":"')

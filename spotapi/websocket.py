@@ -14,7 +14,7 @@ class WebsocketStreamer(BaseClient, Login):
     Standard streamer to connect to spotify's websocket API.
     """
 
-    def __new__(cls, login: Login) -> WebsocketStreamer:
+    def __new__(cls, login: Login, ignore_init_packet: Optional[bool] = True) -> WebsocketStreamer:
         instance = super().__new__(cls)
         instance.__dict__.update(login.__dict__)
         return instance
@@ -80,7 +80,6 @@ class WebsocketStreamer(BaseClient, Login):
             or dict(packet["headers"]).get("Spotify-Connection-Id") is None
         ):
             raise ValueError("Invalid init packet")
-
         return packet["headers"]["Spotify-Connection-Id"]
 
     def get_player_state(self) -> dict:

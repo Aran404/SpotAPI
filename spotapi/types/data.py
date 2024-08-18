@@ -5,8 +5,8 @@ from spotapi.http.request import TLSClient
 
 @dataclass
 class Config:
-    solver: CaptchaProtocol
     logger: LoggerProtocol
+    solver: CaptchaProtocol | None = field(default=None)
     client: TLSClient = field(default=TLSClient("chrome_120", "", auto_retries=3))
 
 

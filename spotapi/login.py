@@ -32,9 +32,6 @@ class Login:
         if self.identifier_credentials is None:
             raise ValueError("Must provide an email or username")
 
-        if not self.solver:
-            raise ValueError("Must provide a Captcha solver")
-
         self.client.fail_exception = LoginError
         self._authorized = False
 
@@ -189,6 +186,10 @@ class Login:
         self.__get_session()
 
         self.logger.attempt("Solving captcha...")
+        
+        if self.solver is None:
+            raise LoginError("Solver not set")
+        
         captcha_response = self.solver.solve_captcha(
             "https://accounts.spotify.com/en/login",
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
@@ -225,6 +226,9 @@ class LoginChallenge:
             raise LoginError("Could not get challenge", error=resp.error.string)
 
     def __construct_challenge_payload(self) -> Mapping[str, Any]:
+        if self.l.solver is None:
+            raise LoginError("Solver not set")
+    
         captcha_response = self.l.solver.solve_captcha(
             self.challenge_url,
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",

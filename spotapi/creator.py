@@ -90,7 +90,10 @@ class Creator:
             AccountChallenge(self.client, resp.response, self.cfg).defeat_challenge()
 
     def register(self) -> None:
-        self.__get_session()
+        self.__get_session()   
+        if self.cfg.solver is None:
+            raise GeneratorError("Solver not set")
+        
         captcha_token = self.cfg.solver.solve_captcha(
             "https://www.spotify.com/ca-en/signup",
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
@@ -156,6 +159,9 @@ class AccountChallenge:
 
     def defeat_challenge(self) -> None:
         self.__get_session()
+        if self.cfg.solver is None:
+            raise GeneratorError("Solver not set")
+        
         token = self.cfg.solver.solve_captcha(
             self.challenge_url,
             "6LeO36obAAAAALSBZrY6RYM1hcAY7RLvpDDcJLy3",
