@@ -4,11 +4,6 @@
 A class designed to control the Spotify player API without requiring a Spotify Premium account.\
 **NOTE**: Only works at the moment if you dump your own cookies. Find out how to import cookies [HERE](../README.md/#import-cookies)
 
-## Attributes:
-- **`login (Login)`**: The login instance used for authentication.
-- **`device_id (str)`**: The device ID to connect to for the player.
-- **`use_active_device (bool)`**: If True, the player will use the active device.
-
 ## Methods:
 
 ### `__init__(self, login: Login, device_id: str | None = None) -> None`
@@ -19,6 +14,7 @@ Initializes the `Player` class and sets up the player to interact with the speci
 **Parameters**:
 - **`login (Login)`**: The login instance used for authentication.
 - **`device_id (str, optional)`**: The device ID to connect to for the player. If not provided, it will use the active device.
+- **`use_active_device (bool)`**: If True, the player will use the active device.
 
 **Example**:
 ```python
