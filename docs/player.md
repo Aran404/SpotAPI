@@ -1,7 +1,7 @@
 # Player Class
 
 **Description**:  
-A class designed to control the Spotify player API without requiring a Spotify Premium account.
+A class designed to control the Spotify player API without requiring a Spotify Premium account.\
 **NOTE**: Only works at the moment if you dump your own cookies. Find out how to import cookies [HERE](../README.md/#import-cookies)
 
 ## Attributes:
