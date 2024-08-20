@@ -1,5 +1,5 @@
 import json
-from typing import Any, Generator, List, Mapping, Optional, Tuple
+from typing import Any, Generator, List, Mapping, Tuple
 
 from spotapi.exceptions import SongError
 from spotapi.http.request import TLSClient
@@ -15,7 +15,7 @@ class Song:
 
     def __init__(
         self,
-        playlist: Optional[PrivatePlaylist] = None,
+        playlist: PrivatePlaylist | None = None,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
@@ -141,12 +141,12 @@ class Song:
                 "Could not remove song from playlist", error=resp.error.string
             )
 
-    def _parse_playlist_items(
-        self,
+    @staticmethod
+    def parse_playlist_items(
         items: List[Mapping[str, Any]],
         *,
-        song_id: Optional[str] = None,
-        song_name: Optional[str] = None,
+        song_id: str | None = None,
+        song_name: str | None = None,
         all_instances: bool = False,
     ) -> Tuple[List[str], bool]:
         uids: List[str] = []
@@ -169,9 +169,9 @@ class Song:
         self,
         *,
         all_instances: bool = False,
-        uid: Optional[str] = None,
-        song_id: Optional[str] = None,
-        song_name: Optional[str] = None,
+        uid: str | None = None,
+        song_id: str | None = None,
+        song_name: str | None = None,
     ) -> None:
         """
         Removes a song from the playlist.
@@ -195,7 +195,7 @@ class Song:
         if not uid:
             for playlist_chunk in playlist:
                 items = playlist_chunk["items"]
-                extended_uids, stop = self._parse_playlist_items(
+                extended_uids, stop = Song.parse_playlist_items(
                     items,
                     song_id=song_id,
                     song_name=song_name,

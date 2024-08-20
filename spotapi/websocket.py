@@ -1,33 +1,33 @@
 from __future__ import annotations
 from websockets.sync.client import connect
+from spotapi.utils.strings import random_hex_string
 from spotapi.login import Login
 from spotapi.client import BaseClient
 from spotapi.exceptions import WebSocketError
+from typing import Any
 import threading
 import atexit
 import json
 import time
+import signal
 
 
 class WebsocketStreamer:
     """
-    Standard streamer to connect to spotify's websocket API.
+    Standard streamer to connect to Spotify's websocket API.
     """
 
-    def __new__(cls, login: Login) -> WebsocketStreamer:
-        instance = super().__new__(cls)
-        instance.__dict__.update(login.__dict__)
-        return instance
-
-    def __init__(self, login: Login):
+    def __init__(self, login: Login) -> None:
         if not login.logged_in:
             raise ValueError("Must be logged in")
 
         self.base = BaseClient(login.client)
         self.client = self.base.client
-        
+
         self.base.get_session()
         self.base.get_client_token()
+
+        self.device_id = random_hex_string(32)
 
         uri = f"wss://gue1-dealer2.spotify.com/?access_token={self.base.access_token}"
         self.ws = connect(
@@ -39,8 +39,11 @@ class WebsocketStreamer:
         self.ws_dump: dict | None = None
         self.connection_id = self.get_init_packet()
 
-        threading.Thread(target=self.keep_alive, daemon=True).start()
+        self.keep_alive_thread = threading.Thread(target=self.keep_alive, daemon=True)
+        self.keep_alive_thread.start()
+
         atexit.register(self.ws.close)
+        signal.signal(signal.SIGINT, self.handle_interrupt)
 
     def register_device(self) -> None:
         url = f"https://gue1-spclient.spotify.com/track-playback/v1/devices"
@@ -66,7 +69,7 @@ class WebsocketStreamer:
                         "manifest_urls_audio_ad",
                     ],
                 },
-                "device_id": self.base.device_id,
+                "device_id": self.device_id,
                 "device_type": "computer",
                 "metadata": {},
                 "model": "web_player",
@@ -79,15 +82,14 @@ class WebsocketStreamer:
             "client_version": "harmony:4.43.2-a61ecaf5",
             "volume": 65535,
         }
-        
-        resp = self.client.post(url, json=payload,authenticate=True)
+
+        resp = self.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:
             raise WebSocketError("Could not register device", error=resp.error.string)
 
-    def connect_device(self) -> None:
-        self.client.cookies.clear()
-        url = f"https://gue1-spclient.spotify.com/connect-state/v1/devices/hobs_{self.base.device_id}"
+    def connect_device(self) -> dict[str, Any]:
+        url = f"https://gue1-spclient.spotify.com/connect-state/v1/devices/hobs_{self.device_id}"
         payload = {
             "member_type": "CONNECT_STATE",
             "device": {
@@ -105,22 +107,25 @@ class WebsocketStreamer:
         }
 
         resp = self.client.put(url, json=payload, authenticate=True, headers=headers)
-        
+
         if resp.fail:
             raise WebSocketError("Could not connect device", error=resp.error.string)
 
+        return resp.response
+
     def keep_alive(self) -> None:
         while True:
-            # We need to make sure the ws doesn't read the PONG
-            with self.rlock:
-                self.ws.send('{"type":"ping"}')
-                self.ws.recv()
-
-            time.sleep(60)
+            try:
+                time.sleep(60)
+                with self.rlock:
+                    self.ws.send('{"type":"ping"}')
+            except (ConnectionError, KeyboardInterrupt):
+                break
 
     def get_packet(self) -> dict:
         with self.rlock:
-            self.ws_dump = dict(json.loads(self.ws.recv()))
+            ws_dump = dict(json.loads(self.ws.recv()))
+            self.ws_dump = ws_dump
             return self.ws_dump
 
     def get_init_packet(self) -> str:
@@ -132,5 +137,10 @@ class WebsocketStreamer:
             or dict(packet["headers"]).get("Spotify-Connection-Id") is None
         ):
             raise ValueError("Invalid init packet")
-        
+
         return packet["headers"]["Spotify-Connection-Id"]
+
+    def handle_interrupt(self, signum: int, frame: Any) -> None:
+        """Handle interrupt signal (Ctrl+C)"""
+        self.ws.close()
+        exit(0)

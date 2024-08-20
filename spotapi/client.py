@@ -15,17 +15,17 @@ class BaseClient:
     NOTE: Should not be used directly. Use the Spotify classes instead.
     """
 
+    js_pack: str | None = None
+    client_version: str | None = None
+    access_token: str | None = None
+    client_token: str | None = None
+    client_id: str | None = None
+    device_id: str | None = None
+    raw_hashes: str | None = None
+
     def __init__(self, client: TLSClient) -> None:
         self.client = client
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)
-
-        self.js_pack: str | None = None
-        self.client_version: str | None = None
-        self.access_token: str | None = None
-        self.client_token: str | None = None
-        self.client_id: str | None = None
-        self.device_id: str | None = None
-        self.raw_hashes: str | None = None
 
         self.browser_version = self.client.client_identifier.split("_")[1]
         self.client.headers.update(

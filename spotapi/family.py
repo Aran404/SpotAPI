@@ -9,6 +9,12 @@ from spotapi.utils.strings import parse_json_string
 class JoinFamily:
     """
     Wrapper class for joining a family with a user and a host provided.
+
+    Parameters
+    ----------
+    user_login (Login): The user's login object.
+    host (Family): The host user's family object.
+    country (str): The country to restrict the autocomplete to.
     """
 
     def __init__(self, user_login: Login, host: "Family", country: str) -> None:
@@ -91,6 +97,16 @@ class JoinFamily:
 class Family(User):
     """
     Spotify Family generic methods.
+
+    Parameters
+    ----------
+    login : Login
+        A logged in Login object.
+
+    Raises
+    ------
+    ValueError
+        If the user does not have premium.
     """
 
     def __init__(self, login: Login) -> None:

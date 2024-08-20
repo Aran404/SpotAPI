@@ -9,6 +9,14 @@ import uuid
 class Password:
     """
     Preforms password recoveries.
+
+    Parameters
+    ----------
+    cfg (Config): Configuration object.
+    email (Optional[str], optional): Email address to use for recovery. Defaults to None.
+    username (Optional[str], optional): Username to use for recovery. Defaults to None.
+
+    Email or username must be provided.
     """
 
     def __init__(
@@ -17,7 +25,7 @@ class Password:
         *,
         email: Optional[str] = None,
         username: Optional[str] = None,
-    ):
+    ) -> None:
         self.solver = cfg.solver
         self.client = cfg.client
         self.logger = cfg.logger
@@ -57,7 +65,7 @@ class Password:
         self._get_session()
         now = time.time()
         self.logger.attempt("Solving captcha...")
-        
+
         if self.solver is None:
             raise PasswordError("Solver not set")
 

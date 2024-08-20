@@ -78,7 +78,7 @@ class User:
         """
         if self.login.solver is None:
             raise UserError("Captcha solver not set")
-        
+
         captcha_response = self.login.solver.solve_captcha(
             "https://www.spotify.com",
             "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",

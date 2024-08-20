@@ -72,3 +72,8 @@ class FamilyError(ParentException):
 # websocket.py exceptions
 class WebSocketError(ParentException):
     pass
+
+
+# player.py exceptions
+class PlayerError(ParentException):
+    pass

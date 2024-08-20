@@ -11,6 +11,8 @@ from spotapi.types.data import Config
 from spotapi.utils.logger import Logger, NoopLogger
 from spotapi.utils.saver import *
 from spotapi.websocket import WebsocketStreamer
+from spotapi.status import PlayerStatus, EventManager
+from spotapi.player import Player
 from spotapi.family import Family, JoinFamily
 from spotapi.http import *
 from spotapi.exceptions import *

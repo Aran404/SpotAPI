@@ -13,4 +13,5 @@ from .errors import (
     GeneratorError,
     PasswordError,
     WebSocketError,
+    PlayerError,
 )

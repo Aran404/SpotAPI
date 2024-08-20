@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import time
-from typing import Any, Generator, Mapping, Optional
+from typing import Any, Generator, Mapping
 
 from spotapi.exceptions import PlaylistError
 from spotapi.http.request import TLSClient
@@ -16,11 +16,16 @@ class PublicPlaylist:
     """
     Allows you to get all public information on a playlist.
     No login is required.
+
+    Parameters
+    ----------
+    playlist (Optional[str]): The Spotify URI of the playlist.
+    client (TLSClient): An instance of TLSClient to use for requests.
     """
 
     def __init__(
         self,
-        playlist: Optional[str] = None,
+        playlist: str | None = None,
         /,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
@@ -97,12 +102,17 @@ class PublicPlaylist:
 class PrivatePlaylist:
     """
     Methods on playlists that you can only do whilst logged in.
+
+    Parameters
+    ----------
+    login (Login): The login object to use
+    playlist (Optional[str]): The Spotify URI of the playlist.
     """
 
     def __init__(
         self,
         login: Login,
-        playlist: Optional[str] = None,
+        playlist: str | None = None,
     ) -> None:
         if not login.logged_in:
             raise ValueError("Must be logged in")
@@ -320,3 +330,19 @@ class PrivatePlaylist:
             raise PlaylistError("Could not create playlist", error=resp.error.string)
 
         return playlist_id
+
+    def recommended_songs(self, num_songs: int = 20) -> Mapping[str, Any]:
+        url = "https://spclient.wg.spotify.com/playlistextender/extendp/"
+        payload = {
+            "playlistURI": f"spotify:playlist:{self.playlist_id}",
+            "trackSkipIDs": [],
+            "numResults": num_songs,
+        }
+        resp = self.login.client.post(url, json=payload, authenticate=True)
+
+        if resp.fail:
+            raise PlaylistError(
+                "Could not get recommended songs", error=resp.error.string
+            )
+
+        return resp.response

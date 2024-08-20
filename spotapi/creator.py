@@ -14,6 +14,13 @@ from spotapi.utils.strings import (
 class Creator:
     """
     Creates a new Spotify account.
+
+    Parameters
+    ----------
+    cfg (Config): Configuration object.
+    email (str, optional): Email address to use for the account. Defaults to a randomly generated email.
+    display_name (str, optional): Display name to use for the account. Defaults to a randomly generated string.
+    password (str, optional): Password to use for the account. Defaults to a randomly generated string.
     """
 
     def __init__(
@@ -100,6 +107,7 @@ class Creator:
             "website/signup/submit_email",
             "v3",
         )
+        self._process_register(captcha_token)
         self._process_register(captcha_token)
 
 

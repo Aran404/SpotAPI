@@ -2,21 +2,23 @@
 
 Welcome to SpotAPI! This Python library is designed to interact with the private and public Spotify APIs, emulating the requests typically made through a web browser. This wrapper provides a convenient way to access Spotify’s rich set of features programmatically.
 
-**Note**: This project is intended solely for educational purposes and should be used responsibly. Accessing private endpoints and scraping data without proper authorization may violate Spotify's terms of service
+**Note**: This project is intended solely for educational purposes and should be used responsibly. Accessing private endpoints and scraping data without proper authorization may violate Spotify's terms of service.
 
 ## Table of Contents
 
 1. [Introduction](#spotapi)
 2. [Features](#features)
-3. [Installation](#installation)
-4. [Quick Examples](#quick-examples)
-5. [Import Cookies](#import-cookies)
-6. [Contributing](#contributing)
-7. [Roadmap](#roadmap)
-8. [License](#license)
+3. [Docs](#docs)
+4. [Installation](#installation)
+5. [Quick Examples](#quick-examples)
+6. [Import Cookies](#import-cookies)
+7. [Contributing](#contributing)
+8. [Roadmap](#roadmap)
+9. [License](#license)
 
 
 ## Features
+- **No Premium Required**: Unlike the Web API which requires Spotify Premium, **SpotAPI** requires no Spotify Premium at all!
 - **Public API Access**: Retrieve and manipulate public Spotify data such as playlists, albums, and tracks with ease.
 - **Private API Access**: Explore private Spotify endpoints to tailor your application to your needs.
 - **Ready to Use**: **SpotAPI** is designed for immediate integration, allowing you to accomplish tasks with just a few lines of code.
@@ -24,6 +26,19 @@ Welcome to SpotAPI! This Python library is designed to interact with the private
 - **Browser-like Requests**: Accurately replicate the HTTP requests Spotify makes in the browser, providing a true to web experience while remaining undetected.
 
 Everything you can do with Spotify, **SpotAPI** can do with just a user’s login credentials.
+
+
+## Docs
+[**Artist.py**](./docs/artist.md)
+[**Creator.py**](./docs/creator.md)
+[**Family.py**](./docs/family.md)
+[**Login.py**](./docs/login.md)
+[**Password.py**](./docs/password.md)
+[**Player.py**](./docs/player.md)
+[**Song.py**](./docs/song.md)
+[**Playlist.py**](./docs/playlist.md)
+[**Status.py**](./docs/status.md)
+[**User.py**](./docs/user.md)
 
 
 ## Installation
@@ -120,9 +135,9 @@ Contributions are welcome! If you find any issues or have suggestions, please op
 > I'll most likely do these if the project gains some traction
 
 - [ ] No Captcha For Login (**100 Stars**)
-- [ ] In Depth Documentation
-- [ ] Websocket Listener (Is not working ATM)
-- [ ] Player
+- [x] In Depth Documentation
+- [x] Websocket Listener
+- [x] Player
 - [ ] More wrappers around this project
 
 ## License

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Mapping, Optional, List
+from typing import Any, Mapping
 from urllib.parse import urlencode, quote
 
 from spotapi.types import Config, SaverProtocol
@@ -12,6 +12,15 @@ from spotapi.utils.strings import parse_json_string
 class Login:
     """
     Base class for logging in to Spotify.
+
+    Parameters
+    ----------
+    cfg (Config): Configuration object.
+    password (str): User's password.
+    email (Optional[str], optional): User's email. Defaults to None.
+    username (Optional[str], optional): User's username. Defaults to None.
+
+    Email or username must be provided.
     """
 
     def __init__(
@@ -19,8 +28,8 @@ class Login:
         cfg: Config,
         password: str,
         *,
-        email: Optional[str] = None,
-        username: Optional[str] = None,
+        email: str | None = None,
+        username: str | None = None,
     ):
         self.solver = cfg.solver
         self.client = cfg.client
@@ -38,6 +47,9 @@ class Login:
     def save(self, saver: SaverProtocol) -> None:
         """
         Saves the session with the provided Saver.
+
+        Args:
+            saver (SaverProtocol): The saver to save the session to.
         """
         if not self.logged_in:
             raise ValueError("Cannot save session if it is not logged in")
@@ -56,6 +68,13 @@ class Login:
     def from_cookies(cls, dump: Mapping[str, Any], cfg: Config) -> Login:
         """
         Constructs a Login instance using cookie data and configuration.
+
+        Args:
+            dump (Mapping[str, Any]): The session dump.
+            cfg (Config): The configuration object.
+
+        Returns:
+            Login: The constructed Login instance.
         """
         password = dump.get("password")
         password = "" if password is None else password
@@ -89,12 +108,21 @@ class Login:
         return instantiated
 
     @classmethod
-    def from_saver(cls, saver: SaverProtocol, cfg: Config, identifier: str) -> Login:
+    def from_saver(
+        cls, saver: SaverProtocol, cfg: Config, identifier: str, **kwargs
+    ) -> Login:
         """
         Loads a session from a Saver Class.
-        NOTE: Kwargs are not used, make sure the defaults for the savers are what you want (or just implement this method yourself).
+
+        Args:
+            saver (SaverProtocol): The saver to load the session from.
+            cfg (Config): The configuration object.
+            identifier (str): The identifier of the session.
+
+        Returns:
+            Login: The loaded Login instance.
         """
-        dump = saver.load(query={"identifier": identifier})
+        dump = saver.load(query={"identifier": identifier}, **kwargs)
         return cls.from_cookies(dump, cfg)
 
     @property
@@ -107,15 +135,19 @@ class Login:
 
     def __str__(self) -> str:
         return f"Login(password={self.password!r}, identifier_credentials={self.identifier_credentials!r})"
-    
+
     def _get_add_cookie(self, _url: str | None = None) -> None:
-        urls = ["https://open.spotify.com/", "https://pixel.spotify.com/v2/sync?ce=1&pp="] if not _url else [_url]
+        urls = (
+            ["https://open.spotify.com/", "https://pixel.spotify.com/v2/sync?ce=1&pp="]
+            if not _url
+            else [_url]
+        )
         for url in urls:
             resp = self.client.get(url)
 
             if resp.fail:
                 raise LoginError("Could not get session", error=resp.error.string)
-    
+
     def _get_session(self) -> None:
         url = "https://accounts.spotify.com/en/login"
         resp = self.client.get(url)
@@ -126,7 +158,7 @@ class Login:
         self.csrf_token = resp.raw.cookies.get("sp_sso_csrf_token")
         self.flow_id = parse_json_string(resp.response, "flowCtx")
         # Some additional cookies
-        self.client.cookies.set("remember", quote(self.identifier_credentials)) # type: ignore
+        self.client.cookies.set("remember", quote(self.identifier_credentials))  # type: ignore
         self._get_add_cookie()
 
     def _password_payload(self, captcha_key: str) -> str:
@@ -148,7 +180,7 @@ class Login:
             "Content-Type": "application/x-www-form-urlencoded",
             "X-Csrf-Token": self.csrf_token,
         }
-        
+
         resp = self.client.post(url, data=payload, headers=headers)
 
         if resp.fail:

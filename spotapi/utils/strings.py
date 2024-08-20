@@ -5,7 +5,9 @@ import base64
 import os
 
 
-def generate_base64(length: int) -> str:
+def random_b64_string(length: int) -> str:
+    """Used by Spotify internally"""
+
     def generate_random_string(length: int) -> str:
         random_string = "".join(chr(random.randint(0, 255)) for _ in range(length))
         return random_string
@@ -17,6 +19,7 @@ def generate_base64(length: int) -> str:
 
 
 def random_hex_string(length: int):
+    """Used by Spotify internally"""
     num_bytes = (length + 1) // 2
     random_bytes = os.urandom(num_bytes)
     hex_string = random_bytes.hex()

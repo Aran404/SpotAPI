@@ -7,7 +7,7 @@ import atexit
 import json
 import os
 import sqlite3
-from typing import Any, List, Mapping, Optional
+from typing import Any, List, Mapping
 
 import pymongo
 import redis
@@ -53,8 +53,14 @@ class JSONSaver(SaverProtocol):
                     current = json.loads(file_content) if file_content.strip() else []
                     # Checks if identifier exists
                     if current:
-                        current = [item for item in current if not any(item["identifier"] == d["identifier"] for d in data)]
-                                
+                        current = [
+                            item
+                            for item in current
+                            if not any(
+                                item["identifier"] == d["identifier"] for d in data
+                            )
+                        ]
+
             current.extend(data)
 
             with open(self.path, "w") as f:

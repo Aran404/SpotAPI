@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Generator, Literal, Mapping, Optional
+from typing import Any, Generator, Literal, Mapping
 
 from spotapi.client import BaseClient
 from spotapi.exceptions import ArtistError
@@ -13,11 +13,20 @@ from spotapi.client import BaseClient
 class Artist:
     """
     A class that represents an artist in the Spotify catalog.
+
+    Parameters
+    ----------
+    login : Optional[Login], optional
+        A logged in Login object. This is required for certain methods.
+        If not provided, some methods will raise a ValueError.
+    client : TLSClient, optional
+        A TLSClient used for making requests to the API.
+        If not provided, a default one will be used.
     """
 
     def __init__(
         self,
-        login: Optional[Login] = None,
+        login: Login | None = None,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
