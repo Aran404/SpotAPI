@@ -228,7 +228,7 @@ class Player(PlayerStatus):
 
     def pause(self) -> None:
         """Pauses the player."""
-        self.pause()
+        self.run_command(self.device_id, self.active_id, "pause")
 
     def resume(self) -> None:
         """Resumes the player."""
