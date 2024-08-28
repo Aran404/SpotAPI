@@ -29,16 +29,16 @@ Everything you can do with Spotify, **SpotAPI** can do with just a user’s logi
 
 
 ## Docs
-[**Artist.py**](./docs/artist.md)
-[**Creator.py**](./docs/creator.md)
-[**Family.py**](./docs/family.md)
-[**Login.py**](./docs/login.md)
-[**Password.py**](./docs/password.md)
-[**Player.py**](./docs/player.md)
-[**Song.py**](./docs/song.md)
-[**Playlist.py**](./docs/playlist.md)
-[**Status.py**](./docs/status.md)
-[**User.py**](./docs/user.md)
+- [**Artist.py**](./docs/artist.md)
+- [**Creator.py**](./docs/creator.md)
+- [**Family.py**](./docs/family.md)
+- [**Login.py**](./docs/login.md)
+- [**Password.py**](./docs/password.md)
+- [**Player.py**](./docs/player.md)
+- [**Song.py**](./docs/song.md)
+- [**Playlist.py**](./docs/playlist.md)
+- [**Status.py**](./docs/status.md)
+- [**User.py**](./docs/user.md)
 
 
 ## Installation
