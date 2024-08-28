@@ -1,12 +1,15 @@
 import json
-from typing import Any, Generator, List, Mapping, Tuple
+from collections.abc import Mapping, Iterable, Generator
+from typing import Any, List, Tuple
 
+from spotapi.types.annotations import enforce
 from spotapi.exceptions import SongError
 from spotapi.http.request import TLSClient
 from spotapi.client import BaseClient
 from spotapi.playlist import PrivatePlaylist, PublicPlaylist
 
 
+@enforce
 class Song:
     """
     Extends the PrivatePlaylist class with methods that can only be used while logged in.
@@ -20,7 +23,7 @@ class Song:
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         self.playlist = playlist
-        self.base = BaseClient(client=playlist.client if (playlist is not None) else client)  # type: ignore
+        self.base = BaseClient(client=playlist.login.client if playlist else client)
 
     def query_songs(
         self, query: str, /, limit: int = 10, *, offset: int = 0
@@ -143,7 +146,7 @@ class Song:
 
     @staticmethod
     def parse_playlist_items(
-        items: List[Mapping[str, Any]],
+        items: Iterable[Mapping[str, Any]],
         *,
         song_id: str | None = None,
         song_name: str | None = None,

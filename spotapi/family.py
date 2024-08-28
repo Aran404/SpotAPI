@@ -1,11 +1,14 @@
 import uuid
+from typing import Any, List
+from collections.abc import Mapping
 from spotapi.user import User
 from spotapi.login import Login
-from typing import Mapping, Any, List
+from spotapi.types.annotations import enforce
 from spotapi.exceptions.errors import FamilyError
 from spotapi.utils.strings import parse_json_string
 
 
+@enforce
 class JoinFamily:
     """
     Wrapper class for joining a family with a user and a host provided.
@@ -94,6 +97,7 @@ class JoinFamily:
         self._add_to_family(place_id)
 
 
+@enforce
 class Family(User):
     """
     Spotify Family generic methods.

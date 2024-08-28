@@ -4,6 +4,7 @@ from spotapi.utils.strings import random_hex_string
 from spotapi.login import Login
 from spotapi.client import BaseClient
 from spotapi.exceptions import WebSocketError
+from spotapi.types.annotations import enforce
 from typing import Any
 import threading
 import atexit
@@ -12,6 +13,7 @@ import time
 import signal
 
 
+@enforce
 class WebsocketStreamer:
     """
     Standard streamer to connect to Spotify's websocket API.

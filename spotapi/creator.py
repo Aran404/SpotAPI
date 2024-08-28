@@ -1,5 +1,7 @@
 import time
 import uuid
+import json
+from spotapi.types.annotations import enforce
 from spotapi.types import Config
 from spotapi.exceptions import GeneratorError
 from spotapi.http.request import TLSClient
@@ -11,6 +13,7 @@ from spotapi.utils.strings import (
 )
 
 
+@enforce
 class Creator:
     """
     Creates a new Spotify account.
@@ -108,14 +111,15 @@ class Creator:
             "v3",
         )
         self._process_register(captcha_token)
-        self._process_register(captcha_token)
 
 
 class AccountChallenge:
     def __init__(self, client: TLSClient, raw_response: str, cfg: Config) -> None:
         self.client = client
         self.raw = raw_response
-        self.session_id = parse_json_string(raw_response, "session_id")
+        self.session_id = parse_json_string(
+            json.dumps(raw_response, separators=(",", ":")), "session_id"
+        )
         self.cfg = cfg
 
     def _get_session(self) -> None:
@@ -128,7 +132,9 @@ class AccountChallenge:
                 "Could not get challenge session", error=resp.error.string
             )
 
-        self.challenge_url = parse_json_string(resp.response, "url")
+        self.challenge_url = parse_json_string(
+            json.dumps(resp.response, separators=(",", ":")), "url"
+        )
 
     def _submit_challenge(self, token: str) -> None:
         session_id = self.challenge_url.split("c/")[1].split("/")[0]

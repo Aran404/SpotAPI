@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
+from spotapi.types.annotations import enforce
 
 from spotapi.exceptions import UserError
 from spotapi.login import Login
 
 
+@enforce
 class User:
     """
     Represents a Spotify user.

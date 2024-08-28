@@ -1,11 +1,16 @@
-from typing import Dict, Any, Callable, List
+from typing import Dict, Any, Callable, List, ParamSpec, TypeVar
+from spotapi.types.annotations import enforce
 from spotapi.types.data import PlayerState, Devices, Track
 from spotapi.login import Login
 from spotapi.websocket import WebsocketStreamer
 import threading
 import functools
 
+R = TypeVar("R")
+P = ParamSpec("P")
 
+
+@enforce
 class PlayerStatus(WebsocketStreamer):
     """
     A class used to represent the current state of the player.
@@ -133,6 +138,7 @@ class PlayerStatus(WebsocketStreamer):
         return state.prev_tracks
 
 
+@enforce
 class EventManager(PlayerStatus):
     def __init__(self, login: Login, s_device_id: str | None = None) -> None:
         super().__init__(login, s_device_id)
@@ -156,14 +162,14 @@ class EventManager(PlayerStatus):
                     f"Function {func.__name__} is already subscribed to event '{event}'"
                 )
 
-    def subscribe(self, event: str) -> Callable[..., Any]:
+    def subscribe(self, event: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """
         Decorator to subscribe a function to a Spotify websocket event.
         """
 
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @functools.wraps(func)
-            def wrapped(*args: Any, **kwargs: Any) -> Any:
+            def wrapped(*args: P.args, **kwargs: P.kwargs) -> R:
                 result = func(*args, **kwargs)
                 return result
 

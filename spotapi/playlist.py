@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 import re
 import time
-from typing import Any, Generator, Mapping
+from typing import Any
+from collections.abc import Mapping, Generator
+from spotapi.types.annotations import enforce
 
 from spotapi.exceptions import PlaylistError
 from spotapi.http.request import TLSClient
@@ -12,6 +14,7 @@ from spotapi.client import BaseClient
 from spotapi.user import User
 
 
+@enforce
 class PublicPlaylist:
     """
     Allows you to get all public information on a playlist.
@@ -132,8 +135,8 @@ class PrivatePlaylist:
         if "playlist:" in playlist:
             playlist = playlist.split("playlist:")[-1]
 
-        if hasattr(playlist, "playlist_id"):
-            self.playlist_id = playlist
+        if not playlist:
+            raise ValueError("Playlist not set")
 
         setattr(self, "playlist_id", playlist)
         self._playlist = True

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Generator, Literal, Mapping
+from spotapi.types.annotations import enforce
+from typing import Any, Literal
+from collections.abc import Mapping, Generator
 
 from spotapi.client import BaseClient
 from spotapi.exceptions import ArtistError
@@ -10,6 +12,7 @@ from spotapi.login import Login
 from spotapi.client import BaseClient
 
 
+@enforce
 class Artist:
     """
     A class that represents an artist in the Spotify catalog.
@@ -34,7 +37,7 @@ class Artist:
             raise ValueError("Must be logged in")
 
         self._login: bool = bool(login)
-        self.base = BaseClient(client=login.client if (login is not None) else client)  # type: ignore
+        self.base = BaseClient(client=login.client if (login is not None) else client)
 
     def query_artists(
         self, query: str, /, limit: int = 10, *, offset: int = 0

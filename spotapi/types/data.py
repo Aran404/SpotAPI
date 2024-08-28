@@ -10,12 +10,18 @@ class Config:
     solver: CaptchaProtocol | None = field(default=None)
     client: TLSClient = field(default=TLSClient("chrome_120", "", auto_retries=3))
 
+    def __str__(self) -> str:
+        return "Config()"
+
 
 @dataclass
 class SolverConfig:
     api_key: str
     captcha_service: str
     retries: int = field(default=120)
+
+    def __str__(self) -> str:
+        return "SolverConfig()"
 
 
 @dataclass
@@ -45,6 +51,9 @@ class Metadata:
         }
         return cls(**valid_keys)
 
+    def __str__(self) -> str:
+        return "Metadata()"
+
 
 @dataclass
 class Track:
@@ -63,6 +72,9 @@ class Track:
         }
         return cls(**valid_keys)
 
+    def __str__(self) -> str:
+        return "Track()"
+
 
 @dataclass
 class Index:
@@ -75,6 +87,9 @@ class Index:
             key: data[key] for key in cls.__annotations__.keys() if key in data
         }
         return cls(**valid_keys)
+
+    def __str__(self) -> str:
+        return "Index()"
 
 
 @dataclass
@@ -91,6 +106,9 @@ class PlayOrigin:
         }
         return cls(**valid_keys)
 
+    def __str__(self) -> str:
+        return "PlayOrigin()"
+
 
 @dataclass
 class Restrictions:
@@ -103,6 +121,9 @@ class Restrictions:
             key: data[key] for key in cls.__annotations__.keys() if key in data
         }
         return cls(**valid_keys)
+
+    def __str__(self) -> str:
+        return "Restrictions()"
 
 
 @dataclass
@@ -118,6 +139,9 @@ class Options:
         }
         return cls(**valid_keys)
 
+    def __str__(self) -> str:
+        return "Options()"
+
 
 @dataclass
 class PlaybackQuality:
@@ -132,6 +156,9 @@ class PlaybackQuality:
             key: data[key] for key in cls.__annotations__.keys() if key in data
         }
         return cls(**valid_keys)
+
+    def __str__(self) -> str:
+        return "PlaybackQuality()"
 
 
 @dataclass
@@ -149,6 +176,9 @@ class ContextMetadata:
             key: data[key] for key in cls.__annotations__.keys() if key in data
         }
         return cls(**valid_keys)
+
+    def __str__(self) -> str:
+        return "ContextMetadata()"
 
 
 @dataclass
@@ -215,6 +245,9 @@ class PlayerState:
             )
         return cls(**valid_keys)
 
+    def __str__(self) -> str:
+        return "PlayerState()"
+
 
 # Devices
 
@@ -230,6 +263,9 @@ class Hifi:
         }
         return Hifi(**valid_keys)
 
+    def __str__(self) -> str:
+        return "Hifi()"
+
 
 @dataclass
 class AudioOutputDeviceInfo:
@@ -244,6 +280,9 @@ class AudioOutputDeviceInfo:
             if key in data
         }
         return AudioOutputDeviceInfo(**valid_keys)
+
+    def __str__(self) -> str:
+        return "AudioOutputDeviceInfo()"
 
 
 @dataclass
@@ -302,6 +341,9 @@ class Capabilities:
 
         return Capabilities(**valid_keys)  # type: ignore
 
+    def __str__(self) -> str:
+        return "Capabilities()"
+
 
 @dataclass
 class MetadataMap:
@@ -315,6 +357,9 @@ class MetadataMap:
             key: data[key] for key in MetadataMap.__annotations__.keys() if key in data
         }
         return MetadataMap(**valid_keys)
+
+    def __str__(self) -> str:
+        return "MetadataMap()"
 
 
 @dataclass
@@ -362,6 +407,9 @@ class Device:
 
         return Device(**valid_keys)  # type: ignore
 
+    def __str__(self) -> str:
+        return "Device()"
+
 
 @dataclass
 class Devices:
@@ -372,3 +420,6 @@ class Devices:
     def from_dict(data: Dict, active_device_id: Optional[str]) -> "Devices":
         devices = {key: Device.from_dict(value) for key, value in data.items()}
         return Devices(devices=devices, active_device_id=active_device_id)
+
+    def __str__(self) -> str:
+        return "Devices()"

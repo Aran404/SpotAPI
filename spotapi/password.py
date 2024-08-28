@@ -1,11 +1,13 @@
 from spotapi.utils.strings import parse_json_string
 from spotapi.exceptions import PasswordError
 from spotapi.types.data import Config
+from spotapi.types.annotations import enforce
 from typing import Optional
 import time
 import uuid
 
 
+@enforce
 class Password:
     """
     Preforms password recoveries.

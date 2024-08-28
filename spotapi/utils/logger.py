@@ -1,5 +1,6 @@
 import os
 import time
+from typing import Any
 from threading import Lock
 from datetime import datetime
 from colorama import Fore, Style, init
@@ -24,7 +25,7 @@ class Logger(LoggerProtocol):
         return f"[{Style.BRIGHT}{Fore.LIGHTCYAN_EX}{str(t)}{Style.RESET_ALL}]"
 
     @staticmethod
-    def error(s: str, **extra) -> None:
+    def error(s: str, **extra: Any) -> None:
         with LOCK:
             fields = [
                 f"{Style.BRIGHT}{Fore.LIGHTBLUE_EX}{k}={Fore.LIGHTRED_EX}{v}{Style.RESET_ALL}"
@@ -36,7 +37,7 @@ class Logger(LoggerProtocol):
             )
 
     @staticmethod
-    def attempt(s: str, **extra) -> None:
+    def attempt(s: str, **extra: Any) -> None:
         with LOCK:
             fields = [
                 f"{Style.BRIGHT}{Fore.LIGHTBLUE_EX}{k}={Fore.LIGHTYELLOW_EX}{v}{Style.RESET_ALL}"
@@ -48,7 +49,7 @@ class Logger(LoggerProtocol):
             )
 
     @staticmethod
-    def info(s: str, **extra) -> None:
+    def info(s: str, **extra: Any) -> None:
         with LOCK:
             fields = [
                 f"{Style.BRIGHT}{Fore.LIGHTBLUE_EX}{k}={Fore.LIGHTMAGENTA_EX}{v}{Style.RESET_ALL}"
@@ -60,7 +61,7 @@ class Logger(LoggerProtocol):
             )
 
     @staticmethod
-    def fatal(s: str, **extra) -> None:
+    def fatal(s: str, **extra: Any) -> None:
         with LOCK:
             fields = [
                 f"{Style.BRIGHT}{Fore.LIGHTBLUE_EX}{k}={Fore.LIGHTRED_EX}{v}{Style.RESET_ALL}"
@@ -76,17 +77,17 @@ class Logger(LoggerProtocol):
 
 class NoopLogger(LoggerProtocol):
     @staticmethod
-    def error(s: str, **extra) -> None:
+    def error(s: str, **extra: Any) -> None:
         ...
 
     @staticmethod
-    def info(s: str, **extra) -> None:
+    def info(s: str, **extra: Any) -> None:
         ...
 
     @staticmethod
-    def fatal(s: str, **extra) -> None:
+    def fatal(s: str, **extra: Any) -> None:
         ...
 
     @staticmethod
-    def attempt(s: str, **extra) -> None:
+    def attempt(s: str, **extra: Any) -> None:
         ...

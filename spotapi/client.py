@@ -1,12 +1,14 @@
 import re
 import atexit
-from typing import Mapping
+from collections.abc import Mapping
+from spotapi.types.annotations import enforce
 
 from spotapi.exceptions import BaseClientError
 from spotapi.http.request import TLSClient
 from spotapi.utils.strings import parse_json_string
 
 
+@enforce
 class BaseClient:
     """
     A base class that all the Spotify classes extend.

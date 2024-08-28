@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
+from spotapi.types.annotations import enforce
 from urllib.parse import urlencode, quote
 
 from spotapi.types import Config, SaverProtocol
@@ -9,6 +11,7 @@ from spotapi.exceptions import LoginError
 from spotapi.utils.strings import parse_json_string
 
 
+@enforce
 class Login:
     """
     Base class for logging in to Spotify.

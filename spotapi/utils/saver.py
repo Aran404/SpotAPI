@@ -29,6 +29,9 @@ class JSONSaver(SaverProtocol):
         self.rlock = self.rwlock.gen_rlock()
         self.wlock = self.rwlock.gen_wlock()
 
+    def __str__(self) -> str:
+        return f"JSONSaver()"
+
     def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         """
         Save data to a JSON file
@@ -166,6 +169,9 @@ class SqliteSaver(SaverProtocol):
         self.rlock = self.rwlock.gen_rlock()
         self.wlock = self.rwlock.gen_wlock()
 
+    def __str__(self) -> str:
+        return f"SqliteSaver()"
+
     def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         """
         Saves data to a SQLite3 database
@@ -261,6 +267,9 @@ class MongoSaver(SaverProtocol):
 
         atexit.register(self.conn.close)
 
+    def __str__(self) -> str:
+        return f"MongoSaver()"
+
     def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         if len(data) == 0:
             raise ValueError("No data to save")
@@ -289,6 +298,9 @@ class RedisSaver(SaverProtocol):
     def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0) -> None:
         self.client = redis.StrictRedis(host=host, port=port, db=db)
         atexit.register(self.client.close)
+
+    def __str__(self) -> str:
+        return f"RedisSaver()"
 
     def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         if len(data) == 0:
