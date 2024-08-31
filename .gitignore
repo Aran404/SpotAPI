@@ -163,3 +163,4 @@ cython_debug/
 #.idea/
 main.py
 build.bat
+sessions.json

@@ -2,7 +2,6 @@ from spotapi.utils.strings import parse_json_string
 from spotapi.exceptions import PasswordError
 from spotapi.types.data import Config
 from spotapi.types.annotations import enforce
-from typing import Optional
 import time
 import uuid
 
@@ -25,8 +24,8 @@ class Password:
         self,
         cfg: Config,
         *,
-        email: Optional[str] = None,
-        username: Optional[str] = None,
+        email: str | None = None,
+        username: str | None = None,
     ) -> None:
         self.solver = cfg.solver
         self.client = cfg.client
