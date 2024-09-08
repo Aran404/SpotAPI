@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from spotapi.types.interfaces import CaptchaProtocol, LoggerProtocol
 from spotapi.http.request import TLSClient
-from typing import List, Dict, Optional, Any, Union
+from typing import List, Dict, Any, Union
 
 __all__ = [
     "Config",
@@ -46,23 +48,23 @@ class SolverConfig:
 
 @dataclass
 class Metadata:
-    ORIGINAL_SESSION_ID: Optional[str] = None
-    album_title: Optional[str] = None
-    image_xlarge_url: Optional[str] = None
-    actions_skipping_next_past_track: Optional[str] = None
-    interaction_id: Optional[str] = None
-    title: Optional[str] = None
-    artist_uri: Optional[str] = None
-    image_url: Optional[str] = None
-    entity_uri: Optional[str] = None
-    image_large_url: Optional[str] = None
-    iteration: Optional[str] = None
-    actions_skipping_prev_past_track: Optional[str] = None
-    page_instance_id: Optional[str] = None
-    album_uri: Optional[str] = None
-    image_small_url: Optional[str] = None
-    track_player: Optional[str] = None
-    context_uri: Optional[str] = None
+    ORIGINAL_SESSION_ID: str | None = None
+    album_title: str | None = None
+    image_xlarge_url: str | None = None
+    actions_skipping_next_past_track: str | None = None
+    interaction_id: str | None = None
+    title: str | None = None
+    artist_uri: str | None = None
+    image_url: str | None = None
+    entity_uri: str | None = None
+    image_large_url: str | None = None
+    iteration: str | None = None
+    actions_skipping_prev_past_track: str | None = None
+    page_instance_id: str | None = None
+    album_uri: str | None = None
+    image_small_url: str | None = None
+    track_player: str | None = None
+    context_uri: str | None = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Metadata":
@@ -77,10 +79,10 @@ class Metadata:
 
 @dataclass
 class Track:
-    uri: Optional[str] = None
-    uid: Optional[str] = None
-    metadata: Optional[Metadata] = None
-    provider: Optional[str] = None
+    uri: str | None = None
+    uid: str | None = None
+    metadata: Metadata | None = None
+    provider: str | None = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Track":
@@ -98,8 +100,8 @@ class Track:
 
 @dataclass
 class Index:
-    page: Optional[int] = None
-    track: Optional[int] = None
+    page: int | None = None
+    track: int | None = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Index":
@@ -114,10 +116,10 @@ class Index:
 
 @dataclass
 class PlayOrigin:
-    feature_identifier: Optional[str] = None
-    feature_version: Optional[str] = None
-    referrer_identifier: Optional[str] = None
-    device_identifier: Optional[str] = None
+    feature_identifier: str | None = None
+    feature_version: str | None = None
+    referrer_identifier: str | None = None
+    device_identifier: str | None = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PlayOrigin":
@@ -148,9 +150,9 @@ class Restrictions:
 
 @dataclass
 class Options:
-    shuffling_context: Optional[bool] = None
-    repeating_context: Optional[bool] = None
-    repeating_track: Optional[bool] = None
+    shuffling_context: bool | None = None
+    repeating_context: bool | None = None
+    repeating_track: bool | None = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Options":
@@ -165,10 +167,10 @@ class Options:
 
 @dataclass
 class PlaybackQuality:
-    bitrate_level: Optional[str] = None
-    strategy: Optional[str] = None
-    target_bitrate_level: Optional[str] = None
-    target_bitrate_available: Optional[bool] = None
+    bitrate_level: str | None = None
+    strategy: str | None = None
+    target_bitrate_level: str | None = None
+    target_bitrate_available: bool | None = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PlaybackQuality":
@@ -183,12 +185,12 @@ class PlaybackQuality:
 
 @dataclass
 class ContextMetadata:
-    image_url: Optional[str] = None
-    context_description: Optional[str] = None
-    context_owner: Optional[str] = None
-    playlist_number_of_tracks: Optional[str] = None
-    playlist_number_of_episodes: Optional[str] = None
-    player_arch: Optional[str] = None
+    image_url: str | None = None
+    context_description: str | None = None
+    context_owner: str | None = None
+    playlist_number_of_tracks: str | None = None
+    playlist_number_of_episodes: str | None = None
+    player_arch: str | None = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ContextMetadata":
@@ -203,30 +205,30 @@ class ContextMetadata:
 
 @dataclass
 class PlayerState:
-    timestamp: Optional[str] = None
-    context_uri: Optional[str] = None
-    context_url: Optional[str] = None
+    timestamp: str | None = None
+    context_uri: str | None = None
+    context_url: str | None = None
     context_restrictions: Dict[str, str] = field(default_factory=dict)
-    play_origin: Optional[PlayOrigin] = None
-    index: Optional[Index] = None
-    track: Optional[Track] = None
-    playback_id: Optional[str] = None
-    playback_speed: Optional[float] = None
-    position_as_of_timestamp: Optional[str] = None
-    duration: Optional[str] = None
-    is_playing: Optional[bool] = None
-    is_paused: Optional[bool] = None
-    is_system_initiated: Optional[bool] = None
-    options: Optional[Options] = None
-    restrictions: Optional[Restrictions] = None
+    play_origin: PlayOrigin | None = None
+    index: Index | None = None
+    track: Track | None = None
+    playback_id: str | None = None
+    playback_speed: float | None = None
+    position_as_of_timestamp: str | None = None
+    duration: str | None = None
+    is_playing: bool | None = None
+    is_paused: bool | None = None
+    is_system_initiated: bool | None = None
+    options: Options | None = None
+    restrictions: Restrictions | None = None
     suppressions: Dict[str, str] = field(default_factory=dict)
     prev_tracks: List[Track] = field(default_factory=list)
     next_tracks: List[Track] = field(default_factory=list)
-    context_metadata: Optional[ContextMetadata] = None
+    context_metadata: ContextMetadata | None = None
     page_metadata: Dict[str, str] = field(default_factory=dict)
-    session_id: Optional[str] = None
-    queue_revision: Optional[str] = None
-    playback_quality: Optional[PlaybackQuality] = None
+    session_id: str | None = None
+    queue_revision: str | None = None
+    playback_quality: PlaybackQuality | None = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PlayerState":
@@ -274,7 +276,7 @@ class PlayerState:
 
 @dataclass
 class Hifi:
-    device_supported: Optional[bool] = None
+    device_supported: bool | None = None
 
     @staticmethod
     def from_dict(data: Dict) -> "Hifi":
@@ -321,12 +323,12 @@ class Capabilities:
     supports_hifi: Union[Hifi, Dict]
     supported_audio_quality: str
     supports_playback_speed: bool
-    supports_rename: Optional[bool] = None
-    supports_playlist_v2: Optional[bool] = None
-    supports_set_backend_metadata: Optional[bool] = None
-    supports_transfer_command: Optional[bool] = None
-    supports_gzip_pushes: Optional[bool] = None
-    supports_dj: Optional[bool] = None
+    supports_rename: bool | None = None
+    supports_playlist_v2: bool | None = None
+    supports_set_backend_metadata: bool | None = None
+    supports_transfer_command: bool | None = None
+    supports_gzip_pushes: bool | None = None
+    supports_dj: bool | None = None
 
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> "Capabilities":
@@ -396,9 +398,9 @@ class Device:
     model: str
     public_ip: str
     license: str
-    spirc_version: Optional[str] = None
-    metadata_map: Optional[MetadataMap] = None
-    audio_output_device_info: Optional[AudioOutputDeviceInfo] = None
+    spirc_version: str | None = None
+    metadata_map: MetadataMap | None = None
+    audio_output_device_info: AudioOutputDeviceInfo | None = None
 
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> "Device":
@@ -433,11 +435,11 @@ class Device:
 
 @dataclass
 class Devices:
-    active_device_id: Optional[str]
+    active_device_id: str | None
     devices: Dict[str, Device]
 
     @staticmethod
-    def from_dict(data: Dict, active_device_id: Optional[str]) -> "Devices":
+    def from_dict(data: Dict, active_device_id: str | None) -> "Devices":
         devices = {key: Device.from_dict(value) for key, value in data.items()}
         return Devices(devices=devices, active_device_id=active_device_id)
 

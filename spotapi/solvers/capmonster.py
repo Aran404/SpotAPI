@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import time
-from typing import Literal, Optional
+from typing import Literal
 
 from spotapi.exceptions import CaptchaException, SolverError
 from spotapi.http.request import StdClient
@@ -8,6 +10,21 @@ __all__ = ["Capmonster", "CaptchaException", "SolverError"]
 
 
 class Capmonster:
+    """
+    Standard implementation of the Capmonster API.
+    
+    Parameters
+    ----------
+    api_key: str
+        Your capmonster API key.
+    client: StdClient
+        The http client to use.
+    retries: int
+        The number of retries to attempt.
+    proxy: str | None
+        Proxy is not supported with capmonster. It is only there to conform with the interface.
+    """
+    __slots__ = ("api_key", "client", "proxy", "retries",)
     BaseURL = "https://api.capmonster.cloud/"
 
     def __init__(
@@ -16,15 +33,16 @@ class Capmonster:
         client: StdClient = StdClient(3),
         *,
         retries: int = 120,
-        proxy: Optional[str] = None,
+        proxy: str | None = None,
     ) -> None:
         self.api_key = api_key
         self.client = client
         self.proxy = proxy
+        
         if self.proxy:
             raise CaptchaException("Only Proxyless mode is supported with capmonster.")
+        
         self.retries = retries
-
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)
 
     def _auth_rule(self, kwargs: dict) -> dict:
@@ -58,7 +76,7 @@ class Capmonster:
         site_key: str,
         action: str,
         task: Literal["v2", "v3"],
-        proxy: Optional[str] = None,
+        proxy: str | None = None,
     ) -> str:
         endpoint = self.BaseURL + "createTask"
         task_type = (

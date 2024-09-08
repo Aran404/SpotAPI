@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing_extensions import TypeAlias, Self
 from typing import Final, final, Any
 

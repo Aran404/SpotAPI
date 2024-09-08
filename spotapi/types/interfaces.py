@@ -1,4 +1,6 @@
-from typing import Any, List, Literal, Mapping, Optional, Protocol
+from __future__ import annotations
+
+from typing import Any, List, Literal, Mapping, Protocol
 from typing_extensions import runtime_checkable
 from spotapi.http.request import StdClient
 
@@ -13,7 +15,7 @@ class CaptchaProtocol(Protocol):
         client: StdClient = StdClient(3),
         *,
         retries: int = 120,
-        proxy: Optional[str] = None,
+        proxy: str | None = None,
     ) -> None:
         ...
 
