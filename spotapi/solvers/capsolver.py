@@ -12,7 +12,7 @@ __all__ = ["Capsolver", "CaptchaException", "SolverError"]
 class Capsolver:
     """
     Standard implementation of the Capsolver API.
-    
+
     Parameters
     ----------
     api_key: str
@@ -24,7 +24,13 @@ class Capsolver:
     proxy: str | None
         The HTTP proxy to use. Must in format of "username:password@host:port".
     """
-    __slots__ = ("api_key", "client", "proxy", "retries",)
+
+    __slots__ = (
+        "api_key",
+        "client",
+        "proxy",
+        "retries",
+    )
     BaseURL = "https://api.capsolver.com/"
 
     def __init__(

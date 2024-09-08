@@ -27,8 +27,12 @@ class StdClient(requests.Session):
     """
     Standard HTTP Client implementation wrapped around the requests library.
     """
-    __slots__ = ("auto_retries", "authenticate",)
-    
+
+    __slots__ = (
+        "auto_retries",
+        "authenticate",
+    )
+
     def __init__(
         self,
         auto_retries: int = 0,
@@ -83,22 +87,29 @@ class StdClient(requests.Session):
         else:
             raise RequestError("Request kept failing after retries.")
 
-    def post(self, url: str | bytes, *, authenticate: bool = False, **kwargs) -> Response:
+    def post(
+        self, url: str | bytes, *, authenticate: bool = False, **kwargs
+    ) -> Response:
         return self.request("POST", url, authenticate=authenticate, **kwargs)
 
-    def get(self, url: str | bytes, *, authenticate: bool = False, **kwargs) -> Response:
+    def get(
+        self, url: str | bytes, *, authenticate: bool = False, **kwargs
+    ) -> Response:
         return self.request("GET", url, authenticate=authenticate, **kwargs)
 
-    def put(self, url: str | bytes, *, authenticate: bool = False, **kwargs) -> Response:
+    def put(
+        self, url: str | bytes, *, authenticate: bool = False, **kwargs
+    ) -> Response:
         return self.request("PUT", url, authenticate=authenticate, **kwargs)
 
 
 class TLSClient(Session):
     """
     TLS-HTTP Client implementation wrapped around the tls_client library.
-    
+
     This is fully undetected by Spotify.com.
     """
+
     def __init__(
         self,
         profile: ClientIdentifiers,

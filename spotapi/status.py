@@ -31,6 +31,7 @@ class PlayerStatus(WebsocketStreamer):
     s_device_id : Optional[str], optional
         The device ID to use for the player. If None, a new device ID will be generated.
     """
+
     _device_dump: Dict[str, Any] | None = None
     _state: Dict[str, Any] | None = None
     _devices: Dict[str, Any] | None = None
@@ -94,12 +95,14 @@ class PlayerStatus(WebsocketStreamer):
 
         if self._devices is None:
             raise ValueError("Could not get devices")
-        
-        active_device_id = self._device_dump.get("active_device_id") if self._device_dump else None
+
+        active_device_id = (
+            self._device_dump.get("active_device_id") if self._device_dump else None
+        )
 
         return Devices.from_dict(
             self._devices,
-            str(active_device_id) if hasattr(active_device_id, "__str__") else None # type: ignore
+            str(active_device_id) if hasattr(active_device_id, "__str__") else None,  # type: ignore
         )
 
     @property

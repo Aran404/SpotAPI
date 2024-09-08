@@ -23,7 +23,13 @@ class JSONSaver(SaverProtocol):
     """
     CRUD methods for JSON files
     """
-    __slots__ = ("path", "rwlock", "rlock", "wlock",)
+
+    __slots__ = (
+        "path",
+        "rwlock",
+        "rlock",
+        "wlock",
+    )
 
     def __init__(self, path: str = "sessions.json") -> None:
         self.path = path
@@ -146,7 +152,15 @@ class SqliteSaver(SaverProtocol):
     """
     CRUD methods for SQLite3 files
     """
-    __slots__ = ("path", "conn", "cursor", "rwlock", "rlock", "wlock",)
+
+    __slots__ = (
+        "path",
+        "conn",
+        "cursor",
+        "rwlock",
+        "rlock",
+        "wlock",
+    )
 
     def __init__(self, path: str = "sessions.db") -> None:
         self.path = path
@@ -258,7 +272,12 @@ class MongoSaver(SaverProtocol):
     """
     CRUD methods for MongoDB
     """
-    __slots__ = ("conn", "database", "collection",)
+
+    __slots__ = (
+        "conn",
+        "database",
+        "collection",
+    )
 
     def __init__(
         self,

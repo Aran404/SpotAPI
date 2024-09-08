@@ -12,7 +12,7 @@ __all__ = ["Capmonster", "CaptchaException", "SolverError"]
 class Capmonster:
     """
     Standard implementation of the Capmonster API.
-    
+
     Parameters
     ----------
     api_key: str
@@ -24,7 +24,13 @@ class Capmonster:
     proxy: str | None
         Proxy is not supported with capmonster. It is only there to conform with the interface.
     """
-    __slots__ = ("api_key", "client", "proxy", "retries",)
+
+    __slots__ = (
+        "api_key",
+        "client",
+        "proxy",
+        "retries",
+    )
     BaseURL = "https://api.capmonster.cloud/"
 
     def __init__(
@@ -38,10 +44,10 @@ class Capmonster:
         self.api_key = api_key
         self.client = client
         self.proxy = proxy
-        
+
         if self.proxy:
             raise CaptchaException("Only Proxyless mode is supported with capmonster.")
-        
+
         self.retries = retries
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)
 

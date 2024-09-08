@@ -19,6 +19,7 @@ class BaseClient:
 
     NOTE: Should not be used directly. Use the Spotify classes instead.
     """
+
     js_pack: _UStr = _Undefined
     client_version: _UStr = _Undefined
     access_token: _UStr = _Undefined
