@@ -1,3 +1,23 @@
+__all__ = [
+    "ParentException",
+    "CaptchaException",
+    "SolverError",
+    "LoginError",
+    "UserError",
+    "PlaylistError",
+    "SaverError",
+    "SongError",
+    "ArtistError",
+    "BaseClientError",
+    "RequestError",
+    "GeneratorError",
+    "PasswordError",
+    "FamilyError",
+    "WebSocketError",
+    "PlayerError",
+]
+
+
 class ParentException(Exception):
     def __init__(self, message: str, error: str | None = None) -> None:
         super().__init__(message)

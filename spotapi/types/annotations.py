@@ -14,6 +14,8 @@ from typing import (
     Union,
 )
 
+__all__ = ["enforce_types", "EnforceMeta", "enforce"]
+
 _EnforceType = TypeVar("_EnforceType", bound=type)
 R = TypeVar("R")
 P = ParamSpec("P")
@@ -92,25 +94,16 @@ def is_instance_of(value: Any, expected_type: Any) -> bool:
             )
 
         case _ if origin is Sequence:
-            return isinstance(value, (list, tuple)) and all(
-                is_instance_of(item, args[0]) for item in value
-            )
+            return isinstance(value, (list, tuple))
 
         case _ if origin is Iterable:
-            return isinstance(value, Iterable) and all(
-                is_instance_of(item, args[0]) for item in value
-            )
+            return isinstance(value, Iterable)
 
         case _ if origin is Mapping:
-            return isinstance(value, Mapping) and all(
-                is_instance_of(k, args[0]) and is_instance_of(v, args[1])
-                for k, v in value.items()
-            )
+            return isinstance(value, Mapping)
 
         case _ if origin is Generator:
-            return isinstance(value, Generator) and (
-                len(args) == 3 and all(is_instance_of(item, args[0]) for item in value)
-            )
+            return isinstance(value, Generator)
 
         case _:
             return isinstance(value, expected_type)

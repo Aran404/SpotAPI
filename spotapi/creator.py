@@ -12,6 +12,8 @@ from spotapi.utils.strings import (
     random_dob,
 )
 
+__all__ = ["Creator", "AccountChallenge", "GeneratorError"]
+
 
 @enforce
 class Creator:
@@ -25,6 +27,19 @@ class Creator:
     display_name (str, optional): Display name to use for the account. Defaults to a randomly generated string.
     password (str, optional): Password to use for the account. Defaults to a randomly generated string.
     """
+
+    __slots__ = (
+        "email",
+        "password",
+        "display_name",
+        "cfg",
+        "client",
+        "submission_id",
+        "api_key",
+        "installation_id",
+        "csrf_token",
+        "flow_id",
+    )
 
     def __init__(
         self,
@@ -114,6 +129,14 @@ class Creator:
 
 
 class AccountChallenge:
+    __slots__ = (
+        "client",
+        "raw",
+        "session_id",
+        "cfg",
+        "challenge_url",
+    )
+
     def __init__(self, client: TLSClient, raw_response: str, cfg: Config) -> None:
         self.client = client
         self.raw = raw_response

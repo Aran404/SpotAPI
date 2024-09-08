@@ -2,6 +2,8 @@ from typing import Any, List, Literal, Mapping, Optional, Protocol
 from typing_extensions import runtime_checkable
 from spotapi.http.request import StdClient
 
+__all__ = ["CaptchaProtocol", "LoggerProtocol", "SaverProtocol"]
+
 
 @runtime_checkable
 class CaptchaProtocol(Protocol):

@@ -1,9 +1,10 @@
-import json
 import time
 from typing import Literal, Optional
 
 from spotapi.exceptions import CaptchaException, SolverError
 from spotapi.http.request import StdClient
+
+__all__ = ["Capmonster", "CaptchaException", "SolverError"]
 
 
 class Capmonster:

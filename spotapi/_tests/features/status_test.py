@@ -1,6 +1,6 @@
 from spotapi import PlayerStatus
 from spotapi.types.data import PlayerState, Devices, Track
-from spotapi._tests.features.session import _MainFixture
+from session import _MainFixture
 
 
 def test_player_status_initialization():

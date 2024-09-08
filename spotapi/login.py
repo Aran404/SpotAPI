@@ -10,6 +10,8 @@ from spotapi.types import Config, SaverProtocol
 from spotapi.exceptions import LoginError
 from spotapi.utils.strings import parse_json_string
 
+__all__ = ["Login", "LoginChallenge", "LoginError"]
+
 
 @enforce
 class Login:
@@ -25,6 +27,17 @@ class Login:
 
     Email or username must be provided.
     """
+
+    __slots__ = (
+        "solver",
+        "client",
+        "logger",
+        "password",
+        "identifier_credentials",
+        "_authorized",
+        "csrf_token",
+        "flow_id",
+    )
 
     def __init__(
         self,
@@ -251,6 +264,16 @@ class Login:
 
 
 class LoginChallenge:
+    __slots__ = (
+        "l",
+        "dump",
+        "challenge_url",
+        "interaction_hash",
+        "interaction_reference",
+        "challenge_session_id",
+        "session_id",
+    )
+
     def __init__(self, login: Login, dump: Mapping[str, Any]) -> None:
         self.l = login
         self.dump = dump

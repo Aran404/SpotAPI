@@ -12,12 +12,30 @@ import json
 import time
 import signal
 
+__all__ = ["WebsocketStreamer"]
+
 
 @enforce
 class WebsocketStreamer:
     """
     Standard streamer to connect to Spotify's websocket API.
+
+    Parameters
+    ----------
+    login : Login
+        The login object to use for authentication.
     """
+
+    __slots__ = (
+        "base",
+        "client",
+        "device_id",
+        "ws",
+        "rlock",
+        "ws_dump",
+        "connection_id",
+        "keep_alive_thread",
+    )
 
     def __init__(self, login: Login) -> None:
         if not login.logged_in:

@@ -11,6 +11,15 @@ from tls_client.response import Response as TLSResponse
 from spotapi.exceptions import ParentException, RequestError
 from spotapi.http.data import Response
 
+__all__ = [
+    "StdClient",
+    "ClientIdentifiers",
+    "TLSClient",
+    "ParentException",
+    "RequestError",
+    "Response",
+]
+
 
 class StdClient(requests.Session):
     def __init__(
@@ -183,12 +192,6 @@ class TLSClient(Session):
         """Routes a PUT Request"""
         if authenticate and self.authenticate is not None:
             kwargs = self.authenticate(kwargs)
-
-        if (
-            url
-            == "https://gue1-spclient.spotify.com/connect-state/v1/devices/hobs_67b45acdf686c83888566f4d1a9750a0f50"
-        ):
-            print(kwargs["headers"])
 
         response = self.build_request("PUT", url, allow_redirects=True, **kwargs)
 

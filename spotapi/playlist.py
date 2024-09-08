@@ -13,6 +13,8 @@ from spotapi.login import Login
 from spotapi.client import BaseClient
 from spotapi.user import User
 
+__all__ = ["PublicPlaylist", "PrivatePlaylist", "PlaylistError"]
+
 
 @enforce
 class PublicPlaylist:
@@ -25,6 +27,12 @@ class PublicPlaylist:
     playlist (Optional[str]): The Spotify URI of the playlist.
     client (TLSClient): An instance of TLSClient to use for requests.
     """
+
+    __slots__ = (
+        "base",
+        "playlist_id",
+        "playlist_link",
+    )
 
     def __init__(
         self,
@@ -111,6 +119,14 @@ class PrivatePlaylist:
     login (Login): The login object to use
     playlist (Optional[str]): The Spotify URI of the playlist.
     """
+
+    __slots__ = (
+        "base",
+        "login",
+        "user",
+        "_playlist",
+        "playlist_id",
+    )
 
     def __init__(
         self,

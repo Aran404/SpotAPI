@@ -4,6 +4,8 @@ from typing import Literal, Optional, Dict, Any
 from spotapi.exceptions import CaptchaException, SolverError
 from spotapi.http.request import StdClient
 
+__all__ = ["Capsolver", "CaptchaException", "SolverError"]
+
 
 class Capsolver:
     BaseURL = "https://api.capsolver.com/"

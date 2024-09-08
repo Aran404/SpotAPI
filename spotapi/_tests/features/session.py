@@ -2,7 +2,7 @@ import dotenv
 import pytest
 import os
 
-from spotapi import JSONSaver, SaverError, Login, Config, Logger, solver_clients
+from spotapi import JSONSaver, Login, Config, Logger, solver_clients
 
 dotenv.load_dotenv()
 
@@ -25,7 +25,7 @@ class _MainFixtures:
                 return pytest.fail("Missing environment variables")
 
         assert api_key and password
-        _cfg = Config(Logger(), solver=solver_clients.Capsolver(api_key))
+        _cfg = Config(logger=Logger(), solver=solver_clients.Capsolver(api_key))
 
         if not hasattr(self, "login"):
             self.login = Login(_cfg, password, email=email)

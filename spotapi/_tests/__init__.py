@@ -1,1 +1,1 @@
-from spotapi._tests.annotations_test import *
+from annotations_test import *

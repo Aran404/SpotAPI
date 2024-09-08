@@ -11,6 +11,8 @@ from spotapi.http.request import TLSClient
 from spotapi.login import Login
 from spotapi.client import BaseClient
 
+__all__ = ["Artist", "ArtistError"]
+
 
 @enforce
 class Artist:
@@ -26,6 +28,11 @@ class Artist:
         A TLSClient used for making requests to the API.
         If not provided, a default one will be used.
     """
+
+    __slots__ = (
+        "_login",
+        "base",
+    )
 
     def __init__(
         self,

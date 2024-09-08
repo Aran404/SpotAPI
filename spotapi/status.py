@@ -6,6 +6,15 @@ from spotapi.websocket import WebsocketStreamer
 import threading
 import functools
 
+__all__ = [
+    "PlayerStatus",
+    "WebsocketStreamer",
+    "EventManager",
+    "PlayerState",
+    "Devices",
+    "Track",
+]
+
 R = TypeVar("R")
 P = ParamSpec("P")
 
@@ -22,7 +31,6 @@ class PlayerStatus(WebsocketStreamer):
     s_device_id : Optional[str], optional
         The device ID to use for the player. If None, a new device ID will be generated.
     """
-
     _device_dump: Dict[str, Any] | None = None
     _state: Dict[str, Any] | None = None
     _devices: Dict[str, Any] | None = None
@@ -140,6 +148,24 @@ class PlayerStatus(WebsocketStreamer):
 
 @enforce
 class EventManager(PlayerStatus):
+    """
+    An event manager for the Spotify state updates.
+
+    Parameters
+    ----------
+    login : Login
+        The login instance used for authentication.
+    s_device_id : Optional[str], optional
+        The device ID to use for the player. If None, a new device ID will be generated.
+    """
+
+    __slots__ = (
+        "_current_state",
+        "wlock",
+        "_subscriptions",
+        "listener",
+    )
+
     def __init__(self, login: Login, s_device_id: str | None = None) -> None:
         super().__init__(login, s_device_id)
         self._current_state = self.state  # Need this to activate websocket

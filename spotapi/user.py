@@ -7,12 +7,21 @@ from spotapi.types.annotations import enforce
 from spotapi.exceptions import UserError
 from spotapi.login import Login
 
+__all__ = ["User", "UserError"]
+
 
 @enforce
 class User:
     """
     Represents a Spotify user.
+
+    Parameters
+    ----------
+    login : Login
+        The login object.
     """
+
+    __slots__ = ("login", "_user_plan", "_user_info", "csrf_token")
 
     def __init__(self, login: Login) -> None:
         if not login.logged_in:

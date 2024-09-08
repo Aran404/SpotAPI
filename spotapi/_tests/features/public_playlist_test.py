@@ -1,6 +1,4 @@
-import pytest
-from spotapi import PublicPlaylist, PlaylistError
-from spotapi._tests.features.session import _MainFixture
+from spotapi import PublicPlaylist
 
 PUBLIC_PLAYLIST_URI = "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"
 playlist_instance = PublicPlaylist(PUBLIC_PLAYLIST_URI)

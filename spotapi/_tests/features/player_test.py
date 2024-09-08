@@ -1,6 +1,6 @@
 import pytest
 from spotapi import Player, PlayerError, Login
-from spotapi._tests.features.session import _MainFixture
+from session import _MainFixture
 
 player_instance = Player(login=_MainFixture.login)
 

@@ -1,6 +1,6 @@
 import pytest
 from spotapi import Song, SongError, PrivatePlaylist
-from spotapi._tests.features.session import _MainFixture
+from session import _MainFixture
 
 playlist_instance = PrivatePlaylist(_MainFixture.login, playlist="test_playlist_id")
 song_instance = Song(playlist=playlist_instance)

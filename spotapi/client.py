@@ -2,11 +2,14 @@ import re
 import atexit
 from collections.abc import Mapping
 from spotapi.types.annotations import enforce
-from spotapi.types.alias import _NStr, _Undefined
+from spotapi.types.alias import _UStr, _Undefined
 
 from spotapi.exceptions import BaseClientError
 from spotapi.http.request import TLSClient
 from spotapi.utils.strings import parse_json_string
+
+__all__ = ["BaseClient", "BaseClientError"]
+
 
 @enforce
 class BaseClient:
@@ -16,14 +19,13 @@ class BaseClient:
 
     NOTE: Should not be used directly. Use the Spotify classes instead.
     """
-
-    js_pack: _NStr = _Undefined
-    client_version: _NStr = _Undefined
-    access_token: _NStr = _Undefined
-    client_token: _NStr = _Undefined
-    client_id: _NStr = _Undefined
-    device_id: _NStr = _Undefined
-    raw_hashes: _NStr = _Undefined
+    js_pack: _UStr = _Undefined
+    client_version: _UStr = _Undefined
+    access_token: _UStr = _Undefined
+    client_token: _UStr = _Undefined
+    client_id: _UStr = _Undefined
+    device_id: _UStr = _Undefined
+    raw_hashes: _UStr = _Undefined
 
     def __init__(self, client: TLSClient) -> None:
         self.client = client

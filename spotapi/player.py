@@ -9,6 +9,8 @@ from typing import List
 import uuid
 import time
 
+__all__ = ["Player", "PlayerStatus", "PlayerError"]
+
 
 @enforce
 class Player(PlayerStatus):
@@ -22,6 +24,13 @@ class Player(PlayerStatus):
     device_id : str, optional
         The device ID to connect to for the player.
     """
+
+    __slots__ = (
+        "active_id",
+        "device_id",
+        "r_state",
+        "_transfered",
+    )
 
     def __init__(self, login: Login, device_id: str | None = None) -> None:
         super().__init__(login, None)

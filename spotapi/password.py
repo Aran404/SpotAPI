@@ -5,6 +5,8 @@ from spotapi.types.annotations import enforce
 import time
 import uuid
 
+__all__ = ["Password", "PasswordError"]
+
 
 @enforce
 class Password:
@@ -19,6 +21,15 @@ class Password:
 
     Email or username must be provided.
     """
+
+    __slots__ = (
+        "solver",
+        "client",
+        "logger",
+        "identifier_credentials",
+        "csrf",
+        "flowID",
+    )
 
     def __init__(
         self,

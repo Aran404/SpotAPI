@@ -8,6 +8,8 @@ from spotapi.http.request import TLSClient
 from spotapi.client import BaseClient
 from spotapi.playlist import PrivatePlaylist, PublicPlaylist
 
+__all__ = ["Song", "SongError"]
+
 
 @enforce
 class Song:
@@ -15,6 +17,11 @@ class Song:
     Extends the PrivatePlaylist class with methods that can only be used while logged in.
     These methods interact with songs and tend to be used in the context of a playlist.
     """
+
+    __slots__ = (
+        "playlist",
+        "base",
+    )
 
     def __init__(
         self,

@@ -3,6 +3,26 @@ from spotapi.types.interfaces import CaptchaProtocol, LoggerProtocol
 from spotapi.http.request import TLSClient
 from typing import List, Dict, Optional, Any, Union
 
+__all__ = [
+    "Config",
+    "SolverConfig",
+    "Metadata",
+    "Track",
+    "Index",
+    "PlayOrigin",
+    "Restrictions",
+    "Options",
+    "PlaybackQuality",
+    "ContextMetadata",
+    "PlayerState",
+    "Hifi",
+    "AudioOutputDeviceInfo",
+    "Capabilities",
+    "MetadataMap",
+    "Device",
+    "Devices",
+]
+
 
 @dataclass
 class Config:
