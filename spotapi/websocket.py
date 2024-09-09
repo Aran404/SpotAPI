@@ -12,7 +12,7 @@ import json
 import time
 import signal
 
-__all__ = ["WebsocketStreamer"]
+__all__ = ["WebsocketStreamer", "WebsocketError"]
 
 
 @enforce
