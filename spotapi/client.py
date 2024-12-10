@@ -130,7 +130,7 @@ class BaseClient:
 
         if self.raw_hashes is _Undefined:
             raise ValueError("Could not get playlist hashes")
-
+            
         try:
             return str(self.raw_hashes).split(f'"{name}","query","')[1].split('"')[0]
         except IndexError:
@@ -154,15 +154,32 @@ class BaseClient:
 
         self.raw_hashes = resp.response
         self.client_version = resp.response.split('clientVersion:"')[1].split('"')[0]
+        
         # Maybe it's static? Let's not take chances.
         self.xpui_route_num = resp.response.split(':"xpui-routes-search"')[0].split(
             ","
         )[-1]
-        pattern = rf'{self.xpui_route_num}:"([^"]*)"'
-        self.xpui_route = re.findall(pattern, resp.response)[-1]
+        self.xpui_route_tracks_num = resp.response.split(':"xpui-routes-track-v2"')[0].split(
+            ","
+        )[-1]
+        
+        xpui_route_pattern = rf'{self.xpui_route_num}:"([^"]*)"'
+        self.xpui_route = re.findall(xpui_route_pattern, resp.response)[-1]
+        
+        xpui_route_tracks_pattern = rf'{self.xpui_route_tracks_num}:"([^"]*)"'
+        self.xpui_route_tracks = re.findall(xpui_route_tracks_pattern, resp.response)[-1]
 
         resp = self.client.get(
             f"https://open.spotifycdn.com/cdn/build/web-player/xpui-routes-search.{self.xpui_route}.js"
+        )
+
+        if resp.fail:
+            raise BaseClientError("Could not get xpui hashes", error=resp.error.string)
+        
+        self.raw_hashes += resp.response
+        
+        resp = self.client.get(
+            f"https://open.spotifycdn.com/cdn/build/web-player/xpui-routes-track-v2.{self.xpui_route_tracks}.js"
         )
 
         if resp.fail:

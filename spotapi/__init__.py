@@ -7,7 +7,8 @@ from spotapi.user import *
 from spotapi.creator import *
 from spotapi.password import *
 from spotapi.solvers import *
-from spotapi.types.data import Config
+from spotapi.types import *
+from spotapi.album import *
 from spotapi.utils.logger import *
 from spotapi.utils.saver import *
 from spotapi.websocket import *

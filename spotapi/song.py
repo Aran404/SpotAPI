@@ -31,6 +31,38 @@ class Song:
     ) -> None:
         self.playlist = playlist
         self.base = BaseClient(client=playlist.login.client if playlist else client)
+        
+    def get_track_info(self, track_id: str) -> Mapping[str, Any]:
+        """
+        Gets information about a specific song.
+        """
+        url = "https://api-partner.spotify.com/pathfinder/v1/query"
+        params = {
+            "operationName": "getTrack",
+            "variables": json.dumps(
+                {
+                    "uri": f"spotify:track:{track_id}",
+                }
+            ),
+            "extensions": json.dumps(
+                {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": self.base.part_hash("getTrack"),
+                    }
+                }
+            ),
+        }
+
+        resp = self.base.client.post(url, params=params, authenticate=True)
+
+        if resp.fail:
+            raise SongError("Could not get song info", error=resp.error.string)
+
+        if not isinstance(resp.response, Mapping):
+            raise SongError("Invalid JSON")
+
+        return resp.response
 
     def query_songs(
         self, query: str, /, limit: int = 10, *, offset: int = 0

@@ -46,7 +46,7 @@ class Creator:
         cfg: Config,
         email: str = random_email(),
         display_name: str = random_string(10),
-        password: str = random_string(10, True),
+        password: str = random_string(10, strong=True),
     ) -> None:
         self.email = email
         self.password = password

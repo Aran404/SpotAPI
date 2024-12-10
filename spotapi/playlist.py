@@ -36,26 +36,21 @@ class PublicPlaylist:
 
     def __init__(
         self,
-        playlist: str | None = None,
+        playlist: str,
         /,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         self.base = BaseClient(client=client)
-
-        if playlist:
-            self.playlist_id = (
-                playlist.split("playlist/")[-1] if "playlist" in playlist else playlist
-            )
-            self.playlist_link = f"https://open.spotify.com/playlist/{self.playlist_id}"
+        self.playlist_id = (
+            playlist.split("playlist/")[-1] if "playlist" in playlist else playlist
+        )
+        self.playlist_link = f"https://open.spotify.com/playlist/{self.playlist_id}"
 
     def get_playlist_info(
         self, limit: int = 25, *, offset: int = 0
     ) -> Mapping[str, Any]:
         """Gets the public playlist information"""
-        if not self.playlist_id:
-            raise ValueError("Playlist ID not set")
-
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
             "operationName": "fetchPlaylist",
@@ -90,7 +85,7 @@ class PublicPlaylist:
         """
         Generator that fetches playlist information in chunks
 
-        Note: If total_tracks <= 343, then there is no need to paginate
+        NOTE: If total_tracks <= 343, then there is no need to paginate.
         """
         UPPER_LIMIT: int = 343
         # We need to get the total playlists first

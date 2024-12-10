@@ -18,6 +18,20 @@ Initializes the `Song` class with an optional `PrivatePlaylist` instance and a `
 - **Raises:**  
   `ValueError` if no playlist is provided and no client is set.
 
+### `get_track_info(self, track_id: str) -> Mapping[str, Any]`
+Searches for songs in the Spotify catalog.
+
+- **Args:**
+  - `track_id`: `str`  
+    The ID of the song. Not the URI.
+
+- **Returns:**  
+  `Mapping[str, Any]`  
+  The raw track result.
+
+- **Raises:**  
+  `SongError` if there is an issue retrieving the song or if the response is invalid.
+
 ### `query_songs(self, query: str, /, limit: int = 10, *, offset: int = 0) -> Mapping[str, Any]`
 Searches for songs in the Spotify catalog.
 
