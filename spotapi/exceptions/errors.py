@@ -16,6 +16,7 @@ __all__ = [
     "WebSocketError",
     "PlayerError",
     "AlbumError",
+    "PodcastError",
 ]
 
 
@@ -99,6 +100,12 @@ class WebSocketError(ParentException):
 class PlayerError(ParentException):
     pass
 
+
 # album.py exceptions
 class AlbumError(ParentException):
+    pass
+
+
+# podcast.py exceptions
+class PodcastError(ParentException):
     pass

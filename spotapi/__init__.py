@@ -18,6 +18,8 @@ from spotapi.family import *
 from spotapi.http import *
 from spotapi.exceptions import *
 from spotapi.utils import *
+from spotapi.podcast import *
+from spotapi.public import *
 
 
 __author__ = "Aran"

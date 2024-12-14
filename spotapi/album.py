@@ -19,7 +19,7 @@ class PublicAlbum:
 
     Parameters
     ----------
-    album (Optional[str]): The Spotify URI of the album.
+    album (str): The Spotify URI of the album.
     client (TLSClient): An instance of TLSClient to use for requests.
     """
 
@@ -37,21 +37,17 @@ class PublicAlbum:
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         self.base = BaseClient(client=client)
-        self.album_id = (
-            album.split("album/")[-1] if "album" in album else album
-        )
+        self.album_id = album.split("album/")[-1] if "album" in album else album
         self.album_link = f"https://open.spotify.com/album/{self.album_id}"
 
-    def get_album_info(
-        self, limit: int = 25, *, offset: int = 0
-    ) -> Mapping[str, Any]:
+    def get_album_info(self, limit: int = 25, *, offset: int = 0) -> Mapping[str, Any]:
         """Gets the public public information"""
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
             "operationName": "getAlbum",
             "variables": json.dumps(
                 {
-                    "locale":"",
+                    "locale": "",
                     "uri": f"spotify:album:{self.album_id}",
                     "offset": offset,
                     "limit": limit,
@@ -81,7 +77,7 @@ class PublicAlbum:
         """
         Generator that fetches playlist information in chunks
 
-        NOTE: If total_tracks <= 343, then there is no need to paginate.
+        NOTE: If total_count <= 343, then there is no need to paginate.
         """
         UPPER_LIMIT: int = 343
         album = self.get_album_info(limit=UPPER_LIMIT)
@@ -94,7 +90,7 @@ class PublicAlbum:
 
         offset = UPPER_LIMIT
         while offset < total_count:
-            yield self.get_album_info(limit=UPPER_LIMIT, offset=offset)["data"]["albumUnion"][
-                "tracksV2"
-            ]["items"]
+            yield self.get_album_info(limit=UPPER_LIMIT, offset=offset)["data"][
+                "albumUnion"
+            ]["tracksV2"]["items"]
             offset += UPPER_LIMIT

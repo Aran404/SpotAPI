@@ -31,7 +31,7 @@ class Song:
     ) -> None:
         self.playlist = playlist
         self.base = BaseClient(client=playlist.login.client if playlist else client)
-        
+
     def get_track_info(self, track_id: str) -> Mapping[str, Any]:
         """
         Gets information about a specific song.
@@ -110,7 +110,7 @@ class Song:
         """
         Generator that fetches songs in chunks
 
-        Note: If total_tracks <= 100, then there is no need to paginate
+        Note: If total_count <= 100, then there is no need to paginate
         """
         UPPER_LIMIT: int = 100
         # We need to get the total songs first

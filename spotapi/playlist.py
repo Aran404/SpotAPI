@@ -346,6 +346,7 @@ class PrivatePlaylist:
         return playlist_id
 
     def recommended_songs(self, num_songs: int = 20) -> Mapping[str, Any]:
+        """Gets the recommended songs for the playlist"""
         url = "https://spclient.wg.spotify.com/playlistextender/extendp/"
         payload = {
             "playlistURI": f"spotify:playlist:{self.playlist_id}",

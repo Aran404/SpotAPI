@@ -89,7 +89,7 @@ class Artist:
         """
         Generator that fetches artists in chunks
 
-        Note: If total_tracks <= 100, then there is no need to paginate
+        Note: If total_count <= 100, then there is no need to paginate
         """
         UPPER_LIMIT: int = 100
 
