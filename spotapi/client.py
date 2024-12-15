@@ -75,8 +75,13 @@ class BaseClient:
         if resp.fail:
             raise BaseClientError("Could not get session", error=resp.error.string)
 
-        pattern = r"https:\/\/open\.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
-        self.js_pack = re.findall(pattern, resp.response)[1]
+        try:
+            pattern = r"https:\/\/open\.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
+            self.js_pack = re.findall(pattern, resp.response)[1]
+        except IndexError:
+            pattern = r"https:\/\/open-exp.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
+            self.js_pack = re.findall(pattern, resp.response)[1]
+            
         self.access_token = parse_json_string(resp.response, "accessToken")
         self.client_id = parse_json_string(resp.response, "clientId")
         self.device_id = parse_json_string(resp.response, "correlationId")
