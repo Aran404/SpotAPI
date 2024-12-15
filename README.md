@@ -33,6 +33,7 @@ Everything you can do with Spotify, **SpotAPI** can do with just a user’s logi
 
 
 ## Docs
+- [**Public.py**](./docs/public.md)
 - [**Artist.py**](./docs/artist.md)
 - [**Album.py**](./docs/album.md)
 - [**Creator.py**](./docs/creator.md)
