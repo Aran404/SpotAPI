@@ -5,6 +5,7 @@ from typing import Any, Mapping
 from spotapi.exceptions import UserError
 from spotapi.login import Login
 
+import secrets
 
 class User:
     """
@@ -98,9 +99,17 @@ class User:
                 "country": profile_dump["country"],
             },
             "recaptcha_token": captcha_response,
+            "client_nonce": ''.join(str(secrets.randbits(32)) for _ in range(2)),
+            "callback_url": "https://www.spotify.com/account/profile/challenge",
+            "client_info": {
+                "locale": "en_US",
+                "capabilities": [
+                    1
+                ]
+            }
         }
 
-        url = "https://www.spotify.com/api/account-settings/v1/profile"
+        url = "https://www.spotify.com/api/account-settings/v2/profile"
 
         headers = {
             "Content-Type": "application/json",
