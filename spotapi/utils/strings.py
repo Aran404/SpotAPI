@@ -4,6 +4,18 @@ import random
 import base64
 import os
 
+
+__all__ = [
+    "random_b64_string",
+    "random_hex_string",
+    "parse_json_string",
+    "random_string",
+    "random_domain",
+    "random_email",
+    "random_dob",
+    "random_nonce"
+]
+
 def random_b64_string(length: int) -> str:
     """Used by Spotify internally"""
 

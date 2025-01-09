@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import json
 from typing import Any, Callable, Type, Union
@@ -11,8 +13,26 @@ from tls_client.response import Response as TLSResponse
 from spotapi.exceptions import ParentException, RequestError
 from spotapi.http.data import Response
 
+__all__ = [
+    "StdClient",
+    "ClientIdentifiers",
+    "TLSClient",
+    "ParentException",
+    "RequestError",
+    "Response",
+]
+
 
 class StdClient(requests.Session):
+    """
+    Standard HTTP Client implementation wrapped around the requests library.
+    """
+
+    __slots__ = (
+        "auto_retries",
+        "authenticate",
+    )
+
     def __init__(
         self,
         auto_retries: int = 0,
@@ -55,7 +75,7 @@ class StdClient(requests.Session):
         return Response(status_code=response.status_code, response=body, raw=response)
 
     def request(
-        self, method: str, url: str, *, authenticate: bool = False, **kwargs
+        self, method: str, url: str | bytes, *, authenticate: bool = False, **kwargs
     ) -> Response:
         if authenticate and self.authenticate:
             kwargs = self.authenticate(kwargs)
@@ -67,17 +87,29 @@ class StdClient(requests.Session):
         else:
             raise RequestError("Request kept failing after retries.")
 
-    def post(self, url: str, *, authenticate: bool = False, **kwargs) -> Response:
+    def post(
+        self, url: str | bytes, *, authenticate: bool = False, **kwargs
+    ) -> Response:
         return self.request("POST", url, authenticate=authenticate, **kwargs)
 
-    def get(self, url: str, *, authenticate: bool = False, **kwargs) -> Response:
+    def get(
+        self, url: str | bytes, *, authenticate: bool = False, **kwargs
+    ) -> Response:
         return self.request("GET", url, authenticate=authenticate, **kwargs)
 
-    def put(self, url: str, *, authenticate: bool = False, **kwargs) -> Response:
+    def put(
+        self, url: str | bytes, *, authenticate: bool = False, **kwargs
+    ) -> Response:
         return self.request("PUT", url, authenticate=authenticate, **kwargs)
 
 
 class TLSClient(Session):
+    """
+    TLS-HTTP Client implementation wrapped around the tls_client library.
+
+    This is fully undetected by Spotify.com.
+    """
+
     def __init__(
         self,
         profile: ClientIdentifiers,
@@ -183,12 +215,6 @@ class TLSClient(Session):
         """Routes a PUT Request"""
         if authenticate and self.authenticate is not None:
             kwargs = self.authenticate(kwargs)
-
-        if (
-            url
-            == "https://gue1-spclient.spotify.com/connect-state/v1/devices/hobs_67b45acdf686c83888566f4d1a9750a0f50"
-        ):
-            print(kwargs["headers"])
 
         response = self.build_request("PUT", url, allow_redirects=True, **kwargs)
 

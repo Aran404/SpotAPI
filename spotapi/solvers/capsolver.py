@@ -1,11 +1,36 @@
+from __future__ import annotations
+
 import time
-from typing import Literal, Optional, Dict, Any
+from typing import Literal, Dict, Any
 
 from spotapi.exceptions import CaptchaException, SolverError
 from spotapi.http.request import StdClient
 
+__all__ = ["Capsolver", "CaptchaException", "SolverError"]
+
 
 class Capsolver:
+    """
+    Standard implementation of the Capsolver API.
+
+    Parameters
+    ----------
+    api_key: str
+        Your capsolver API key.
+    client: StdClient
+        The http client to use.
+    retries: int
+        The number of retries to attempt.
+    proxy: str | None
+        The HTTP proxy to use. Must in format of "username:password@host:port".
+    """
+
+    __slots__ = (
+        "api_key",
+        "client",
+        "proxy",
+        "retries",
+    )
     BaseURL = "https://api.capsolver.com/"
 
     def __init__(
@@ -14,7 +39,7 @@ class Capsolver:
         client: StdClient = StdClient(3),
         *,
         retries: int = 120,
-        proxy: Optional[str] = None,
+        proxy: str | None = None,
     ) -> None:
         self.api_key = api_key
         self.client = client
@@ -54,7 +79,7 @@ class Capsolver:
         site_key: str,
         action: str,
         task: Literal["v2", "v3"],
-        proxy: Optional[str] = None,
+        proxy: str | None = None,
     ) -> str:
         endpoint = self.BaseURL + "createTask"
         task_type = (

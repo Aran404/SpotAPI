@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 import re
 import time
-from typing import Any, Generator, Mapping
+from typing import Any
+from collections.abc import Mapping, Generator
+from spotapi.types.annotations import enforce
 
 from spotapi.exceptions import PlaylistError
 from spotapi.http.request import TLSClient
@@ -11,7 +13,10 @@ from spotapi.login import Login
 from spotapi.client import BaseClient
 from spotapi.user import User
 
+__all__ = ["PublicPlaylist", "PrivatePlaylist", "PlaylistError"]
 
+
+@enforce
 class PublicPlaylist:
     """
     Allows you to get all public information on a playlist.
@@ -23,28 +28,29 @@ class PublicPlaylist:
     client (TLSClient): An instance of TLSClient to use for requests.
     """
 
+    __slots__ = (
+        "base",
+        "playlist_id",
+        "playlist_link",
+    )
+
     def __init__(
         self,
-        playlist: str | None = None,
+        playlist: str,
         /,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         self.base = BaseClient(client=client)
-
-        if playlist:
-            self.playlist_id = (
-                playlist.split("playlist/")[-1] if "playlist" in playlist else playlist
-            )
-            self.playlist_link = f"https://open.spotify.com/playlist/{self.playlist_id}"
+        self.playlist_id = (
+            playlist.split("playlist/")[-1] if "playlist" in playlist else playlist
+        )
+        self.playlist_link = f"https://open.spotify.com/playlist/{self.playlist_id}"
 
     def get_playlist_info(
         self, limit: int = 25, *, offset: int = 0
     ) -> Mapping[str, Any]:
         """Gets the public playlist information"""
-        if not self.playlist_id:
-            raise ValueError("Playlist ID not set")
-
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
             "operationName": "fetchPlaylist",
@@ -79,7 +85,7 @@ class PublicPlaylist:
         """
         Generator that fetches playlist information in chunks
 
-        Note: If total_tracks <= 343, then there is no need to paginate
+        NOTE: If total_tracks <= 343, then there is no need to paginate.
         """
         UPPER_LIMIT: int = 343
         # We need to get the total playlists first
@@ -109,6 +115,14 @@ class PrivatePlaylist:
     playlist (Optional[str]): The Spotify URI of the playlist.
     """
 
+    __slots__ = (
+        "base",
+        "login",
+        "user",
+        "_playlist",
+        "playlist_id",
+    )
+
     def __init__(
         self,
         login: Login,
@@ -132,8 +146,8 @@ class PrivatePlaylist:
         if "playlist:" in playlist:
             playlist = playlist.split("playlist:")[-1]
 
-        if hasattr(playlist, "playlist_id"):
-            self.playlist_id = playlist
+        if not playlist:
+            raise ValueError("Playlist not set")
 
         setattr(self, "playlist_id", playlist)
         self._playlist = True
@@ -332,6 +346,7 @@ class PrivatePlaylist:
         return playlist_id
 
     def recommended_songs(self, num_songs: int = 20) -> Mapping[str, Any]:
+        """Gets the recommended songs for the playlist"""
         url = "https://spclient.wg.spotify.com/playlistextender/extendp/"
         payload = {
             "playlistURI": f"spotify:playlist:{self.playlist_id}",

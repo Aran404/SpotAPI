@@ -1,11 +1,25 @@
-from typing import Dict, Any, Callable, List
+from typing import Dict, Any, Callable, List, ParamSpec, TypeVar
+from spotapi.types.annotations import enforce
 from spotapi.types.data import PlayerState, Devices, Track
 from spotapi.login import Login
 from spotapi.websocket import WebsocketStreamer
 import threading
 import functools
 
+__all__ = [
+    "PlayerStatus",
+    "WebsocketStreamer",
+    "EventManager",
+    "PlayerState",
+    "Devices",
+    "Track",
+]
 
+R = TypeVar("R")
+P = ParamSpec("P")
+
+
+@enforce
 class PlayerStatus(WebsocketStreamer):
     """
     A class used to represent the current state of the player.
@@ -82,9 +96,13 @@ class PlayerStatus(WebsocketStreamer):
         if self._devices is None:
             raise ValueError("Could not get devices")
 
+        active_device_id = (
+            self._device_dump.get("active_device_id") if self._device_dump else None
+        )
+
         return Devices.from_dict(
             self._devices,
-            self._device_dump.get("active_device_id") if self._device_dump else None,
+            str(active_device_id) if hasattr(active_device_id, "__str__") else None,  # type: ignore
         )
 
     @property
@@ -133,7 +151,26 @@ class PlayerStatus(WebsocketStreamer):
         return state.prev_tracks
 
 
+@enforce
 class EventManager(PlayerStatus):
+    """
+    An event manager for the Spotify state updates.
+
+    Parameters
+    ----------
+    login : Login
+        The login instance used for authentication.
+    s_device_id : Optional[str], optional
+        The device ID to use for the player. If None, a new device ID will be generated.
+    """
+
+    __slots__ = (
+        "_current_state",
+        "wlock",
+        "_subscriptions",
+        "listener",
+    )
+
     def __init__(self, login: Login, s_device_id: str | None = None) -> None:
         super().__init__(login, s_device_id)
         self._current_state = self.state  # Need this to activate websocket
@@ -156,14 +193,14 @@ class EventManager(PlayerStatus):
                     f"Function {func.__name__} is already subscribed to event '{event}'"
                 )
 
-    def subscribe(self, event: str) -> Callable[..., Any]:
+    def subscribe(self, event: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """
         Decorator to subscribe a function to a Spotify websocket event.
         """
 
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @functools.wraps(func)
-            def wrapped(*args: Any, **kwargs: Any) -> Any:
+            def wrapped(*args: P.args, **kwargs: P.kwargs) -> R:
                 result = func(*args, **kwargs)
                 return result
 

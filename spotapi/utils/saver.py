@@ -16,11 +16,20 @@ from readerwriterlock import rwlock
 from spotapi.types.interfaces import SaverProtocol
 from spotapi.exceptions import SaverError
 
+__all__ = ["JSONSaver", "MongoSaver", "RedisSaver", "SqliteSaver", "SaverProtocol"]
+
 
 class JSONSaver(SaverProtocol):
     """
     CRUD methods for JSON files
     """
+
+    __slots__ = (
+        "path",
+        "rwlock",
+        "rlock",
+        "wlock",
+    )
 
     def __init__(self, path: str = "sessions.json") -> None:
         self.path = path
@@ -28,6 +37,9 @@ class JSONSaver(SaverProtocol):
         self.rwlock = rwlock.RWLockFairD()
         self.rlock = self.rwlock.gen_rlock()
         self.wlock = self.rwlock.gen_wlock()
+
+    def __str__(self) -> str:
+        return f"JSONSaver()"
 
     def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         """
@@ -141,6 +153,15 @@ class SqliteSaver(SaverProtocol):
     CRUD methods for SQLite3 files
     """
 
+    __slots__ = (
+        "path",
+        "conn",
+        "cursor",
+        "rwlock",
+        "rlock",
+        "wlock",
+    )
+
     def __init__(self, path: str = "sessions.db") -> None:
         self.path = path
         self.conn = sqlite3.connect(self.path, check_same_thread=False)
@@ -165,6 +186,9 @@ class SqliteSaver(SaverProtocol):
         self.rwlock = rwlock.RWLockFairD()
         self.rlock = self.rwlock.gen_rlock()
         self.wlock = self.rwlock.gen_wlock()
+
+    def __str__(self) -> str:
+        return f"SqliteSaver()"
 
     def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         """
@@ -249,6 +273,12 @@ class MongoSaver(SaverProtocol):
     CRUD methods for MongoDB
     """
 
+    __slots__ = (
+        "conn",
+        "database",
+        "collection",
+    )
+
     def __init__(
         self,
         host: str = "mongodb://localhost:27017/",
@@ -260,6 +290,9 @@ class MongoSaver(SaverProtocol):
         self.collection = self.database[collection]
 
         atexit.register(self.conn.close)
+
+    def __str__(self) -> str:
+        return f"MongoSaver()"
 
     def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         if len(data) == 0:
@@ -289,6 +322,9 @@ class RedisSaver(SaverProtocol):
     def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0) -> None:
         self.client = redis.StrictRedis(host=host, port=port, db=db)
         atexit.register(self.client.close)
+
+    def __str__(self) -> str:
+        return f"RedisSaver()"
 
     def save(self, data: List[Mapping[str, Any]], **kwargs) -> None:
         if len(data) == 0:

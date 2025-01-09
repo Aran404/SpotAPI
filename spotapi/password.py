@@ -1,11 +1,14 @@
 from spotapi.utils.strings import parse_json_string
 from spotapi.exceptions import PasswordError
 from spotapi.types.data import Config
-from typing import Optional
+from spotapi.types.annotations import enforce
 import time
 import uuid
 
+__all__ = ["Password", "PasswordError"]
 
+
+@enforce
 class Password:
     """
     Preforms password recoveries.
@@ -19,12 +22,21 @@ class Password:
     Email or username must be provided.
     """
 
+    __slots__ = (
+        "solver",
+        "client",
+        "logger",
+        "identifier_credentials",
+        "csrf",
+        "flowID",
+    )
+
     def __init__(
         self,
         cfg: Config,
         *,
-        email: Optional[str] = None,
-        username: Optional[str] = None,
+        email: str | None = None,
+        username: str | None = None,
     ) -> None:
         self.solver = cfg.solver
         self.client = cfg.client

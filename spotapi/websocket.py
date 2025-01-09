@@ -4,6 +4,7 @@ from spotapi.utils.strings import random_hex_string
 from spotapi.login import Login
 from spotapi.client import BaseClient
 from spotapi.exceptions import WebSocketError
+from spotapi.types.annotations import enforce
 from typing import Any
 import threading
 import atexit
@@ -11,11 +12,30 @@ import json
 import time
 import signal
 
+__all__ = ["WebsocketStreamer", "WebSocketError"]
 
+
+@enforce
 class WebsocketStreamer:
     """
     Standard streamer to connect to Spotify's websocket API.
+
+    Parameters
+    ----------
+    login : Login
+        The login object to use for authentication.
     """
+
+    __slots__ = (
+        "base",
+        "client",
+        "device_id",
+        "ws",
+        "rlock",
+        "ws_dump",
+        "connection_id",
+        "keep_alive_thread",
+    )
 
     def __init__(self, login: Login) -> None:
         if not login.logged_in:

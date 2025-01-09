@@ -1,11 +1,16 @@
 import uuid
+from typing import Any, List
+from collections.abc import Mapping
 from spotapi.user import User
 from spotapi.login import Login
-from typing import Mapping, Any, List
+from spotapi.types.annotations import enforce
 from spotapi.exceptions.errors import FamilyError
 from spotapi.utils.strings import parse_json_string
 
+__all__ = ["JoinFamily", "Family", "FamilyError"]
 
+
+@enforce
 class JoinFamily:
     """
     Wrapper class for joining a family with a user and a host provided.
@@ -16,6 +21,19 @@ class JoinFamily:
     host (Family): The host user's family object.
     country (str): The country to restrict the autocomplete to.
     """
+
+    __slots__ = (
+        "user",
+        "host",
+        "country",
+        "client",
+        "family",
+        "address",
+        "invite_token",
+        "session_id",
+        "csrf",
+        "addresses",
+    )
 
     def __init__(self, user_login: Login, host: "Family", country: str) -> None:
         self.user = User(user_login)
@@ -94,6 +112,7 @@ class JoinFamily:
         self._add_to_family(place_id)
 
 
+@enforce
 class Family(User):
     """
     Spotify Family generic methods.
@@ -108,6 +127,8 @@ class Family(User):
     ValueError
         If the user does not have premium.
     """
+
+    __slots__ = ("_user_family",)
 
     def __init__(self, login: Login) -> None:
         super().__init__(login)

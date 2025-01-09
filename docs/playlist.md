@@ -4,8 +4,8 @@ The `PublicPlaylist` class allows you to access public information about a Spoti
 
 ## Parameters
 
-- **playlist**: `str | None`  
-  The Spotify URI of the playlist. If provided, it is used to initialize the playlist.
+- **playlist**: `str`  
+  The Spotify URI of the playlist, it is used to initialize the playlist.
 
 - **client**: `TLSClient`  
   An instance of `TLSClient` used for making HTTP requests. Defaults to a new instance with specified parameters.
@@ -14,9 +14,6 @@ The `PublicPlaylist` class allows you to access public information about a Spoti
 
 ### `__init__(self, playlist: str | None = None, /, *, client: TLSClient = TLSClient("chrome_120", "", auto_retries=3)) -> None`
 Initializes the `PublicPlaylist` class with an optional playlist URI and a `TLSClient` instance.
-
-- **Raises:**  
-  `ValueError` if playlist ID cannot be extracted from the provided URI.
 
 ### `get_playlist_info(self, limit: int = 25, *, offset: int = 0) -> Mapping[str, Any]`
 Fetches public information about the playlist.

@@ -1,17 +1,27 @@
 import json
-from typing import Any, Generator, List, Mapping, Tuple
+from collections.abc import Mapping, Iterable, Generator
+from typing import Any, List, Tuple
 
+from spotapi.types.annotations import enforce
 from spotapi.exceptions import SongError
 from spotapi.http.request import TLSClient
 from spotapi.client import BaseClient
 from spotapi.playlist import PrivatePlaylist, PublicPlaylist
 
+__all__ = ["Song", "SongError"]
 
+
+@enforce
 class Song:
     """
     Extends the PrivatePlaylist class with methods that can only be used while logged in.
     These methods interact with songs and tend to be used in the context of a playlist.
     """
+
+    __slots__ = (
+        "playlist",
+        "base",
+    )
 
     def __init__(
         self,
@@ -20,7 +30,39 @@ class Song:
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
     ) -> None:
         self.playlist = playlist
-        self.base = BaseClient(client=playlist.client if (playlist is not None) else client)  # type: ignore
+        self.base = BaseClient(client=playlist.login.client if playlist else client)
+
+    def get_track_info(self, track_id: str) -> Mapping[str, Any]:
+        """
+        Gets information about a specific song.
+        """
+        url = "https://api-partner.spotify.com/pathfinder/v1/query"
+        params = {
+            "operationName": "getTrack",
+            "variables": json.dumps(
+                {
+                    "uri": f"spotify:track:{track_id}",
+                }
+            ),
+            "extensions": json.dumps(
+                {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": self.base.part_hash("getTrack"),
+                    }
+                }
+            ),
+        }
+
+        resp = self.base.client.post(url, params=params, authenticate=True)
+
+        if resp.fail:
+            raise SongError("Could not get song info", error=resp.error.string)
+
+        if not isinstance(resp.response, Mapping):
+            raise SongError("Invalid JSON")
+
+        return resp.response
 
     def query_songs(
         self, query: str, /, limit: int = 10, *, offset: int = 0
@@ -68,7 +110,7 @@ class Song:
         """
         Generator that fetches songs in chunks
 
-        Note: If total_tracks <= 100, then there is no need to paginate
+        Note: If total_count <= 100, then there is no need to paginate
         """
         UPPER_LIMIT: int = 100
         # We need to get the total songs first
@@ -143,7 +185,7 @@ class Song:
 
     @staticmethod
     def parse_playlist_items(
-        items: List[Mapping[str, Any]],
+        items: Iterable[Mapping[str, Any]],
         *,
         song_id: str | None = None,
         song_name: str | None = None,

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Generator, Literal, Mapping
+from spotapi.types.annotations import enforce
+from typing import Any, Literal
+from collections.abc import Mapping, Generator
 
 from spotapi.client import BaseClient
 from spotapi.exceptions import ArtistError
@@ -9,7 +11,10 @@ from spotapi.http.request import TLSClient
 from spotapi.login import Login
 from spotapi.client import BaseClient
 
+__all__ = ["Artist", "ArtistError"]
 
+
+@enforce
 class Artist:
     """
     A class that represents an artist in the Spotify catalog.
@@ -24,6 +29,11 @@ class Artist:
         If not provided, a default one will be used.
     """
 
+    __slots__ = (
+        "_login",
+        "base",
+    )
+
     def __init__(
         self,
         login: Login | None = None,
@@ -34,7 +44,7 @@ class Artist:
             raise ValueError("Must be logged in")
 
         self._login: bool = bool(login)
-        self.base = BaseClient(client=login.client if (login is not None) else client)  # type: ignore
+        self.base = BaseClient(client=login.client if (login is not None) else client)
 
     def query_artists(
         self, query: str, /, limit: int = 10, *, offset: int = 0
@@ -79,7 +89,7 @@ class Artist:
         """
         Generator that fetches artists in chunks
 
-        Note: If total_tracks <= 100, then there is no need to paginate
+        Note: If total_count <= 100, then there is no need to paginate
         """
         UPPER_LIMIT: int = 100
 

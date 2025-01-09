@@ -1,12 +1,17 @@
 import re
 import atexit
-from typing import Mapping
+from collections.abc import Mapping
+from spotapi.types.annotations import enforce
+from spotapi.types.alias import _UStr, _Undefined
 
 from spotapi.exceptions import BaseClientError
 from spotapi.http.request import TLSClient
 from spotapi.utils.strings import parse_json_string
 
+__all__ = ["BaseClient", "BaseClientError"]
 
+
+@enforce
 class BaseClient:
     """
     A base class that all the Spotify classes extend.
@@ -15,13 +20,13 @@ class BaseClient:
     NOTE: Should not be used directly. Use the Spotify classes instead.
     """
 
-    js_pack: str | None = None
-    client_version: str | None = None
-    access_token: str | None = None
-    client_token: str | None = None
-    client_id: str | None = None
-    device_id: str | None = None
-    raw_hashes: str | None = None
+    js_pack: _UStr = _Undefined
+    client_version: _UStr = _Undefined
+    access_token: _UStr = _Undefined
+    client_token: _UStr = _Undefined
+    client_id: _UStr = _Undefined
+    device_id: _UStr = _Undefined
+    raw_hashes: _UStr = _Undefined
 
     def __init__(self, client: TLSClient) -> None:
         self.client = client
@@ -39,22 +44,22 @@ class BaseClient:
         atexit.register(self.client.close)
 
     def _auth_rule(self, kwargs: dict) -> dict:
-        if self.client_token is None:
+        if self.client_token is _Undefined:
             self.get_client_token()
 
-        if self.access_token is None:
+        if self.access_token is _Undefined:
             self.get_session()
 
         if "headers" not in kwargs:
             kwargs["headers"] = {}
 
-        assert self.access_token is not None, "Access token is None"
+        assert self.access_token is not _Undefined, "Access token is _Undefined"
         kwargs["headers"].update(
             {
-                "Authorization": "Bearer " + self.access_token,
+                "Authorization": "Bearer " + str(self.access_token),
                 "Client-Token": self.client_token,
                 "Spotify-App-Version": self.client_version,
-            }
+            }.items()
         )
 
         return kwargs
@@ -70,8 +75,13 @@ class BaseClient:
         if resp.fail:
             raise BaseClientError("Could not get session", error=resp.error.string)
 
-        pattern = r"https:\/\/open\.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
-        self.js_pack = re.findall(pattern, resp.response)[1]
+        try:
+            pattern = r"https:\/\/open\.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
+            self.js_pack = re.findall(pattern, resp.response)[1]
+        except IndexError:
+            pattern = r"https:\/\/open-exp.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
+            self.js_pack = re.findall(pattern, resp.response)[1]
+            
         self.access_token = parse_json_string(resp.response, "accessToken")
         self.client_id = parse_json_string(resp.response, "clientId")
         self.device_id = parse_json_string(resp.response, "correlationId")
@@ -120,25 +130,25 @@ class BaseClient:
         self.client_token = resp.response["granted_token"]["token"]
 
     def part_hash(self, name: str) -> str:
-        if self.raw_hashes is None:
+        if self.raw_hashes is _Undefined:
             self.get_sha256_hash()
 
-        if self.raw_hashes is None:
+        if self.raw_hashes is _Undefined:
             raise ValueError("Could not get playlist hashes")
 
         try:
-            return self.raw_hashes.split(f'"{name}","query","')[1].split('"')[0]
+            return str(self.raw_hashes).split(f'"{name}","query","')[1].split('"')[0]
         except IndexError:
-            return self.raw_hashes.split(f'"{name}","mutation","')[1].split('"')[0]
+            return str(self.raw_hashes).split(f'"{name}","mutation","')[1].split('"')[0]
 
     def get_sha256_hash(self) -> None:
-        if self.js_pack is None:
+        if self.js_pack is _Undefined:
             self.get_session()
 
-        if self.js_pack is None:
+        if self.js_pack is _Undefined:
             raise ValueError("Could not get playlist hashes")
 
-        resp = self.client.get(self.js_pack)
+        resp = self.client.get(str(self.js_pack))
 
         if resp.fail:
             raise BaseClientError(
@@ -149,21 +159,37 @@ class BaseClient:
 
         self.raw_hashes = resp.response
         self.client_version = resp.response.split('clientVersion:"')[1].split('"')[0]
+
         # Maybe it's static? Let's not take chances.
         self.xpui_route_num = resp.response.split(':"xpui-routes-search"')[0].split(
             ","
         )[-1]
-        pattern = rf'{self.xpui_route_num}:"([^"]*)"'
-        self.xpui_route = re.findall(pattern, resp.response)[-1]
+        self.xpui_route_tracks_num = resp.response.split(':"xpui-routes-track-v2"')[
+            0
+        ].split(",")[-1]
 
-        resp = self.client.get(
-            f"https://open.spotifycdn.com/cdn/build/web-player/xpui-routes-search.{self.xpui_route}.js"
+        xpui_route_pattern = rf'{self.xpui_route_num}:"([^"]*)"'
+        self.xpui_route = re.findall(xpui_route_pattern, resp.response)[-1]
+
+        xpui_route_tracks_pattern = rf'{self.xpui_route_tracks_num}:"([^"]*)"'
+        self.xpui_route_tracks = re.findall(xpui_route_tracks_pattern, resp.response)[
+            -1
+        ]
+
+        urls = (
+            f"https://open.spotifycdn.com/cdn/build/web-player/xpui-routes-search.{self.xpui_route}.js",
+            f"https://open.spotifycdn.com/cdn/build/web-player/xpui-routes-track-v2.{self.xpui_route_tracks}.js",
         )
 
-        if resp.fail:
-            raise BaseClientError("Could not get xpui hashes", error=resp.error.string)
+        for url in urls:
+            resp = self.client.get(url)
 
-        self.raw_hashes += resp.response
+            if resp.fail:
+                raise BaseClientError(
+                    "Could not get xpui hashes", error=resp.error.string
+                )
+
+            self.raw_hashes += resp.response
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(...)"

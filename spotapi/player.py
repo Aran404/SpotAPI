@@ -3,12 +3,16 @@ from spotapi.login import Login
 from spotapi.utils import random_hex_string
 from spotapi.exceptions import PlayerError
 from spotapi.playlist import PublicPlaylist
+from spotapi.types.annotations import enforce
 from spotapi.song import Song
 from typing import List
 import uuid
 import time
 
+__all__ = ["Player", "PlayerStatus", "PlayerError"]
 
+
+@enforce
 class Player(PlayerStatus):
     """
     A class used to interact with the Spotify player.
@@ -19,9 +23,14 @@ class Player(PlayerStatus):
         The login instance used for authentication.
     device_id : str, optional
         The device ID to connect to for the player.
-    use_active_device : bool, default True
-        If True, the player will use the active device.
     """
+
+    __slots__ = (
+        "active_id",
+        "device_id",
+        "r_state",
+        "_transfered",
+    )
 
     def __init__(self, login: Login, device_id: str | None = None) -> None:
         super().__init__(login, None)

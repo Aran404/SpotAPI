@@ -1,3 +1,7 @@
+# Legal Notice
+
+> **Disclaimer**: This repository and any associated code are provided "as is" without warranty of any kind, either expressed or implied. The author of this repository does not accept any responsibility for the use or misuse of this repository or its contents. The author does not endorse any actions or consequences arising from the use of this repository. Any copies, forks, or re-uploads made by other users are not the responsibility of the author. The repository is solely intended as a Proof Of Concept for educational purposes regarding the use of a service's private API. By using this repository, you acknowledge that the author makes no claims about the accuracy, legality, or safety of the code and accepts no liability for any issues that may arise. More information can be found [HERE](./LEGAL_NOTICE.md).
+
 # SpotAPI
 
 Welcome to SpotAPI! This Python library is designed to interact with the private and public Spotify APIs, emulating the requests typically made through a web browser. This wrapper provides a convenient way to access Spotify’s rich set of features programmatically.
@@ -29,7 +33,9 @@ Everything you can do with Spotify, **SpotAPI** can do with just a user’s logi
 
 
 ## Docs
+- [**Public.py**](./docs/public.md)
 - [**Artist.py**](./docs/artist.md)
+- [**Album.py**](./docs/album.md)
 - [**Creator.py**](./docs/creator.md)
 - [**Family.py**](./docs/family.md)
 - [**Login.py**](./docs/login.md)

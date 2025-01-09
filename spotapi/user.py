@@ -1,17 +1,27 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
+from spotapi.types.annotations import enforce
 
 from spotapi import utils
 from spotapi.exceptions import UserError
 from spotapi.login import Login
 
-import secrets
+__all__ = ["User", "UserError"]
 
+@enforce
 class User:
     """
     Represents a Spotify user.
+
+    Parameters
+    ----------
+    login : Login
+        The login object.
     """
+
+    __slots__ = ("login", "_user_plan", "_user_info", "csrf_token")
 
     def __init__(self, login: Login) -> None:
         if not login.logged_in:
