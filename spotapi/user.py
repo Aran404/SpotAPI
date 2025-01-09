@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from spotapi import utils
 from spotapi.exceptions import UserError
 from spotapi.login import Login
 
@@ -99,7 +100,7 @@ class User:
                 "country": profile_dump["country"],
             },
             "recaptcha_token": captcha_response,
-            "client_nonce": ''.join(str(secrets.randbits(32)) for _ in range(2)),
+            "client_nonce": utils.random_nonce(),
             "callback_url": "https://www.spotify.com/account/profile/challenge",
             "client_info": {
                 "locale": "en_US",
