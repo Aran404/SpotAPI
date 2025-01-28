@@ -48,7 +48,7 @@ class PublicPlaylist:
         self.playlist_link = f"https://open.spotify.com/playlist/{self.playlist_id}"
 
     def get_playlist_info(
-        self, limit: int = 25, *, offset: int = 0
+        self, limit: int = 25, *, offset: int = 0, enable_watch_feed_entrypoint: bool = False
     ) -> Mapping[str, Any]:
         """Gets the public playlist information"""
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
@@ -59,6 +59,7 @@ class PublicPlaylist:
                     "uri": f"spotify:playlist:{self.playlist_id}",
                     "offset": offset,
                     "limit": limit,
+                    "enableWatchFeedEntrypoint": enable_watch_feed_entrypoint,
                 }
             ),
             "extensions": json.dumps(
