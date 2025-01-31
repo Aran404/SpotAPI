@@ -82,35 +82,37 @@ class Artist:
             raise ArtistError("Invalid JSON")
 
         return resp.response
-    
-    def get_artist_by_id(
-            self, artist_id: str, locale_code: str = "en"
-        ) -> Mapping[str, Any]:
-        """
-        `artist_id` can be either the full uri or just the id
-        """
+
+    def get_artist(
+        self, artist_id: str, /, *, locale_code: str = "en"
+    ) -> Mapping[str, Any]:
+        """Gets an artist by ID"""
         if "artist:" in artist_id:
             artist_id = artist_id.split("artist:")[-1]
-    
+
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         params = {
             "operationName": "queryArtistOverview",
-            "variables": json.dumps({
-                "uri": f"spotify:artist:{artist_id}",
-                "locale": locale_code,
-            }),
-            "extensions": json.dumps({
-                "persistedQuery": {
-                    "version": 1,
-                    "sha256Hash": "4bc52527bb77a5f8bbb9afe491e9aa725698d29ab73bff58d49169ee29800167"
+            "variables": json.dumps(
+                {
+                    "uri": f"spotify:artist:{artist_id}",
+                    "locale": locale_code,
                 }
-            }),
+            ),
+            "extensions": json.dumps(
+                {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": self.base.part_hash("queryArtistOverview"),
+                    }
+                }
+            ),
         }
 
         resp = self.base.client.get(url, params=params, authenticate=True)
 
-        if resp.fail:   
-            raise ArtistError("Could not get artist details", error=resp.error.string)
+        if resp.fail:
+            raise ArtistError("Could not get artist by ID", error=resp.error.string)
 
         if not isinstance(resp.response, Mapping):
             raise ArtistError("Invalid JSON response")
