@@ -83,6 +83,42 @@ class Artist:
 
         return resp.response
 
+    def get_artist(
+        self, artist_id: str, /, *, locale_code: str = "en"
+    ) -> Mapping[str, Any]:
+        """Gets an artist by ID"""
+        if "artist:" in artist_id:
+            artist_id = artist_id.split("artist:")[-1]
+
+        url = "https://api-partner.spotify.com/pathfinder/v1/query"
+        params = {
+            "operationName": "queryArtistOverview",
+            "variables": json.dumps(
+                {
+                    "uri": f"spotify:artist:{artist_id}",
+                    "locale": locale_code,
+                }
+            ),
+            "extensions": json.dumps(
+                {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": self.base.part_hash("queryArtistOverview"),
+                    }
+                }
+            ),
+        }
+
+        resp = self.base.client.get(url, params=params, authenticate=True)
+
+        if resp.fail:
+            raise ArtistError("Could not get artist by ID", error=resp.error.string)
+
+        if not isinstance(resp.response, Mapping):
+            raise ArtistError("Invalid JSON response")
+
+        return resp.response
+
     def paginate_artists(
         self, query: str, /
     ) -> Generator[Mapping[str, Any], None, None]:
