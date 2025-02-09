@@ -279,7 +279,7 @@ class Hifi:
     device_supported: bool | None = None
 
     @staticmethod
-    def from_dict(data: Dict) -> "Hifi":
+    def from_dict(data: Dict[str, Any]) -> "Hifi":
         valid_keys = {
             key: data[key] for key in Hifi.__annotations__.keys() if key in data
         }
@@ -295,7 +295,7 @@ class AudioOutputDeviceInfo:
     device_name: str
 
     @staticmethod
-    def from_dict(data: Dict) -> "AudioOutputDeviceInfo":
+    def from_dict(data: Dict[str, Any]) -> "AudioOutputDeviceInfo":
         valid_keys = {
             key: data[key]
             for key in AudioOutputDeviceInfo.__annotations__.keys()
@@ -374,7 +374,7 @@ class MetadataMap:
     tier1_port: str
 
     @staticmethod
-    def from_dict(data: Dict) -> "MetadataMap":
+    def from_dict(data: Dict[str, Any]) -> "MetadataMap":
         valid_keys = {
             key: data[key] for key in MetadataMap.__annotations__.keys() if key in data
         }
@@ -439,7 +439,7 @@ class Devices:
     devices: Dict[str, Device]
 
     @staticmethod
-    def from_dict(data: Dict, active_device_id: str | None) -> "Devices":
+    def from_dict(data: Dict[str, Any], active_device_id: str | None) -> "Devices":
         devices = {key: Device.from_dict(value) for key, value in data.items()}
         return Devices(devices=devices, active_device_id=active_device_id)
 
