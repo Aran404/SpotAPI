@@ -1,11 +1,10 @@
 import json
-from collections.abc import Mapping, Iterable, Generator
 from typing import Any, List, Tuple
-
 from spotapi.types.annotations import enforce
 from spotapi.exceptions import SongError
 from spotapi.http.request import TLSClient
 from spotapi.client import BaseClient
+from collections.abc import Mapping, Iterable, Generator
 from spotapi.playlist import PrivatePlaylist, PublicPlaylist
 
 __all__ = ["Song", "SongError"]
@@ -16,6 +15,11 @@ class Song:
     """
     Extends the PrivatePlaylist class with methods that can only be used while logged in.
     These methods interact with songs and tend to be used in the context of a playlist.
+
+    Parameters
+    ----------
+    playlist (Optional[str]): The Spotify URI of the playlist.
+    client (Optional[TLSClient]): An instance of TLSClient to use for requests
     """
 
     __slots__ = (

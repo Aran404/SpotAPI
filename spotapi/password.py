@@ -1,9 +1,9 @@
-from spotapi.utils.strings import parse_json_string
-from spotapi.exceptions import PasswordError
-from spotapi.types.data import Config
-from spotapi.types.annotations import enforce
 import time
 import uuid
+from spotapi.utils.strings import parse_json_string
+from spotapi.types.annotations import enforce
+from spotapi.exceptions import PasswordError
+from spotapi.types.data import Config
 
 __all__ = ["Password", "PasswordError"]
 

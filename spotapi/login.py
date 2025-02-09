@@ -5,7 +5,6 @@ from typing import Any
 from collections.abc import Mapping
 from spotapi.types.annotations import enforce
 from urllib.parse import urlencode, quote
-
 from spotapi.types import Config, SaverProtocol
 from spotapi.exceptions import LoginError
 from spotapi.utils.strings import parse_json_string
@@ -149,8 +148,13 @@ class Login:
     def logged_in(self, value: bool):
         self._authorized = value
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return f"Login(password={self.password!r}, identifier_credentials={self.identifier_credentials!r})"
+
+    def __str__(self) -> str:
+        return (
+            f"Logged in with ID={self.identifier_credentials}, password={self.password}"
+        )
 
     def _get_add_cookie(self, _url: str | None = None) -> None:
         urls = (

@@ -3,7 +3,6 @@ import atexit
 from collections.abc import Mapping
 from spotapi.types.annotations import enforce
 from spotapi.types.alias import _UStr, _Undefined
-
 from spotapi.exceptions import BaseClientError
 from spotapi.http.request import TLSClient
 from spotapi.utils.strings import parse_json_string
@@ -81,7 +80,7 @@ class BaseClient:
         except IndexError:
             pattern = r"https:\/\/open-exp.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
             self.js_pack = re.findall(pattern, resp.response)[1]
-            
+
         self.access_token = parse_json_string(resp.response, "accessToken")
         self.client_id = parse_json_string(resp.response, "clientId")
         self.device_id = parse_json_string(resp.response, "correlationId")

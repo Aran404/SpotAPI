@@ -13,8 +13,9 @@ __all__ = [
     "random_domain",
     "random_email",
     "random_dob",
-    "random_nonce"
+    "random_nonce",
 ]
+
 
 def random_b64_string(length: int) -> str:
     """Used by Spotify internally"""
@@ -86,5 +87,6 @@ def random_email() -> str:
 def random_dob() -> str:
     return f"{random.randint(1950, 2000)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}"
 
+
 def random_nonce() -> str:
-    return ''.join(str(random.getrandbits(32)) for _ in range(2))
+    return "".join(str(random.getrandbits(32)) for _ in range(2))

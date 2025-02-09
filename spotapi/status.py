@@ -1,10 +1,10 @@
-from typing import Dict, Any, Callable, List, ParamSpec, TypeVar
-from spotapi.types.annotations import enforce
-from spotapi.types.data import PlayerState, Devices, Track
-from spotapi.login import Login
-from spotapi.websocket import WebsocketStreamer
 import threading
 import functools
+from spotapi.login import Login
+from spotapi.types.annotations import enforce
+from spotapi.types.data import PlayerState, Devices, Track
+from spotapi.websocket import WebsocketStreamer
+from typing import Dict, Any, Callable, List, ParamSpec, TypeVar
 
 __all__ = [
     "PlayerStatus",

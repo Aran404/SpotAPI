@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import atexit
-import json
 from typing import Any, Callable, Type, Union
-
-import requests
-from tls_client import Session
 from tls_client.settings import ClientIdentifiers
 from tls_client.exceptions import TLSClientExeption
 from tls_client.response import Response as TLSResponse
-
 from spotapi.exceptions import ParentException, RequestError
 from spotapi.http.data import Response
+from tls_client import Session
+import requests
+import atexit
+import json
 
 __all__ = [
     "StdClient",
@@ -23,12 +21,13 @@ __all__ = [
 ]
 
 
-class StdClient(requests.Session):
+class StdClient:
     """
     Standard HTTP Client implementation wrapped around the requests library.
     """
 
     __slots__ = (
+        "_client",
         "auto_retries",
         "authenticate",
     )
@@ -38,10 +37,10 @@ class StdClient(requests.Session):
         auto_retries: int = 0,
         auth_rule: Callable[[dict[Any, Any]], dict] | None = None,
     ) -> None:
-        super().__init__()
+        self._client = requests.Session()
         self.auto_retries = auto_retries + 1
         self.authenticate = auth_rule
-        atexit.register(self.close)
+        atexit.register(self._client.close)
 
     def __call__(
         self, method: str, url: str, **kwargs
@@ -49,17 +48,25 @@ class StdClient(requests.Session):
         return self.build_request(method, url, **kwargs)
 
     def build_request(
-        self, method: str, url: str, **kwargs
+        self, method: str, url: str | bytes, **kwargs
     ) -> Union[requests.Response, None]:
+        if isinstance(url, (bytes, memoryview)):
+            url = (
+                url.tobytes().decode("utf-8")
+                if isinstance(url, memoryview)
+                else url.decode("utf-8")
+            )
+
         err = "Unknown"
         for _ in range(self.auto_retries):
             try:
-                response = super().request(method.upper(), url, **kwargs)
+                response = self._client.request(method.upper(), url, **kwargs)
             except Exception as e:
                 err = str(e)
                 continue
             else:
                 return response
+
         raise RequestError("Failed to complete request.", error=err)
 
     def parse_response(self, response: requests.Response) -> Response:
@@ -132,8 +139,15 @@ class TLSClient(Session):
         return self.build_request(method, url, **kwargs)
 
     def build_request(
-        self, method: str, url: str, **kwargs
+        self, method: str, url: str | bytes, **kwargs
     ) -> Union[TLSResponse, None]:
+        if isinstance(url, (bytes, memoryview)):
+            url = (
+                url.tobytes().decode("utf-8")
+                if isinstance(url, memoryview)
+                else url.decode("utf-8")
+            )
+
         err = "Unknown"
         for _ in range(self.auto_retries):
             try:
@@ -183,7 +197,9 @@ class TLSClient(Session):
 
         return resp
 
-    def get(self, url: str, *, authenticate: bool = False, **kwargs) -> Response:
+    def get(
+        self, url: str | bytes, *, authenticate: bool = False, **kwargs
+    ) -> Response:
         """Routes a GET Request"""
         if authenticate and self.authenticate is not None:
             kwargs = self.authenticate(kwargs)
@@ -196,7 +212,12 @@ class TLSClient(Session):
         return self.parse_response(response, "GET", True)
 
     def post(
-        self, url: str, *, authenticate: bool = False, danger: bool = False, **kwargs
+        self,
+        url: str | bytes,
+        *,
+        authenticate: bool = False,
+        danger: bool = False,
+        **kwargs,
     ) -> Response:
         """Routes a POST Request"""
         if authenticate and self.authenticate is not None:
@@ -210,7 +231,12 @@ class TLSClient(Session):
         return self.parse_response(response, "POST", danger)
 
     def put(
-        self, url: str, *, authenticate: bool = False, danger: bool = False, **kwargs
+        self,
+        url: str | bytes,
+        *,
+        authenticate: bool = False,
+        danger: bool = False,
+        **kwargs,
     ) -> Response:
         """Routes a PUT Request"""
         if authenticate and self.authenticate is not None:

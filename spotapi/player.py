@@ -1,13 +1,13 @@
-from spotapi.status import PlayerStatus
-from spotapi.login import Login
+import uuid
+import time
 from spotapi.utils import random_hex_string
 from spotapi.exceptions import PlayerError
 from spotapi.playlist import PublicPlaylist
 from spotapi.types.annotations import enforce
+from spotapi.status import PlayerStatus
+from spotapi.login import Login
 from spotapi.song import Song
 from typing import List
-import uuid
-import time
 
 __all__ = ["Player", "PlayerStatus", "PlayerError"]
 

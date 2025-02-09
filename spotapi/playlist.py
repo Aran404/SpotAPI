@@ -4,14 +4,13 @@ import json
 import re
 import time
 from typing import Any
+from spotapi.login import Login
+from spotapi.user import User
+from spotapi.client import BaseClient
 from collections.abc import Mapping, Generator
 from spotapi.types.annotations import enforce
-
 from spotapi.exceptions import PlaylistError
 from spotapi.http.request import TLSClient
-from spotapi.login import Login
-from spotapi.client import BaseClient
-from spotapi.user import User
 
 __all__ = ["PublicPlaylist", "PrivatePlaylist", "PlaylistError"]
 
@@ -48,7 +47,11 @@ class PublicPlaylist:
         self.playlist_link = f"https://open.spotify.com/playlist/{self.playlist_id}"
 
     def get_playlist_info(
-        self, limit: int = 25, *, offset: int = 0, enable_watch_feed_entrypoint: bool = False
+        self,
+        limit: int = 25,
+        *,
+        offset: int = 0,
+        enable_watch_feed_entrypoint: bool = False,
     ) -> Mapping[str, Any]:
         """Gets the public playlist information"""
         url = "https://api-partner.spotify.com/pathfinder/v1/query"

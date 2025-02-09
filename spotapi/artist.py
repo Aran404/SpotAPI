@@ -4,7 +4,6 @@ import json
 from spotapi.types.annotations import enforce
 from typing import Any, Literal
 from collections.abc import Mapping, Generator
-
 from spotapi.client import BaseClient
 from spotapi.exceptions import ArtistError
 from spotapi.http.request import TLSClient

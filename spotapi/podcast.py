@@ -4,7 +4,6 @@ import json
 from typing import Any
 from collections.abc import Mapping, Generator
 from spotapi.types.annotations import enforce
-
 from spotapi.exceptions import PodcastError
 from spotapi.http.request import TLSClient
 from spotapi.client import BaseClient

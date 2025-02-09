@@ -1,10 +1,9 @@
-from typing import Generic, TypeVar, Callable, Generator, Mapping, Any, TypeAlias
-from spotapi.client import TLSClient
 from typing import Deque
 from collections import deque
 from threading import Lock
-
+from spotapi.client import TLSClient
 from spotapi import Artist, PublicAlbum, PublicPlaylist, Song, Podcast
+from typing import Generic, TypeVar, Callable, Generator, Mapping, Any, TypeAlias
 
 T = TypeVar("T")
 

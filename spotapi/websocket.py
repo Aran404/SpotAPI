@@ -1,16 +1,17 @@
 from __future__ import annotations
-from websockets.sync.client import connect
-from spotapi.utils.strings import random_hex_string
-from spotapi.login import Login
-from spotapi.client import BaseClient
-from spotapi.exceptions import WebSocketError
-from spotapi.types.annotations import enforce
-from typing import Any
+
 import threading
 import atexit
 import json
 import time
 import signal
+from typing import Any
+from spotapi.login import Login
+from spotapi.client import BaseClient
+from spotapi.exceptions import WebSocketError
+from spotapi.types.annotations import enforce
+from websockets.sync.client import connect
+from spotapi.utils.strings import random_hex_string
 
 __all__ = ["WebsocketStreamer", "WebSocketError"]
 
