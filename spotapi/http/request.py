@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Type, Union
+from typing import Any, Callable, Type, Dict
 from tls_client.settings import ClientIdentifiers
 from tls_client.exceptions import TLSClientExeption
 from tls_client.response import Response as TLSResponse
@@ -35,7 +35,7 @@ class StdClient:
     def __init__(
         self,
         auto_retries: int = 0,
-        auth_rule: Callable[[dict[Any, Any]], dict] | None = None,
+        auth_rule: Callable[[Dict[Any, Any]], Dict[Any, Any]] | None = None,
     ) -> None:
         self._client = requests.Session()
         self.auto_retries = auto_retries + 1
@@ -44,12 +44,12 @@ class StdClient:
 
     def __call__(
         self, method: str, url: str, **kwargs
-    ) -> Union[requests.Response, None]:
+    ) -> requests.Response | None:
         return self.build_request(method, url, **kwargs)
 
     def build_request(
         self, method: str, url: str | bytes, **kwargs
-    ) -> Union[requests.Response, None]:
+    ) -> requests.Response | None:
         if isinstance(url, (bytes, memoryview)):
             url = (
                 url.tobytes().decode("utf-8")
@@ -70,7 +70,7 @@ class StdClient:
         raise RequestError("Failed to complete request.", error=err)
 
     def parse_response(self, response: requests.Response) -> Response:
-        body: Union[str, dict, None] = response.text
+        body: str | Dict[Any, Any] | None = response.text
         headers = {key.lower(): value for key, value in response.headers.items()}
 
         if "application/json" in headers.get("content-type", ""):
@@ -123,7 +123,7 @@ class TLSClient(Session):
         proxy: str,
         *,
         auto_retries: int = 0,
-        auth_rule: Callable[[dict[Any, Any]], dict] | None = None,
+        auth_rule: Callable[[Dict[Any, Any]], Dict[Any, Any]] | None = None,
     ) -> None:
         super().__init__(client_identifier=profile, random_tls_extension_order=True)
 
@@ -135,12 +135,12 @@ class TLSClient(Session):
         self.fail_exception: Type[ParentException] | None = None
         atexit.register(self.close)
 
-    def __call__(self, method: str, url: str, **kwargs) -> Union[TLSResponse, None]:
+    def __call__(self, method: str, url: str, **kwargs) -> TLSResponse | None:
         return self.build_request(method, url, **kwargs)
 
     def build_request(
         self, method: str, url: str | bytes, **kwargs
-    ) -> Union[TLSResponse, None]:
+    ) -> TLSResponse | None:
         if isinstance(url, (bytes, memoryview)):
             url = (
                 url.tobytes().decode("utf-8")
@@ -163,21 +163,21 @@ class TLSClient(Session):
     def parse_response(
         self, response: TLSResponse, method: str, danger: bool
     ) -> Response:
-        body: Union[str, dict, None] = response.text
+        body: str | Dict[Any, Any] | None = response.text
         headers = {key.lower(): value for key, value in response.headers.items()}
 
         # Spotify doesn't set content-type for some reason?
         json_encoded = "application/json" in headers.get("content-type", "")
-        is_dict = True
+        is_Dict = True
 
         try:
             json.loads(body)  # type: ignore
         except json.JSONDecodeError:
-            is_dict = False
+            is_Dict = False
 
-        if json_encoded or is_dict:
+        if json_encoded or is_Dict:
             json_formatted = response.json()
-            body = json_formatted if isinstance(json_formatted, dict) else body
+            body = json_formatted if isinstance(json_formatted, Dict) else body
 
         if not body:
             body = None
