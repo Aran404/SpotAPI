@@ -42,9 +42,7 @@ class StdClient:
         self.authenticate = auth_rule
         atexit.register(self._client.close)
 
-    def __call__(
-        self, method: str, url: str, **kwargs
-    ) -> requests.Response | None:
+    def __call__(self, method: str, url: str, **kwargs) -> requests.Response | None:
         return self.build_request(method, url, **kwargs)
 
     def build_request(

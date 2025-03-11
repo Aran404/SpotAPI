@@ -1,3 +1,4 @@
+import json
 import re
 import atexit
 from collections.abc import Mapping
@@ -63,13 +64,20 @@ class BaseClient:
 
         return kwargs
 
+    def _get_auth_vars(self) -> None:
+        if self.access_token is _Undefined or self.client_id is _Undefined:
+            resp = self.client.get("https://open.spotify.com/get_access_token")
+
+            if resp.fail:
+                raise BaseClientError(
+                    "Could not get session auth tokens", error=resp.error.string
+                )
+
+            self.access_token = resp.response["accessToken"]
+            self.client_id = resp.response["clientId"]
+
     def get_session(self) -> None:
-        resp = self.client.get(
-            "https://open.spotify.com",
-            headers={
-                "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{self.browser_version}.0.0.0 Safari/537.36"
-            },
-        )
+        resp = self.client.get("https://open.spotify.com")
 
         if resp.fail:
             raise BaseClientError("Could not get session", error=resp.error.string)
@@ -81,9 +89,8 @@ class BaseClient:
             pattern = r"https:\/\/open-exp.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
             self.js_pack = re.findall(pattern, resp.response)[1]
 
-        self.access_token = parse_json_string(resp.response, "accessToken")
-        self.client_id = parse_json_string(resp.response, "clientId")
         self.device_id = parse_json_string(resp.response, "correlationId")
+        self._get_auth_vars()
 
     def get_client_token(self) -> None:
         if not (self.client_id and self.device_id):
