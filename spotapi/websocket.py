@@ -50,7 +50,7 @@ class WebsocketStreamer:
 
         self.device_id = random_hex_string(32)
 
-        uri = f"wss://gue1-dealer2.spotify.com/?access_token={self.base.access_token}"
+        uri = f"wss://dealer.spotify.com/?access_token={self.base.access_token}"
         self.ws = connect(
             uri,
             user_agent_header="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
