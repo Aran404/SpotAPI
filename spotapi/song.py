@@ -161,6 +161,31 @@ class Song:
         if resp.fail:
             raise SongError("Could not add song to playlist", error=resp.error.string)
 
+    def add_songs_to_playlist(self, song_ids: list, /) -> None:
+        """Adds multiple songs to the playlist"""
+        if not self.playlist or not hasattr(self.playlist, "playlist_id"):
+            raise ValueError("Playlist not set")
+
+        url = "https://api-partner.spotify.com/pathfinder/v1/query"
+        payload = {
+            "variables": {
+                "uris": [f"spotify:track:{song_id}" for song_id in song_ids],
+                "playlistUri": f"spotify:playlist:{self.playlist.playlist_id}",
+                "newPosition": {"moveType": "BOTTOM_OF_PLAYLIST", "fromUid": None},
+            },
+            "operationName": "addToPlaylist",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": self.base.part_hash("addToPlaylist"),
+                }
+            },
+        }
+        resp = self.base.client.post(url, json=payload, authenticate=True)
+
+        if resp.fail:
+            raise SongError("Could not add songs to playlist", error=resp.error.string)    
+
     def _stage_remove_song(self, uids: List[str]) -> None:
         # If None, something internal went wrong
         assert self.playlist is not None, "Playlist not set"
