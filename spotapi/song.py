@@ -163,6 +163,7 @@ class Song:
 
     def add_songs_to_playlist(self, song_ids: list, /) -> None:
         """Adds multiple songs to the playlist"""
+        # This can be a bit slow when adding 500+ songs, maybe we should add a batch processing
         if not self.playlist or not hasattr(self.playlist, "playlist_id"):
             raise ValueError("Playlist not set")
 
