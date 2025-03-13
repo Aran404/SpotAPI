@@ -203,7 +203,7 @@ class AccountChallenge:
             self.challenge_url,
             "6LeO36obAAAAALSBZrY6RYM1hcAY7RLvpDDcJLy3",
             "challenge",
-            "v2",
+            "v3",
         )
         self._submit_challenge(token)
         self._complete_challenge()
