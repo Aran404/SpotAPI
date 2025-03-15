@@ -1,6 +1,9 @@
-import json
 import re
+import hmac
+import time
 import atexit
+import hashlib
+from typing import Callable, Tuple
 from collections.abc import Mapping
 from spotapi.types.annotations import enforce
 from spotapi.types.alias import _UStr, _Undefined
@@ -9,6 +12,36 @@ from spotapi.http.request import TLSClient
 from spotapi.utils.strings import parse_json_string
 
 __all__ = ["BaseClient", "BaseClientError"]
+
+# fmt: off
+# Currently the secret is static but could change at any moment. 
+# From the looks of it there is no easy way to get it dynamically per request due to the vaguity of the javascript variables.
+_TOTP_SECRET = bytearray([53,53,48,55,49,52,53,56,53,51,52,56,55,52,57,57,53,57,50,50,52,56,54,51,48,51,50,57,51,52,55])
+# fmt: on
+
+
+def generate_totp(
+    secret: bytes = _TOTP_SECRET,
+    algorithm: Callable[[], object] = hashlib.sha1,
+    digits: int = 6,
+    counter_factory: Callable[[], int] = lambda: int(time.time()) // 30,
+) -> Tuple[str, int]:
+    counter = counter_factory()
+    hmac_result = hmac.new(
+        secret, counter.to_bytes(8, byteorder="big"), algorithm  # type: ignore
+    ).digest()
+
+    offset = hmac_result[-1] & 15
+    truncated_value = (
+        (hmac_result[offset] & 127) << 24
+        | (hmac_result[offset + 1] & 255) << 16
+        | (hmac_result[offset + 2] & 255) << 8
+        | (hmac_result[offset + 3] & 255)
+    )
+    return (
+        str(truncated_value % (10**digits)).zfill(digits),
+        counter * 30_000,
+    )  # (30 * 1000)
 
 
 @enforce
@@ -66,7 +99,17 @@ class BaseClient:
 
     def _get_auth_vars(self) -> None:
         if self.access_token is _Undefined or self.client_id is _Undefined:
-            resp = self.client.get("https://open.spotify.com/get_access_token")
+            totp, timestamp = generate_totp()
+            query = {
+                "reason": "init",
+                "productType": "web-player",
+                "totp": totp,
+                "totpVer": 5,
+                "ts": timestamp,
+            }
+            resp = self.client.get(
+                "https://open.spotify.com/get_access_token", params=query
+            )
 
             if resp.fail:
                 raise BaseClientError(
