@@ -133,18 +133,16 @@ class Song:
             ]["tracksV2"]["items"]
             offset += UPPER_LIMIT
 
-    def add_song_to_playlist(self, song_id: str, /) -> None:
-        """Adds a song to the playlist"""
+    def add_songs_to_playlist(self, song_ids: List[str], /) -> None:
+        """Adds multiple songs to the playlist"""
+        # This can be a bit slow when adding 500+ songs, maybe we should add a batch processing
         if not self.playlist or not hasattr(self.playlist, "playlist_id"):
             raise ValueError("Playlist not set")
-
-        if "track" in song_id:
-            song_id = song_id.split("track/")[1]
 
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         payload = {
             "variables": {
-                "uris": [f"spotify:track:{song_id}"],
+                "uris": [f"spotify:track:{song_id}" for song_id in song_ids],
                 "playlistUri": f"spotify:playlist:{self.playlist.playlist_id}",
                 "newPosition": {"moveType": "BOTTOM_OF_PLAYLIST", "fromUid": None},
             },
@@ -159,7 +157,14 @@ class Song:
         resp = self.base.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:
-            raise SongError("Could not add song to playlist", error=resp.error.string)
+            raise SongError("Could not add songs to playlist", error=resp.error.string)
+
+    def add_song_to_playlist(self, song_id: str, /) -> None:
+        """Adds a song to the playlist"""
+        if "track" in song_id:
+            song_id = song_id.split("track/")[1]
+
+        self.add_songs_to_playlist([song_id])
 
     def _stage_remove_song(self, uids: List[str]) -> None:
         # If None, something internal went wrong
