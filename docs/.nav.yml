@@ -1,0 +1,16 @@
+nav:
+  - index.md
+  - installation.md
+  - album.md
+  - artist.md
+  - creator.md
+  - family.md
+  - login.md
+  - password.md
+  - player.md
+  - playlist.md
+  - public.md
+  - song.md
+  - status.md
+  - user.md
+  - websocket.md

@@ -1,0 +1,37 @@
+site_name: SpotAPI
+site_url: https://mydomain.org/spotapi
+repo_url: https://github.com/Aran404/SpotAPI
+repo_name: Aran404/SpotAPI
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.top
+    - navigation.tracking
+    - navigation.sections
+    - navigation.instant
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      pygments_lang_class: true
+      auto_title: true
+      line_spans: __span
+  - pymdownx.keys
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+plugins:
+  - search
+  - awesome-nav

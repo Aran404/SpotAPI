@@ -1,0 +1,18 @@
+[project]
+name = "spotapi"
+version = "0.1.0"
+description = "A python wrapper for the public & private Spotify API"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "colorama>=0.4.6",
+  "mkdocs-awesome-nav>=3.0.0",
+  "mkdocs-material>=9.6.9",
+  "pillow>=11.1.0",
+  "readerwriterlock>=1.0.9",
+  "requests>=2.32.3",
+  "tls-client>=1.0.1",
+  "typing-extensions>=4.12.2",
+  "validators>=0.34.0",
+  "websockets>=15.0.1",
+]
