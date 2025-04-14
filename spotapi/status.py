@@ -18,7 +18,6 @@ __all__ = [
 R = TypeVar("R")
 P = ParamSpec("P")
 
-
 @enforce
 class PlayerStatus(WebsocketStreamer):
     """

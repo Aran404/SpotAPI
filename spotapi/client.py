@@ -19,7 +19,6 @@ __all__ = ["BaseClient", "BaseClientError"]
 _TOTP_SECRET = bytearray([53,53,48,55,49,52,53,56,53,51,52,56,55,52,57,57,53,57,50,50,52,56,54,51,48,51,50,57,51,52,55])
 # fmt: on
 
-
 def generate_totp(
     secret: bytes = _TOTP_SECRET,
     algorithm: Callable[[], object] = hashlib.sha1,
@@ -132,7 +131,7 @@ class BaseClient:
             pattern = r"https:\/\/open-exp.spotifycdn\.com\/cdn\/build\/web-player\/web-player.*?\.js"
             self.js_pack = re.findall(pattern, resp.response)[1]
 
-        self.device_id = parse_json_string(resp.response, "correlationId")
+        self.device_id = self.client.cookies.get("sp_t") or ""
         self._get_auth_vars()
 
     def get_client_token(self) -> None:

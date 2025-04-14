@@ -5,7 +5,7 @@ import atexit
 import json
 import time
 import signal
-from typing import Any
+from typing import Any, Dict
 from spotapi.login import Login
 from spotapi.client import BaseClient
 from spotapi.exceptions import WebSocketError
@@ -57,7 +57,7 @@ class WebsocketStreamer:
         )
 
         self.rlock = threading.Lock()
-        self.ws_dump: dict | None = None
+        self.ws_dump: Dict[Any, Any] | None = None
         self.connection_id = self.get_init_packet()
 
         self.keep_alive_thread = threading.Thread(target=self.keep_alive, daemon=True)
@@ -109,7 +109,7 @@ class WebsocketStreamer:
         if resp.fail:
             raise WebSocketError("Could not register device", error=resp.error.string)
 
-    def connect_device(self) -> dict[str, Any]:
+    def connect_device(self) -> Dict[str, Any]:
         url = f"https://gue1-spclient.spotify.com/connect-state/v1/devices/hobs_{self.device_id}"
         payload = {
             "member_type": "CONNECT_STATE",
@@ -143,7 +143,7 @@ class WebsocketStreamer:
             except (ConnectionError, KeyboardInterrupt):
                 break
 
-    def get_packet(self) -> dict:
+    def get_packet(self) -> Dict[Any, Any]:
         with self.rlock:
             ws_dump = dict(json.loads(self.ws.recv()))
             self.ws_dump = ws_dump
