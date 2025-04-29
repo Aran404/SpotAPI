@@ -9,8 +9,6 @@ import os
 import sqlite3
 from typing import Any, List, Mapping
 
-import pymongo
-import redis
 from readerwriterlock import rwlock
 
 from spotapi.types.interfaces import SaverProtocol
@@ -285,6 +283,8 @@ class MongoSaver(SaverProtocol):
         database_name: str = "spotify",
         collection: str = "sessions",
     ) -> None:
+        import pymongo
+
         self.conn = pymongo.MongoClient(host)
         self.database = self.conn[database_name]
         self.collection = self.database[collection]
@@ -320,6 +320,8 @@ class MongoSaver(SaverProtocol):
 
 class RedisSaver(SaverProtocol):
     def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0) -> None:
+        import redis
+
         self.client = redis.StrictRedis(host=host, port=port, db=db)
         atexit.register(self.client.close)
 
