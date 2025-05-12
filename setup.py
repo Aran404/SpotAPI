@@ -9,9 +9,7 @@ __install_require__ = [
     "typing_extensions",
     "validators",
 ]
-__extras__ = {
-    "websocket": ["websockets"],
-}
+__extras__ = {}
 
 with open("README.md", "r") as f:
     long_description = f.read()
