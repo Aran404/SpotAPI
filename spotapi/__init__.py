@@ -1,3 +1,4 @@
+from spotapi.artist import *
 from spotapi.client import *
 from spotapi.login import *
 from spotapi.playlist import *
