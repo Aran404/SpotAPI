@@ -1,5 +1,4 @@
 colorama==0.4.6
-Pillow==10.4.0
 readerwriterlock==1.0.9
 requests==2.31.0
 tls_client==1.0

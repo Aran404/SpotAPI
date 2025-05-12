@@ -4,7 +4,6 @@ __description__ = "A sleek API wrapper for Spotify's private API"
 __install_require__ = [
     "requests",
     "colorama",
-    "Pillow",
     "readerwriterlock",
     "tls_client",
     "typing_extensions",
@@ -12,8 +11,6 @@ __install_require__ = [
 ]
 __extras__ = {
     "websocket": ["websockets"],
-    "redis": ["redis"],
-    "pymongo": ["pymongo"],
 }
 
 with open("README.md", "r") as f:
