@@ -107,7 +107,7 @@ class BaseClient:
                 "ts": timestamp,
             }
             resp = self.client.get(
-                "https://open.spotify.com/get_access_token", params=query
+                "https://open.spotify.com/api/token", params=query
             )
 
             if resp.fail:
