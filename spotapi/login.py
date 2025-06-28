@@ -115,7 +115,7 @@ class Login:
 
         cfg.client.cookies.clear()
         for k, v in cookies.items():
-            cfg.client.cookies.set(k, v)
+            cfg.client.cookies.set(k, v, domain=".spotify.com", path="/")
 
         instantiated = cls(cfg, password, email=cred, username=cred)
         instantiated.logged_in = True
