@@ -100,7 +100,7 @@ class BaseClient:
 
     def _get_auth_vars(self) -> None:
         if self.access_token is _Undefined or self.client_id is _Undefined:
-            totp, timestamp = generate_totp()
+            totp, _ = generate_totp()
             query = {
                 "reason": "init",
                 "productType": "web-player",
