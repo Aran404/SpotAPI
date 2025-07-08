@@ -168,6 +168,22 @@ class Login:
             if resp.fail:
                 raise LoginError("Could not get session", error=resp.error.string)
 
+    def _set_non_otc(self) -> None:
+        url = "https://accounts.spotify.com/en/login"
+        params = {
+            "login_hint": self.identifier_credentials,
+            "allow_password": 1,
+            "continue": f"https://open.spotify.com/?flow_ctx={self.flow_id}",
+            "flow_ctx": self.flow_id,
+        }
+
+        resp = self.client.get(url, params=params)
+
+        if resp.fail:
+            raise LoginError("Could not get non otc session", error=resp.error.string)
+
+        self.csrf_token = resp.raw.cookies.get("sp_sso_csrf_token")
+
     def _get_session(self) -> None:
         url = "https://accounts.spotify.com/en/login"
         resp = self.client.get(url)
@@ -177,17 +193,17 @@ class Login:
 
         self.csrf_token = resp.raw.cookies.get("sp_sso_csrf_token")
         self.flow_id = parse_json_string(resp.response, "flowCtx")
-        # Some additional cookies
+
         self.client.cookies.set("remember", quote(self.identifier_credentials))  # type: ignore
         self._get_add_cookie()
+        self._set_non_otc()
 
     def _password_payload(self, captcha_key: str) -> str:
         query = {
             "username": self.identifier_credentials,
             "password": self.password,
-            "remember": "true",
             "recaptchaToken": captcha_key,
-            "continue": "https://accounts.spotify.com/en/status",
+            "continue": f"https://open.spotify.com/?flow_ctx={self.flow_id}",
             "flowCtx": self.flow_id,
         }
 
@@ -219,7 +235,6 @@ class Login:
             self.logger.attempt("Challenge detected, attempting to solve")
             LoginChallenge(self, json_data).defeat()
             self.logger.info("Challenge solved")
-            # json_data will still be bad, but we know we are logged in now
             return
 
         if "error" not in json_data:
@@ -238,7 +253,7 @@ class Login:
                 raise LoginError(f"Unforseen Error", error=f"{str(self)}: {error_type}")
 
     def login(self) -> None:
-        """Logins the user"""
+        """Preform user login."""
         if self.logged_in:
             raise LoginError("User already logged in")
 
@@ -298,10 +313,10 @@ class LoginChallenge:
             raise LoginError("Solver not set")
 
         captcha_response = self.l.solver.solve_captcha(
-            self.challenge_url,
-            "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
+            "https://challenge.spotify.com",
+            "6LeO36obAAAAALSBZrY6RYM1hcAY7RLvpDDcJLy3",
             "accounts/login",
-            "v3",
+            "v2",
         )
 
         if not captcha_response:
@@ -314,10 +329,9 @@ class LoginChallenge:
         payload = {
             "session_id": self.session_id,
             "challenge_id": challenge_id,
-            "recaptcha_challenge_id": {"solve": {"recaptcha_token": captcha_response}},
+            "recaptcha_challenge_v1": {"solve": {"recaptcha_token": captcha_response}},
         }
         headers = {
-            "X-Cloud-Trace-Context": "00000000000000006979d1624aa6b213/2238380859227873585;o=1",
             "Content-Type": "application/json",
         }
 
@@ -333,19 +347,19 @@ class LoginChallenge:
         if not isinstance(resp.response, Mapping):
             raise LoginError("Invalid JSON")
 
-        self.interaction_hash = resp.response["Completed"]["Hash"]
-        self.interaction_reference = resp.response["Completed"]["InteractionReference"]
+        self.interaction_hash = resp.response["completed"]["hash"]
+        self.interaction_reference = resp.response["completed"]["interaction_reference"]
 
     def _complete_challenge(self) -> None:
         # We need to grab the cookies
-        url = f"https://accounts.spotify.com/login/challenge-completed?sessionId={self.session_id}&interactRef={self.interaction_reference}&hash={self.interaction_hash}"
-
+        url = f"https://accounts.spotify.com/login/challenge-completed?sessionId={self.session_id}&interact_ref={self.interaction_reference}&hash={self.interaction_hash}"
         resp = self.l.client.get(url)
 
         if resp.fail:
             raise LoginError("Could not complete challenge", error=resp.error.string)
 
     def defeat(self) -> None:
+        """Defeats the RecaptchaV2 challenge."""
         self._get_challenge()
         self._submit_challenge()
         self._complete_challenge()

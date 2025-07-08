@@ -16,8 +16,10 @@ __all__ = ["BaseClient", "BaseClientError"]
 # fmt: off
 # Currently the secret is static but could change at any moment. 
 # From the looks of it there is no easy way to get it dynamically per request due to the vaguity of the javascript variables.
-_TOTP_SECRET = bytearray([53,53,48,55,49,52,53,56,53,51,52,56,55,52,57,57,53,57,50,50,52,56,54,51,48,51,50,57,51,52,55])
+_TOTP_SECRET = bytearray([49, 48, 48, 49, 49, 49, 56, 49, 49, 49, 49, 55, 57, 56, 50, 49, 50, 51, 49, 50, 52, 54, 56, 56, 52, 54, 57, 51, 55, 56, 49,
+                         51, 50, 54, 52, 52, 50, 56, 49, 57, 57, 52, 55, 57, 50, 51, 54, 53, 51, 53, 57, 49, 49, 51, 54, 52, 49, 48, 54, 50, 50, 49, 51, 49, 48, 55, 51, 48])
 # fmt: on
+
 
 def generate_totp(
     secret: bytes = _TOTP_SECRET,
@@ -103,12 +105,10 @@ class BaseClient:
                 "reason": "init",
                 "productType": "web-player",
                 "totp": totp,
-                "totpVer": 5,
-                "ts": timestamp,
+                "totpVer": 9,
+                "totpServer": totp,
             }
-            resp = self.client.get(
-                "https://open.spotify.com/get_access_token", params=query
-            )
+            resp = self.client.get("https://open.spotify.com/api/token", params=query)
 
             if resp.fail:
                 raise BaseClientError(
