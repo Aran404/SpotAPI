@@ -108,7 +108,9 @@ class BaseClient:
                 "totpVer": 9,
                 "totpServer": totp,
             }
-            resp = self.client.get("https://open.spotify.com/api/token", params=query)
+            resp = self.client.get(
+                "https://open.spotify.com/get_access_token", params=query
+            )
 
             if resp.fail:
                 raise BaseClientError(
