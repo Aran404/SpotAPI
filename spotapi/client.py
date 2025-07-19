@@ -18,7 +18,7 @@ __all__ = ["BaseClient", "BaseClientError"]
 # fmt: off
 # Currently the secret is static but could change at any moment. 
 # From the looks of it there is no easy way to get it dynamically per request due to the vaguity of the javascript variables.
-_TOTP_SECRET = bytearray([62, 54, 109, 83, 107, 77, 41, 103, 45, 93, 114, 38, 41, 97, 64, 51, 95, 94, 95, 94])
+_TOTP_SECRET = bytearray([53, 57, 79, 64, 54, 84, 97, 56, 53, 106, 50, 49, 98, 56, 83, 66, 37, 100, 68, 83, 65, 61, 39, 61, 51, 107, 80, 119, 92, 118])
 # fmt: on
 
 
@@ -91,7 +91,7 @@ class BaseClient:
                 "reason": "init",
                 "productType": "web-player",
                 "totp": totp,
-                "totpVer": 14,
+                "totpVer": 15,
                 "totpServer": totp,
             }
             resp = self.client.get(
