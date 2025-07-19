@@ -1,6 +1,8 @@
 import re
 import hmac
 import time
+import base64
+import pyotp
 import atexit
 import hashlib
 from typing import Callable, Tuple
@@ -16,33 +18,17 @@ __all__ = ["BaseClient", "BaseClientError"]
 # fmt: off
 # Currently the secret is static but could change at any moment. 
 # From the looks of it there is no easy way to get it dynamically per request due to the vaguity of the javascript variables.
-_TOTP_SECRET = bytearray([49, 48, 48, 49, 49, 49, 56, 49, 49, 49, 49, 55, 57, 56, 50, 49, 50, 51, 49, 50, 52, 54, 56, 56, 52, 54, 57, 51, 55, 56, 49,
-                         51, 50, 54, 52, 52, 50, 56, 49, 57, 57, 52, 55, 57, 50, 51, 54, 53, 51, 53, 57, 49, 49, 51, 54, 52, 49, 48, 54, 50, 50, 49, 51, 49, 48, 55, 51, 48])
+_TOTP_SECRET = bytearray([53, 57, 79, 64, 54, 84, 97, 56, 53, 106, 50, 49, 98, 56, 83, 66, 37, 100, 68, 83, 65, 61, 39, 61, 51, 107, 80, 119, 92, 118])
 # fmt: on
 
 
-def generate_totp(
-    secret: bytes = _TOTP_SECRET,
-    algorithm: Callable[[], object] = hashlib.sha1,
-    digits: int = 6,
-    counter_factory: Callable[[], int] = lambda: int(time.time()) // 30,
-) -> Tuple[str, int]:
-    counter = counter_factory()
-    hmac_result = hmac.new(
-        secret, counter.to_bytes(8, byteorder="big"), algorithm  # type: ignore
-    ).digest()
-
-    offset = hmac_result[-1] & 15
-    truncated_value = (
-        (hmac_result[offset] & 127) << 24
-        | (hmac_result[offset + 1] & 255) << 16
-        | (hmac_result[offset + 2] & 255) << 8
-        | (hmac_result[offset + 3] & 255)
-    )
-    return (
-        str(truncated_value % (10**digits)).zfill(digits),
-        counter * 30_000,
-    )  # (30 * 1000)
+def generate_totp() -> str:
+    transformed = [e ^ ((t % 33) + 9) for t, e in enumerate(_TOTP_SECRET)]
+    joined = "".join(str(num) for num in transformed)
+    hex_str = joined.encode().hex()
+    secret = base64.b32encode(bytes.fromhex(hex_str)).decode().rstrip("=")
+    totp = pyotp.TOTP(secret).now()
+    return totp
 
 
 @enforce
@@ -100,12 +86,12 @@ class BaseClient:
 
     def _get_auth_vars(self) -> None:
         if self.access_token is _Undefined or self.client_id is _Undefined:
-            totp, _ = generate_totp()
+            totp = generate_totp()
             query = {
                 "reason": "init",
                 "productType": "web-player",
                 "totp": totp,
-                "totpVer": 9,
+                "totpVer": 15,
                 "totpServer": totp,
             }
             resp = self.client.get(
