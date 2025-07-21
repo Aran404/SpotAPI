@@ -3,6 +3,7 @@ import base64
 import pyotp
 import atexit
 import requests
+import time
 from typing import Tuple
 from collections.abc import Mapping
 from spotapi.types.annotations import enforce
@@ -10,22 +11,43 @@ from spotapi.types.alias import _UStr, _Undefined
 from spotapi.exceptions import BaseClientError
 from spotapi.http.request import TLSClient
 
+# Fallback hardcoded secret (version 18)
+_FALLBACK_SECRET = (18, bytearray([70, 60, 33, 57, 92, 120, 90, 33, 32, 62, 62, 55, 126, 93, 66, 35, 108, 68]))
+
+# Cache storage
+_secret_cache: Tuple[int, bytearray] = None
+_cache_expiry: float = 0
+_CACHE_TTL = 15 * 60  # 15 minutes
+
 __all__ = ["BaseClient", "BaseClientError"]
 
 
 def get_latest_totp_secret() -> Tuple[int, bytearray]:
-    url = "https://github.com/Thereallo1026/spotify-secrets/blob/main/secrets/secretDict.json?raw=true"
-    response = requests.get(url)
-    response.raise_for_status()
-    secrets = response.json()
+    global _secret_cache, _cache_expiry
 
-    version = max(secrets, key=int)
-    secret_list = secrets[version]
+    if _secret_cache and time.time() < _cache_expiry:
+        return _secret_cache
 
-    if not isinstance(secret_list, list):
-        raise TypeError(f"Expected a list of integers, got {type(secret_list)}")
+    try:
+        url = "https://github.com/Thereallo1026/spotify-secrets/blob/main/secrets/secretDict.json?raw=true"
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        secrets = response.json()
 
-    return version, bytearray(secret_list)
+        version = max(secrets, key=int)
+        secret_list = secrets[version]
+
+        if not isinstance(secret_list, list):
+            raise TypeError(f"Expected a list of integers, got {type(secret_list)}")
+
+        _secret_cache = (version, bytearray(secret_list))
+        _cache_expiry = time.time() + _CACHE_TTL
+        print(f"Fetched secret v{version} from remote")
+        return _secret_cache
+
+    except Exception as e:
+        print(f"Using fallback TOTP secret (v{_FALLBACK_SECRET[0]}) due to error: {e}")
+        return _FALLBACK_SECRET
 
 
 def generate_totp() -> Tuple[str, int]:
