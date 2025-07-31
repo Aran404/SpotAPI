@@ -6,6 +6,7 @@ import requests
 import time
 from typing import Tuple
 from collections.abc import Mapping
+from spotapi.utils.logger import Logger
 from spotapi.types.annotations import enforce
 from spotapi.types.alias import _UStr, _Undefined
 from spotapi.exceptions import BaseClientError
@@ -15,8 +16,8 @@ from spotapi.http.request import TLSClient
 _FALLBACK_SECRET = (18, bytearray([70, 60, 33, 57, 92, 120, 90, 33, 32, 62, 62, 55, 126, 93, 66, 35, 108, 68]))
 
 # Cache storage
-_secret_cache: Tuple[int, bytearray] = None
-_cache_expiry: float = 0
+_secret_cache: Tuple[int, bytearray] | None = None
+_cache_expiry: float = -1
 _CACHE_TTL = 15 * 60  # 15 minutes
 
 __all__ = ["BaseClient", "BaseClientError"]
@@ -30,29 +31,27 @@ def get_latest_totp_secret() -> Tuple[int, bytearray]:
 
     try:
         url = "https://github.com/Thereallo1026/spotify-secrets/blob/main/secrets/secretDict.json?raw=true"
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
+        resp = requests.get(url, timeout=5)
+        if not resp.ok:
+            raise BaseClientError(f"Failed to fetch secrets: {response.status_code}")
+        
         secrets = response.json()
-
         version = max(secrets, key=int)
         secret_list = secrets[version]
 
         if not isinstance(secret_list, list):
-            raise TypeError(f"Expected a list of integers, got {type(secret_list)}")
+            raise BaseClientError(f"Expected a list of integers, got {type(secret_list)}")
 
         _secret_cache = (version, bytearray(secret_list))
         _cache_expiry = time.time() + _CACHE_TTL
-        print(f"Fetched secret v{version} from remote")
         return _secret_cache
-
-    except Exception as e:
-        print(f"Using fallback TOTP secret (v{_FALLBACK_SECRET[0]}) due to error: {e}")
+    except Exception as e: 
+        Logger.error(f"Failed to fetch secrets: {e}. Falling back to default secret.")
         return _FALLBACK_SECRET
 
 
 def generate_totp() -> Tuple[str, int]:
     version, secret_bytes = get_latest_totp_secret()
-    print(f"Using secret version: {version}: {secret_bytes}")
     transformed = [e ^ ((t % 33) + 9) for t, e in enumerate(secret_bytes)]
     joined = "".join(str(num) for num in transformed)
     hex_str = joined.encode().hex()
