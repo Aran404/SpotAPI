@@ -7,6 +7,7 @@ import requests
 from typing import Tuple, Literal
 from collections.abc import Mapping
 from spotapi.utils.logger import Logger
+from spotapi.utils.logger import Logger
 from spotapi.types.annotations import enforce
 from spotapi.types.alias import _UStr, _Undefined
 from spotapi.exceptions import BaseClientError
@@ -119,19 +120,20 @@ class BaseClient:
     def _get_auth_vars(self) -> None:
         if self.access_token is _Undefined or self.client_id is _Undefined:
             totp, version = generate_totp()
+            totp, version = generate_totp()
             query = {
                 "reason": "init",
                 "productType": "web-player",
                 "totp": totp,
                 "totpVer": version,
+                "totpVer": version,
                 "totpServer": totp,
             }
             resp = self.client.get("https://open.spotify.com/api/token", params=query)
+            resp = self.client.get("https://open.spotify.com/api/token", params=query)
 
             if resp.fail:
-                raise BaseClientError(
-                    "Could not get session auth tokens", error=resp.error.string
-                )
+                raise BaseClientError("Could not get session auth tokens", error=resp.error.string)
 
             self.access_token = resp.response["accessToken"]
             self.client_id = resp.response["clientId"]
@@ -244,7 +246,6 @@ class BaseClient:
 
         for url in urls:
             resp = self.client.get(url)
-
             if resp.fail:
                 raise BaseClientError(
                     "Could not get general hashes", error=resp.error.string
