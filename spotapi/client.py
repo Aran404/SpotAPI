@@ -165,7 +165,8 @@ class BaseClient:
 
         _recaptcha_key = self.server_cfg["recaptchaWebPlayerFraudSiteKey"]
         if _recaptcha_key:
-            self.recaptcha_key = _recaptcha_key
+            global RECAPTCHA_SITE_KEY
+            RECAPTCHA_SITE_KEY = _recaptcha_key
 
         self.client_version = self.server_cfg["clientVersion"]
         self.device_id = self.client.cookies.get("sp_t") or ""
