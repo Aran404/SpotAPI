@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from spotapi.types.annotations import enforce
 from spotapi import utils
 from spotapi.exceptions import UserError
-from spotapi.login import Login
+from spotapi.login import Login, RECAPTCHA_SITE_KEY
 
 __all__ = ["User", "UserError"]
 
@@ -93,7 +93,7 @@ class User:
 
         captcha_response = self.login.solver.solve_captcha(
             "https://www.spotify.com",
-            "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
+            RECAPTCHA_SITE_KEY,
             "account_settings/profile_update",
             "v3",
         )

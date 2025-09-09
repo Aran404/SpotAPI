@@ -55,5 +55,5 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="1.2.0",
+    version="1.2.2",
 )

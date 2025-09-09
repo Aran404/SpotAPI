@@ -1,6 +1,7 @@
 import time
 import uuid
 import json
+from spotapi.client import RECAPTCHA_SITE_KEY
 from spotapi.types.annotations import enforce
 from spotapi.types import Config
 from spotapi.exceptions import GeneratorError
@@ -121,7 +122,7 @@ class Creator:
 
         captcha_token = self.cfg.solver.solve_captcha(
             "https://www.spotify.com/ca-en/signup",
-            "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
+            RECAPTCHA_SITE_KEY,
             "website/signup/submit_email",
             "v3",
         )

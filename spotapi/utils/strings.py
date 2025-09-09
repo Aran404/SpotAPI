@@ -1,8 +1,11 @@
-from typing import Optional
+from typing import List, Tuple, Dict
+from bs4 import BeautifulSoup
 import string
 import random
 import base64
+import ast
 import os
+import re
 
 
 __all__ = [
@@ -15,6 +18,41 @@ __all__ = [
     "random_dob",
     "random_nonce",
 ]
+
+
+def extract_mappings(js_code: str) -> Tuple[Dict[int, str], Dict[int, str]]:
+    pattern = r"\{\d+:\"[^\"]+\"(?:,\d+:\"[^\"]+\")*\}"
+    matches = re.findall(pattern, js_code)
+
+    if len(matches) < 2:
+        raise ValueError("Could not find both mappings in the JS code.")
+
+    mapping1 = ast.literal_eval(matches[3])
+    mapping2 = ast.literal_eval(matches[4])
+
+    return mapping1, mapping2
+
+
+def combine_chunks(name_map: Dict[int, str], hash_map: Dict[int, str]) -> List[str]:
+    combined: List[str] = []
+    for key in name_map:
+        if key in hash_map:
+            filename = f"{name_map[key]}.{hash_map[key]}.js"
+            combined.append(filename)
+    return combined
+
+
+def extract_js_links(html_content: str) -> List[str]:
+    """Extracts all JavaScript links from a given HTML content."""
+    soup = BeautifulSoup(html_content, "html.parser")
+    js_links = []
+
+    for script_tag in soup.find_all("script", src=True):
+        src = script_tag["src"]
+        if src.endswith(".js"):
+            js_links.append(str(src))
+
+    return js_links
 
 
 def random_b64_string(length: int) -> str:
@@ -51,7 +89,7 @@ def parse_json_string(b: str, s: str) -> str:
     return b[value_start_index:value_end_index]
 
 
-def random_string(length: int, /, strong: Optional[bool] = False) -> str:
+def random_string(length: int, /, strong: bool = False) -> str:
     letters = string.ascii_letters
     rnd = "".join(random.choice(letters) for _ in range(length))
 

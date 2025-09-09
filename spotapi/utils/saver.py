@@ -6,13 +6,11 @@ These are popular savers that are used for session storing, but if you need a di
 import atexit
 import json
 import os
-import sqlite3
-from typing import Any, List, Mapping
-
 import pymongo
 import redis
+import sqlite3
+from typing import Any, List, Mapping
 from readerwriterlock import rwlock
-
 from spotapi.types.interfaces import SaverProtocol
 from spotapi.exceptions import SaverError
 

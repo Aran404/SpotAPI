@@ -4,6 +4,7 @@ from spotapi.utils.strings import parse_json_string
 from spotapi.types.annotations import enforce
 from spotapi.exceptions import PasswordError
 from spotapi.types.data import Config
+from spotapi.client import RECAPTCHA_SITE_KEY
 
 __all__ = ["Password", "PasswordError"]
 
@@ -83,7 +84,7 @@ class Password:
 
         captcha_response = self.solver.solve_captcha(
             "https://accounts.spotify.com/en/password-reset",
-            "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
+            RECAPTCHA_SITE_KEY,
             "password_reset_web/recovery",
             "v3",
         )

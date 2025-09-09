@@ -5,6 +5,7 @@ from typing import Any
 from collections.abc import Mapping
 from spotapi.types.annotations import enforce
 from urllib.parse import urlencode, quote
+from spotapi.client import RECAPTCHA_SITE_KEY
 from spotapi.types import Config, SaverProtocol
 from spotapi.exceptions import LoginError
 from spotapi.utils.strings import parse_json_string
@@ -266,8 +267,8 @@ class Login:
             raise LoginError("Solver not set")
 
         captcha_response = self.solver.solve_captcha(
-            "https://accounts.spotify.com/en/login",
-            "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39",
+            "https://accounts.spotify.com",
+            RECAPTCHA_SITE_KEY,
             "accounts/login",
             "v3",
         )
