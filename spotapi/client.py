@@ -120,7 +120,6 @@ class BaseClient:
     def _get_auth_vars(self) -> None:
         if self.access_token is _Undefined or self.client_id is _Undefined:
             totp, version = generate_totp()
-            totp, version = generate_totp()
             query = {
                 "reason": "init",
                 "productType": "web-player",
@@ -129,7 +128,6 @@ class BaseClient:
                 "totpVer": version,
                 "totpServer": totp,
             }
-            resp = self.client.get("https://open.spotify.com/api/token", params=query)
             resp = self.client.get("https://open.spotify.com/api/token", params=query)
 
             if resp.fail:
