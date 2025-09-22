@@ -131,7 +131,9 @@ class BaseClient:
             resp = self.client.get("https://open.spotify.com/api/token", params=query)
 
             if resp.fail:
-                raise BaseClientError("Could not get session auth tokens", error=resp.error.string)
+                raise BaseClientError(
+                    "Could not get session auth tokens", error=resp.error.string
+                )
 
             self.access_token = resp.response["accessToken"]
             self.client_id = resp.response["clientId"]
@@ -142,14 +144,12 @@ class BaseClient:
             raise BaseClientError("Could not get session", error=resp.error.string)
 
         _all_js_packs = extract_js_links(resp.response)
+        print(_all_js_packs)
         self.js_pack = next(
             (
                 link
                 for link in _all_js_packs
-                if link.startswith(
-                    "https://open.spotifycdn.com/cdn/build/web-player/web-player"
-                )
-                and link.endswith(".js")
+                if "web-player/web-player" in link and link.endswith(".js")
             ),
             "",
         )
