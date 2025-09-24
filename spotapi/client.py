@@ -144,7 +144,6 @@ class BaseClient:
             raise BaseClientError("Could not get session", error=resp.error.string)
 
         _all_js_packs = extract_js_links(resp.response)
-        print(_all_js_packs)
         self.js_pack = next(
             (
                 link
