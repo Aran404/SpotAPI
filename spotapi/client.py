@@ -39,7 +39,7 @@ def get_latest_totp_secret() -> Tuple[int, bytearray]:
         return _secret_cache
 
     try:
-        url = "https://github.com/Thereallo1026/spotify-secrets/blob/main/secrets/secretDict.json?raw=true"
+        url = "https://code.thetadev.de/ThetaDev/spotify-secrets/raw/branch/main/secrets/secretDict.json"
         response = requests.get(url, timeout=5)
         if not response.ok:
             raise BaseClientError(f"Failed to fetch secrets: {response.status_code}")
@@ -144,7 +144,6 @@ class BaseClient:
             raise BaseClientError("Could not get session", error=resp.error.string)
 
         _all_js_packs = extract_js_links(resp.response)
-        print(_all_js_packs)
         self.js_pack = next(
             (
                 link
