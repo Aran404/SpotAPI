@@ -7,3 +7,4 @@ typing_extensions==4.12.2
 validators==0.33.0
 websockets==12.0
 pyotp==2.9.0
+beautifulsoup4
