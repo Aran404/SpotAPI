@@ -9,6 +9,8 @@ __install_require__ = [
     "tls_client",
     "typing_extensions",
     "validators",
+    "pyotp",
+    "beautifulsoup4",
 ]
 __extras__ = {
     "websocket": ["websockets"],
@@ -55,5 +57,5 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="1.2.4",
+    version="1.2.5",
 )
