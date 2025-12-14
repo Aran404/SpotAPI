@@ -239,7 +239,7 @@ class BaseClient:
         str_mapping, hash_mapping = extract_mappings(str(self.raw_hashes))
         urls = map(
             lambda s: f"https://open.spotifycdn.com/cdn/build/web-player/{s}",
-            combine_chunks(str_mapping, hash_mapping),
+            combine_chunks(hash_mapping, str_mapping),
         )
 
         for url in urls:
