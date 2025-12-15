@@ -25,6 +25,15 @@ Searches for an artist in the Spotify catalog.
   
 - **Returns:** A mapping of the search results.
 
+### `get_artist(self, artist_id: str, /, *, locale_code: str = "en") -> Mapping[str, Any]`
+Fetches detailed information about an artist by ID.
+
+- **Parameters:**
+  - `artist_id`: The Spotify artist ID. Both raw IDs and URIs (`artist:xxxxx`) are accepted.
+  - `locale_code`: Locale used for language-specific content (default `"en"`).
+
+- **Returns:** A mapping containing the artist overview.
+
 ### `paginate_artists(self, query: str, /) -> Generator[Mapping[str, Any], None, None]`
 Generates artist data in chunks.
 
