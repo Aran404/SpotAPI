@@ -10,13 +10,31 @@ The `Song` class provides methods to interact with songs in the context of a pla
 - **client**: `TLSClient`  
   The client used for making HTTP requests. Defaults to a new `TLSClient` instance with certain parameters.
 
+- **language**: `str`, optional  
+  The language for API responses using ISO 639-1 language codes (e.g., 'ko', 'ja', 'zh', 'en'). Default is 'en'.
+
 ## Methods
 
-### `__init__(self, playlist: PrivatePlaylist | None = None, *, client: TLSClient = TLSClient("chrome_120", "", auto_retries=3)) -> None`
+### `__init__(self, playlist: PrivatePlaylist | None = None, *, client: TLSClient = TLSClient("chrome_120", "", auto_retries=3), language: str = "en") -> None`
 Initializes the `Song` class with an optional `PrivatePlaylist` instance and a `TLSClient` instance.
 
 - **Raises:**  
   `ValueError` if no playlist is provided and no client is set.
+
+## Language Support Examples
+
+```python
+from spotapi import Song
+
+# Initialize with Korean language
+song_ko = Song(language="ko")
+
+# Search for songs with Korean responses
+results = song_ko.query_songs("BTS", limit=20)
+
+# Change language at runtime
+song_ko.base.set_language("ja")  # Switch to Japanese
+```
 
 ### `get_track_info(self, track_id: str) -> Mapping[str, Any]`
 Searches for songs in the Spotify catalog.

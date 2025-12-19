@@ -10,10 +10,28 @@ The `PublicPlaylist` class allows you to access public information about a Spoti
 - **client**: `TLSClient`  
   An instance of `TLSClient` used for making HTTP requests. Defaults to a new instance with specified parameters.
 
+- **language**: `str`, optional  
+  The language for API responses using ISO 639-1 language codes (e.g., 'ko', 'ja', 'zh', 'en'). Default is 'en'.
+
 ## Methods
 
-### `__init__(self, playlist: str | None = None, /, *, client: TLSClient = TLSClient("chrome_120", "", auto_retries=3)) -> None`
+### `__init__(self, playlist: str | None = None, /, *, client: TLSClient = TLSClient("chrome_120", "", auto_retries=3), language: str = "en") -> None`
 Initializes the `PublicPlaylist` class with an optional playlist URI and a `TLSClient` instance.
+
+## Language Support Examples
+
+```python
+from spotapi import PublicPlaylist
+
+# Initialize with Korean language
+playlist = PublicPlaylist("37i9dQZF1DXcBWIGoYBM5M", language="ko")
+
+# Get playlist info with Korean language responses
+info = playlist.get_playlist_info()
+
+# Change language at runtime
+playlist.base.set_language("ja")  # Switch to Japanese
+```
 
 ### `get_playlist_info(self, limit: int = 25, *, offset: int = 0) -> Mapping[str, Any]`
 Fetches public information about the playlist.
