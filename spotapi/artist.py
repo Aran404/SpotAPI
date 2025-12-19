@@ -38,12 +38,13 @@ class Artist:
         login: Login | None = None,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
+        language: str = "en",
     ) -> None:
         if login and not login.logged_in:
             raise ValueError("Must be logged in")
 
         self._login: bool = bool(login)
-        self.base = BaseClient(client=login.client if (login is not None) else client)
+        self.base = BaseClient(client=login.client if (login is not None) else client, language=language)
 
     def query_artists(
         self, query: str, /, limit: int = 10, *, offset: int = 0

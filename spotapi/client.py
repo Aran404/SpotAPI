@@ -81,9 +81,11 @@ class BaseClient:
     client_id: _UStr = _Undefined
     device_id: _UStr = _Undefined
     raw_hashes: _UStr = _Undefined
+    language: str = "en"
 
-    def __init__(self, client: TLSClient) -> None:
+    def __init__(self, client: TLSClient, language: str = "en") -> None:
         self.client = client
+        self.language = language
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)
 
         self.browser_version = self.client.client_identifier.split("_")[1]
@@ -112,10 +114,15 @@ class BaseClient:
                 "Authorization": "Bearer " + str(self.access_token),
                 "Client-Token": self.client_token,
                 "Spotify-App-Version": self.client_version,
+                "Accept-Language": self.language,
             }.items()
         )
 
         return kwargs
+
+    def set_language(self, language: str) -> None:
+        """Set the language for API requests. Uses ISO 639-1 language codes (e.g., 'ko', 'en', 'ja')."""
+        self.language = language
 
     def _get_auth_vars(self) -> None:
         if self.access_token is _Undefined or self.client_id is _Undefined:

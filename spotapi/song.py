@@ -32,9 +32,10 @@ class Song:
         playlist: PrivatePlaylist | None = None,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
+        language: str = "en",
     ) -> None:
         self.playlist = playlist
-        self.base = BaseClient(client=playlist.login.client if playlist else client)
+        self.base = BaseClient(client=playlist.login.client if playlist else client, language=language)
 
     def get_track_info(self, track_id: str) -> Mapping[str, Any]:
         """

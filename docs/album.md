@@ -10,10 +10,28 @@ The `PublicAlbum` class allows you to access public information about a Spotify 
 - **client**: `TLSClient`  
   An instance of `TLSClient` used for making HTTP requests. Defaults to a new instance with specified parameters.
 
+- **language**: `str`, optional  
+  The language for API responses using ISO 639-1 language codes (e.g., 'ko', 'ja', 'zh', 'en'). Default is 'en'.
+
 ## Methods
 
-### `__init__(self, album: str, /, *, client: TLSClient = TLSClient("chrome_120", "", auto_retries=3)) -> None`
+### `__init__(self, album: str, /, *, client: TLSClient = TLSClient("chrome_120", "", auto_retries=3), language: str = "en") -> None`
 Initializes the `PublicAlbum` class with an optional album URI and a `TLSClient` instance.
+
+## Language Support Examples
+
+```python
+from spotapi import PublicAlbum
+
+# Initialize with Korean language
+album = PublicAlbum("4m2880jivSbbyEGAKfITCa", language="ko")
+
+# Get album info with Korean language responses
+info = album.get_album_info()
+
+# Change language at runtime
+album.base.set_language("zh")  # Switch to Chinese
+```
 
 ### `get_album_info(self, limit: int = 25, *, offset: int = 0) -> Mapping[str, Any]`
 Fetches public information about the album.

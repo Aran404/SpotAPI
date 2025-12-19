@@ -33,8 +33,9 @@ class Podcast:
         podcast: str | None = None,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
+        language: str = "en",
     ) -> None:
-        self.base = BaseClient(client=client)
+        self.base = BaseClient(client=client, language=language)
         if podcast:
             self.podcast_id = (
                 podcast.split("show/")[-1] if "show" in podcast else podcast

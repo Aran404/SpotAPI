@@ -10,10 +10,34 @@ The `Artist` class represents an artist in the Spotify catalog, providing method
 - **client**: `TLSClient`, optional  
   A `TLSClient` used for making requests to the API. If not provided, a default one will be used.
 
+- **language**: `str`, optional  
+  The language for API responses using ISO 639-1 language codes (e.g., 'ko', 'ja', 'zh', 'en'). Default is 'en'.
+
 ## Methods
 
-### `__init__(self, login: Login | None = None, *, client: TLSClient = TLSClient("chrome_120", "", auto_retries=3)) -> None`
+### `__init__(self, login: Login | None = None, *, client: TLSClient = TLSClient("chrome_120", "", auto_retries=3), language: str = "en") -> None`
 Initializes the `Artist` class. If a `Login` object is provided, it checks if the user is logged in. If not, a `ValueError` is raised.
+
+### `set_language(self, language: str) -> None`
+Changes the language for API requests at runtime.
+
+- **Parameters:**
+  - `language`: ISO 639-1 language code (e.g., 'ko', 'ja', 'zh', 'en').
+
+## Language Support Examples
+
+```python
+from spotapi import Artist
+
+# Initialize with Korean language
+artist_ko = Artist(language="ko")
+
+# Change language at runtime
+artist_ko.base.set_language("ja")  # Switch to Japanese
+
+# Query artist with Japanese responses
+results = artist_ko.get_artist("4tZwfgrHOc3mvqYlEYSvVi")
+```
 
 ### `query_artists(self, query: str, /, limit: int = 10, *, offset: int = 0) -> Mapping[str, Any]`
 Searches for an artist in the Spotify catalog.

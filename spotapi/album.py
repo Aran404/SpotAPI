@@ -34,8 +34,9 @@ class PublicAlbum:
         /,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
+        language: str = "en",
     ) -> None:
-        self.base = BaseClient(client=client)
+        self.base = BaseClient(client=client, language=language)
         self.album_id = album.split("album/")[-1] if "album" in album else album
         self.album_link = f"https://open.spotify.com/album/{self.album_id}"
 

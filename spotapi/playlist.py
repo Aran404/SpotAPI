@@ -39,8 +39,9 @@ class PublicPlaylist:
         /,
         *,
         client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
+        language: str = "en",
     ) -> None:
-        self.base = BaseClient(client=client)
+        self.base = BaseClient(client=client, language=language)
         self.playlist_id = (
             playlist.split("playlist/")[-1] if "playlist" in playlist else playlist
         )
@@ -131,6 +132,8 @@ class PrivatePlaylist:
         self,
         login: Login,
         playlist: str | None = None,
+        *,
+        language: str = "en",
     ) -> None:
         if not login.logged_in:
             raise ValueError("Must be logged in")
@@ -140,7 +143,7 @@ class PrivatePlaylist:
                 playlist.split("playlist/")[-1] if "playlist" in playlist else playlist
             )
 
-        self.base = BaseClient(login.client)
+        self.base = BaseClient(login.client, language=language)
         self.login = login
         self.user = User(login)
         # We need to check if a user can use a method

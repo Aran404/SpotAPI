@@ -26,8 +26,9 @@ Welcome to SpotAPI! This Python library is designed to interact with the private
 - **Public API Access**: Retrieve and manipulate public Spotify data such as playlists, albums, and tracks with ease.
 - **Private API Access**: Explore private Spotify endpoints to tailor your application to your needs.
 - **Ready to Use**: **SpotAPI** is designed for immediate integration, allowing you to accomplish tasks with just a few lines of code.
-- **No API Key Required**: Seamlessly use **SpotAPI** without needing a Spotify API key. It’s straightforward and hassle free!
+- **No API Key Required**: Seamlessly use **SpotAPI** without needing a Spotify API key. It's straightforward and hassle free!
 - **Browser-like Requests**: Accurately replicate the HTTP requests Spotify makes in the browser, providing a true to web experience while remaining undetected.
+- **Multi-Language Support**: Set your preferred language for API responses using ISO 639-1 language codes (e.g., 'ko', 'ja', 'zh', 'en').
 
 Everything you can do with Spotify, **SpotAPI** can do with just a user’s login credentials.
 
@@ -103,6 +104,21 @@ songs = song.query_songs("weezer", limit=20)
 data = songs["data"]["searchV2"]["tracksV2"]["items"]
 for idx, item in enumerate(data):
     print(idx, item['item']['data']['name'])
+```
+
+### With Language Support
+```py
+from spotapi import Artist, PublicPlaylist, Song
+
+# Initialize with Korean language
+artist = Artist(language="ko")
+playlist = PublicPlaylist("37i9dQZF1DXcBWIGoYBM5M", language="ko")
+
+# Change language at runtime
+song = Song(language="en")
+song.base.set_language("ja")  # Switch to Japanese
+
+# Supported languages: ko, ja, zh, en, and any ISO 639-1 code
 ```
 ### Results
 ```
