@@ -275,7 +275,7 @@ class Song:
 
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         payload = {
-            "variables": {"uris": [f"spotify:track:{song_id}"]},
+            "variables": {"libraryItemUris": [f"spotify:track:{song_id}"]},
             "operationName": "addToLibrary",
             "extensions": {
                 "persistedQuery": {
