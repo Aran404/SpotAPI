@@ -143,7 +143,7 @@ class Song:
         url = "https://api-partner.spotify.com/pathfinder/v1/query"
         payload = {
             "variables": {
-                "uris": [f"spotify:track:{song_id}" for song_id in song_ids],
+                "playlistItemUris": [f"spotify:track:{song_id}" for song_id in song_ids],
                 "playlistUri": f"spotify:playlist:{self.playlist.playlist_id}",
                 "newPosition": {"moveType": "BOTTOM_OF_PLAYLIST", "fromUid": None},
             },
