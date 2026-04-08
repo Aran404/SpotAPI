@@ -7,7 +7,6 @@ import requests
 from typing import Tuple, Literal
 from collections.abc import Mapping
 from spotapi.utils.logger import Logger
-from spotapi.utils.logger import Logger
 from spotapi.types.annotations import enforce
 from spotapi.types.alias import _UStr, _Undefined
 from spotapi.exceptions import BaseClientError
