@@ -17,8 +17,8 @@ Welcome to SpotAPI! This Python library is designed to interact with the private
 5. [Quick Examples](#quick-examples)
 6. [Import Cookies](#import-cookies)
 7. [Contributing](#contributing)
-8. [Roadmap](#roadmap)
-9. [License](#license)
+8. [License](#license)
+9. * [Extended Functionality & Private Modules](#private-modules)
 
 
 ## Features
@@ -153,15 +153,9 @@ If you prefer not to use a third party CAPTCHA solver, you can import cookies to
 ## Contributing
 Contributions are welcome! If you find any issues or have suggestions, please open an issue or submit a pull request.
 
-## Roadmap
-> I'll most likely do these if the project gains some traction
-
-- [ ] No Captcha For Login (**100 Stars**)
-- [x] In Depth Documentation
-- [x] Websocket Listener
-- [x] Player
-- [ ] More wrappers around this project
-
 ## License
 This project is licensed under the **GPL 3.0** License. See [LICENSE](https://choosealicense.com/licenses/gpl-3.0/) for details.
 
+### [Extended Functionality](#private)
+
+For the full scale account generation and "engagement" modules that can't be posted here, reach out on Telegram: **@aran_xyz**
