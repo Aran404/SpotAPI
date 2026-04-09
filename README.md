@@ -156,6 +156,6 @@ Contributions are welcome! If you find any issues or have suggestions, please op
 ## License
 This project is licensed under the **GPL 3.0** License. See [LICENSE](https://choosealicense.com/licenses/gpl-3.0/) for details.
 
-### [Extended Functionality](#private)
+### **Private Modules**
 
 For the full scale account generation and "engagement" modules that can't be posted here, reach out on Telegram: **@aran_xyz**
