@@ -18,7 +18,7 @@ Welcome to SpotAPI! This Python library is designed to interact with the private
 6. [Import Cookies](#import-cookies)
 7. [Contributing](#contributing)
 8. [License](#license)
-9. * [Extended Functionality & Private Modules](#private-modules)
+9. **[Extended Functionality & Private Modules](#private-modules)**
 
 
 ## Features
