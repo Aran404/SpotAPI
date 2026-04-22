@@ -10,6 +10,7 @@ from spotapi.utils.logger import Logger
 from spotapi.types.annotations import enforce
 from spotapi.types.alias import _UStr, _Undefined
 from spotapi.exceptions import BaseClientError
+from spotapi.http.data import Response
 from spotapi.http.request import TLSClient
 from spotapi.utils.strings import extract_js_links, extract_mappings, combine_chunks
 
@@ -76,16 +77,21 @@ class BaseClient:
     js_pack: _UStr = _Undefined
     client_version: _UStr = _Undefined
     access_token: _UStr = _Undefined
+    access_token_expires_at_ms: float = 0
     client_token: _UStr = _Undefined
     client_id: _UStr = _Undefined
     device_id: _UStr = _Undefined
     raw_hashes: _UStr = _Undefined
     language: str = "en"
 
+    # Refresh a bit before real expiry to avoid skew-induced 401s
+    _REFRESH_SKEW_MS: float = 30_000
+
     def __init__(self, client: TLSClient, language: str = "en") -> None:
         self.client = client
         self.language = language
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)
+        self.client.on_auth_failure = lambda resp: self._handle_auth_failure(resp)
 
         self.browser_version = self.client.client_identifier.split("_")[1]
         self.client.headers.update(
@@ -105,6 +111,14 @@ class BaseClient:
         if self.access_token is _Undefined:
             self.get_session()
 
+        if (
+            self.access_token_expires_at_ms
+            and time.time() * 1000 + self._REFRESH_SKEW_MS
+            >= self.access_token_expires_at_ms
+        ):
+            self.access_token = _Undefined
+            self._get_auth_vars()
+
         if "headers" not in kwargs:
             kwargs["headers"] = {}
 
@@ -118,6 +132,24 @@ class BaseClient:
         )
 
         return kwargs
+
+    def _handle_auth_failure(self, resp: Response) -> bool:
+        if resp.status_code == 401:
+            self.access_token = _Undefined
+            self._get_auth_vars()
+            return True
+
+        if resp.status_code == 400:
+            try:
+                headers = {k.lower(): v for k, v in resp.raw.headers.items()}
+            except Exception:
+                headers = {}
+            if headers.get("client-token-error") == "INVALID_CLIENTTOKEN":
+                self.client_token = _Undefined
+                self.get_client_token()
+                return True
+
+        return False
 
     def set_language(self, language: str) -> None:
         """Set the language for API requests. Uses ISO 639-1 language codes (e.g., 'ko', 'en', 'ja')."""
@@ -143,6 +175,9 @@ class BaseClient:
 
             self.access_token = resp.response["accessToken"]
             self.client_id = resp.response["clientId"]
+            self.access_token_expires_at_ms = float(
+                resp.response.get("accessTokenExpirationTimestampMs") or 0
+            )
 
     def get_session(self) -> None:
         resp = self.client.get("https://open.spotify.com")
