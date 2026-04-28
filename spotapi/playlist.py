@@ -277,6 +277,63 @@ class PrivatePlaylist:
 
         return resp.response
 
+    def get_saved_tracks_info(
+        self,
+        limit: int = 25,
+        *,
+        offset: int = 0,
+    ) -> Mapping[str, Any]:
+        """Gets the playlist information of saved songs"""
+        url = "https://api-partner.spotify.com/pathfinder/v1/query"
+        params = {
+            "operationName": "fetchLibraryTracks",
+            "variables": json.dumps(
+                {
+                    "offset": offset,
+                    "limit": limit,
+                }
+            ),
+            "extensions": json.dumps(
+                {
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": self.base.part_hash("fetchLibraryTracks"),
+                    }
+                }
+            ),
+        }
+
+        resp = self.login.client.post(url, params=params, authenticate=True)
+
+        if resp.fail:
+            raise PlaylistError("Could not get library tracks info", error=resp.error.string)
+
+        if not isinstance(resp.response, Mapping):
+            raise PlaylistError("Invalid JSON")
+
+        return resp.response
+
+    def paginate_saved_tracks(self) -> Generator[Mapping[str, Any], None, None]:
+        """
+        Generator that fetches playlist information in chunks
+
+        NOTE: If total_tracks <= 343, then there is no need to paginate.
+        """
+        UPPER_LIMIT: int = 343
+        # We need to get the total playlists first
+        playlist = self.get_saved_tracks_info(limit=UPPER_LIMIT)
+        total_count: int = playlist["data"]["me"]["library"]["tracks"]["totalCount"]
+
+        yield playlist["data"]["me"]["library"]["tracks"]
+
+        if total_count <= UPPER_LIMIT:
+            return
+
+        offset = UPPER_LIMIT
+        while offset < total_count:
+            yield self.get_saved_tracks_info(limit=UPPER_LIMIT, offset=offset)["data"]["me"]["library"]["tracks"]
+            offset += UPPER_LIMIT
+
     def _stage_create_playlist(self, name: str) -> str:
         url = "https://spclient.wg.spotify.com/playlist/v2/playlist"
         payload = {
