@@ -111,6 +111,31 @@ Deletes the playlist from the user's library. This is the same as removing it fr
   `ValueError` if the playlist ID is not set.  
   `PlaylistError` if there is an issue deleting the playlist.
 
+### `get_saved_tracks_info(self, limit: int = 25, *, offset: int = 0) -> Mapping[str, Any]`
+Fetches information about the user's Liked Songs.
+
+- **Args:**
+  - `limit`: `int`  
+    The maximum number of results to return. Default is 25.
+  - `offset`: `int`  
+    The offset for pagination. Default is 0.
+
+- **Returns:**  
+  `Mapping[str, Any]`  
+  The saved tracks information.
+
+- **Raises:**  
+  `PlaylistError` if there is an issue retrieving the playlist information or if the response is invalid.
+
+### `paginate_saved_tracks(self) -> Generator[Mapping[str, Any], None, None]`
+Generator that fetches Liked Songs information in chunks.
+
+- **Returns:**  
+  `Generator[Mapping[str, Any], None, None]`  
+  A generator yielding playlist information in chunks.
+
+- **Note:** If the total number of tracks is 343 or fewer, pagination is not required.
+
 ### `get_library(self, limit: int = 50, /) -> Mapping[str, Any]`
 Fetches all playlists in the user's library.
 
