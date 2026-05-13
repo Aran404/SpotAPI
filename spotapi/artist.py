@@ -145,6 +145,112 @@ class Artist:
             ]["artists"]["items"]
             offset += UPPER_LIMIT
 
+    def get_artist_discography(
+        self,
+        artist_id: str,
+        /,
+        *,
+        section: Literal["all", "albums", "singles", "compilations"] = "all",
+        offset: int = 0,
+        limit: int = 50,
+        order: Literal["DATE_DESC", "DATE_ASC"] = "DATE_DESC",
+    ) -> Mapping[str, Any]:
+        """Gets an artist's discography with pagination.
+
+        Unlike queryArtistOverview (capped per section), the discography operations
+        support proper offset/limit/order. Section 'all' merges albums + singles +
+        compilations sorted by date.
+        """
+        if "artist:" in artist_id:
+            artist_id = artist_id.split("artist:")[-1]
+
+        operation_name = {
+            "all": "queryArtistDiscographyAll",
+            "albums": "queryArtistDiscographyAlbums",
+            "singles": "queryArtistDiscographySingles",
+            "compilations": "queryArtistDiscographyCompilations",
+        }[section]
+        url = "https://api-partner.spotify.com/pathfinder/v2/query"
+        payload = {
+            "variables": {
+                "uri": f"spotify:artist:{artist_id}",
+                "offset": offset,
+                "limit": limit,
+                "order": order,
+            },
+            "operationName": operation_name,
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": self.base.part_hash(operation_name),
+                },
+            },
+        }
+
+        resp = self.base.client.post(url, json=payload, authenticate=True)
+
+        if resp.fail:
+            raise ArtistError(
+                "Could not get artist discography", error=resp.error.string
+            )
+
+        if not isinstance(resp.response, Mapping):
+            raise ArtistError("Invalid JSON response")
+
+        return resp.response
+
+    def paginate_artist_discography(
+        self,
+        artist_id: str,
+        /,
+        *,
+        section: Literal["all", "albums", "singles", "compilations"] = "all",
+        order: Literal["DATE_DESC", "DATE_ASC"] = "DATE_DESC",
+    ) -> Generator[Mapping[str, Any], None, None]:
+        """Generator that fetches an artist's discography in chunks.
+
+        Note: If total_count <= 50, then there is no need to paginate.
+        """
+        UPPER_LIMIT: int = 50
+
+        first = self.get_artist_discography(
+            artist_id, section=section, offset=0, limit=UPPER_LIMIT, order=order
+        )
+        section_data = (
+            first.get("data", {})
+            .get("artistUnion", {})
+            .get("discography", {})
+            .get(section, {})
+        )
+        items = section_data.get("items") or []
+        total_count: int = section_data.get("totalCount") or len(items)
+
+        yield items
+
+        if total_count <= UPPER_LIMIT:
+            return
+
+        offset = UPPER_LIMIT
+        while offset < total_count:
+            resp = self.get_artist_discography(
+                artist_id,
+                section=section,
+                offset=offset,
+                limit=UPPER_LIMIT,
+                order=order,
+            )
+            page_items = (
+                resp.get("data", {})
+                .get("artistUnion", {})
+                .get("discography", {})
+                .get(section, {})
+                .get("items")
+            ) or []
+            if not page_items:
+                break
+            yield page_items
+            offset += UPPER_LIMIT
+
     def _do_follow(
         self,
         artist_id: str,
