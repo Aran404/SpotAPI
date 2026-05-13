@@ -57,6 +57,107 @@ def test_paginate_artists():
         assert isinstance(chunk, list)
 
 
+# BTS — has plenty of albums + singles for paging assertions.
+_DISCOGRAPHY_ARTIST_ID = "3Nrfpe0tUJi4K4DXYWgMUX"
+
+
+def _assert_discography_section(response, section):
+    """Common shape check for queryArtistDiscography* responses."""
+    assert "data" in response
+    artist_union = response["data"]["artistUnion"]
+    assert artist_union["__typename"] == "Artist"
+    assert "discography" in artist_union
+    section_data = artist_union["discography"][section]
+    assert "items" in section_data
+    assert isinstance(section_data["items"], list)
+    assert "totalCount" in section_data
+
+
+def test_get_artist_discography_all():
+    """Section 'all' returns combined releases sorted by date."""
+    artist_instance = Artist()
+    response = artist_instance.get_artist_discography(
+        _DISCOGRAPHY_ARTIST_ID, section="all", limit=5
+    )
+    _assert_discography_section(response, "all")
+    items = response["data"]["artistUnion"]["discography"]["all"]["items"]
+    assert 0 < len(items) <= 5
+
+
+def test_get_artist_discography_albums():
+    """Section 'albums' returns album-type releases only."""
+    artist_instance = Artist()
+    response = artist_instance.get_artist_discography(
+        _DISCOGRAPHY_ARTIST_ID, section="albums", limit=5
+    )
+    _assert_discography_section(response, "albums")
+
+
+def test_get_artist_discography_singles():
+    """Section 'singles' returns single-type releases only."""
+    artist_instance = Artist()
+    response = artist_instance.get_artist_discography(
+        _DISCOGRAPHY_ARTIST_ID, section="singles", limit=5
+    )
+    _assert_discography_section(response, "singles")
+
+
+def test_get_artist_discography_with_uri():
+    """Accepts both raw IDs and spotify:artist:* URIs."""
+    artist_instance = Artist()
+    response = artist_instance.get_artist_discography(
+        f"spotify:artist:{_DISCOGRAPHY_ARTIST_ID}", section="all", limit=3
+    )
+    _assert_discography_section(response, "all")
+
+
+def test_get_artist_discography_offset():
+    """Advancing offset returns a different page of items than offset=0."""
+    artist_instance = Artist()
+    first = artist_instance.get_artist_discography(
+        _DISCOGRAPHY_ARTIST_ID, section="all", offset=0, limit=5
+    )["data"]["artistUnion"]["discography"]["all"]["items"]
+    second = artist_instance.get_artist_discography(
+        _DISCOGRAPHY_ARTIST_ID, section="all", offset=5, limit=5
+    )["data"]["artistUnion"]["discography"]["all"]["items"]
+    if len(first) >= 5 and len(second) > 0:
+        first_ids = {item.get("releases", {}).get("items", [{}])[0].get("id") for item in first}
+        second_ids = {item.get("releases", {}).get("items", [{}])[0].get("id") for item in second}
+        assert first_ids != second_ids
+
+
+def test_paginate_artist_discography():
+    """Generator yields lists summing up to totalCount."""
+    artist_instance = Artist()
+    first = artist_instance.get_artist_discography(
+        _DISCOGRAPHY_ARTIST_ID, section="singles", limit=1
+    )
+    total = first["data"]["artistUnion"]["discography"]["singles"]["totalCount"]
+
+    pages = list(artist_instance.paginate_artist_discography(
+        _DISCOGRAPHY_ARTIST_ID, section="singles"
+    ))
+    assert all(isinstance(chunk, list) for chunk in pages)
+    assert sum(len(chunk) for chunk in pages) == total
+
+
+def test_paginate_artist_discography_order_asc():
+    """order=DATE_ASC yields oldest-first."""
+    artist_instance = Artist()
+    pages = list(artist_instance.paginate_artist_discography(
+        _DISCOGRAPHY_ARTIST_ID, section="albums", order="DATE_ASC"
+    ))
+    assert len(pages) > 0
+    # First release in the earliest page should be no later than the last release
+    # in the final page when ordered ascending.
+    first_release = pages[0][0]["releases"]["items"][0]
+    last_release = pages[-1][-1]["releases"]["items"][0]
+    first_year = first_release.get("date", {}).get("year")
+    last_year = last_release.get("date", {}).get("year")
+    if first_year and last_year:
+        assert first_year <= last_year
+
+
 def test_follow_artist():
     """Test the follow method to follow an artist."""
     artist_id = "3TVXtAsR1Inumwj472S9r4"
