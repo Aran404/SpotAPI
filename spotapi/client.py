@@ -18,9 +18,9 @@ from spotapi.utils.strings import extract_js_links, extract_mappings, combine_ch
 RECAPTCHA_SITE_KEY: str = "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39"
 # Fallback hardcoded secret (version 18)
 _FALLBACK_SECRET: Tuple[Literal[18], bytearray] = (
-    18,
+    61,
     bytearray(
-        [70, 60, 33, 57, 92, 120, 90, 33, 32, 62, 62, 55, 126, 93, 66, 35, 108, 68]
+        [44,55,47,42,70,40,34,114,76,74,50,111,120,97,75,76,94,102,43,69,49,120,118,80,64,78]
     ),
 )
 
