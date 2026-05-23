@@ -53,7 +53,7 @@ class Player(PlayerStatus):
 
         _origin_device_id = self.r_state.play_origin.device_identifier
         if _origin_device_id is None:
-            raise ValueError("Could not get origin device ID.")
+            _origin_device_id = "local"
 
         self.device_id = _origin_device_id
         self.transfer_player(self.device_id, self.active_id)
