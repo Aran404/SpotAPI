@@ -65,8 +65,6 @@ class WebsocketStreamer:
 
         atexit.register(self.ws.close)
 
-        atexit.register(self.ws.close)
-
         try:
             signal.signal(signal.SIGINT, self.handle_interrupt)
         except ValueError:  #< Not running in the main thread
