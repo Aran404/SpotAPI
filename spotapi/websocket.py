@@ -64,7 +64,13 @@ class WebsocketStreamer:
         self.keep_alive_thread.start()
 
         atexit.register(self.ws.close)
-        signal.signal(signal.SIGINT, self.handle_interrupt)
+
+        atexit.register(self.ws.close)
+
+        try:
+            signal.signal(signal.SIGINT, self.handle_interrupt)
+        except ValueError:  #< Not running in the main thread
+            pass
 
     def register_device(self) -> None:
         url = f"https://gue1-spclient.spotify.com/track-playback/v1/devices"
