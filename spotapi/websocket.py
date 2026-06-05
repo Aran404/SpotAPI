@@ -50,17 +50,15 @@ class WebsocketStreamer:
 
         self.device_id = random_hex_string(32)
 
-        uri = f"wss://dealer.spotify.com/?access_token={self.base.access_token}"
-        self.ws = connect(
-            uri,
-            user_agent_header="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        )
-
         self.rlock = threading.Lock()
-        self.ws_dump: Dict[Any, Any] | None = None
-        self.connection_id = self.get_init_packet()
+        self.ws_dump = None
 
-        self.keep_alive_thread = threading.Thread(target=self.keep_alive, daemon=True)
+        self._create_websocket()
+
+        self.keep_alive_thread = threading.Thread(
+            target=self.keep_alive,
+            daemon=True,
+        )
         self.keep_alive_thread.start()
 
         atexit.register(self.ws.close)
@@ -68,6 +66,47 @@ class WebsocketStreamer:
         try:
             signal.signal(signal.SIGINT, self.handle_interrupt)
         except ValueError:  #< Not running in the main thread
+            pass
+
+    def _create_websocket(self) -> None:
+        uri = f"wss://dealer.spotify.com/?access_token={self.base.access_token}"
+
+        self.ws = connect(
+            uri,
+            user_agent_header=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+        )
+
+        self.connection_id = self.get_init_packet()
+
+    def reconnect(self) -> None:
+        with self.rlock:
+            try:
+                self.ws.close()
+            except Exception:
+                pass
+
+            self.base.get_session()
+            self.base.get_client_token()
+
+            self._create_websocket()
+
+        if (
+            not hasattr(self, "keep_alive_thread")
+            or not self.keep_alive_thread.is_alive()
+        ):
+            self.keep_alive_thread = threading.Thread(
+                target=self.keep_alive,
+                daemon=True,
+            )
+            self.keep_alive_thread.start()
+
+        try:
+            self.register_device()
+        except Exception:
             pass
 
     def register_device(self) -> None:
@@ -142,16 +181,35 @@ class WebsocketStreamer:
         while True:
             try:
                 time.sleep(60)
+
                 with self.rlock:
                     self.ws.send('{"type":"ping"}')
-            except (ConnectionError, KeyboardInterrupt):
-                break
 
-    def get_packet(self) -> Dict[Any, Any]:
-        with self.rlock:
-            ws_dump = dict(json.loads(self.ws.recv()))
-            self.ws_dump = ws_dump
-            return self.ws_dump
+            except Exception as e:
+                print("Websocket disconnected, reconnecting...")
+
+                try:
+                    self.reconnect()
+                except Exception as reconnectError:
+                    print(f"Reconnect failed: {reconnectError}")
+                return
+
+    def get_packet(self):
+        while True:
+            try:
+                with self.rlock:
+                    ws_dump = dict(json.loads(self.ws.recv()))
+
+                self.ws_dump = ws_dump
+                return ws_dump
+
+            except Exception:
+                try:
+                    self.reconnect()
+                except Exception as e:
+                    print("Failed to reconnect!")
+
+                time.sleep(1)
 
     def get_init_packet(self) -> str:
         """Gets the Spotify Connection ID in the init packet"""
