@@ -36,6 +36,7 @@ class WebsocketStreamer:
         "ws_dump",
         "connection_id",
         "keep_alive_thread",
+        "supervisor_thread",
     )
 
     def __init__(self, login: Login) -> None:
@@ -52,6 +53,7 @@ class WebsocketStreamer:
 
         self.rlock = threading.Lock()
         self.ws_dump = None
+        self.ws = None
 
         self._create_websocket()
 
@@ -61,7 +63,23 @@ class WebsocketStreamer:
         )
         self.keep_alive_thread.start()
 
-        atexit.register(self.ws.close)
+        def _cleanup():
+            try:
+                if self.ws != None:
+                    try:
+                        self.ws.close()
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+        atexit.register(_cleanup)
+
+        self.supervisor_thread = threading.Thread(
+            target=self._supervise,
+            daemon=True,
+        )
+        self.supervisor_thread.start()
 
         try:
             signal.signal(signal.SIGINT, self.handle_interrupt)
@@ -103,6 +121,10 @@ class WebsocketStreamer:
                 daemon=True,
             )
             self.keep_alive_thread.start()
+
+        if not hasattr(self, "supervisor_thread") or not self.supervisor_thread.is_alive():
+            self.supervisor_thread = threading.Thread(target=self._supervise, daemon=True)
+            self.supervisor_thread.start()
 
         try:
             self.register_device()
@@ -227,3 +249,35 @@ class WebsocketStreamer:
         """Handle interrupt signal (Ctrl+C)"""
         self.ws.close()
         exit(0)
+
+    def _supervise(self) -> None:
+        """Monitor websocket and threads, attempt reconnects when down."""
+        backoff = 1
+        while True:
+            try:
+                need_reconnect = False
+
+                if self.ws == None:
+                    need_reconnect = True
+                else:
+                    try:
+                        closed_attr = self.ws.closed
+                        if closed_attr is True:
+                            need_reconnect = True
+                    except Exception:
+                        need_reconnect = True
+
+                if self.keep_alive_thread.is_alive() == False:
+                    need_reconnect = True
+
+                if need_reconnect:
+                    try:
+                        self.reconnect()
+                        backoff = 1
+                    except Exception:
+                        time.sleep(backoff)
+                        backoff = min(backoff * 2, 60)
+
+                time.sleep(5)
+            except Exception:
+                time.sleep(5)
