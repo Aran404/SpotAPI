@@ -104,7 +104,7 @@ class WebsocketStreamer:
         with self.rlock:
             try:
                 self.ws.close()
-            except Exception:
+            except:
                 pass
 
             self.base.get_session()
@@ -112,24 +112,7 @@ class WebsocketStreamer:
 
             self._create_websocket()
 
-        if (
-            not hasattr(self, "keep_alive_thread")
-            or not self.keep_alive_thread.is_alive()
-        ):
-            self.keep_alive_thread = threading.Thread(
-                target=self.keep_alive,
-                daemon=True,
-            )
-            self.keep_alive_thread.start()
-
-        if not hasattr(self, "supervisor_thread") or not self.supervisor_thread.is_alive():
-            self.supervisor_thread = threading.Thread(target=self._supervise, daemon=True)
-            self.supervisor_thread.start()
-
-        try:
             self.register_device()
-        except Exception:
-            pass
 
     def register_device(self) -> None:
         url = f"https://gue1-spclient.spotify.com/track-playback/v1/devices"
@@ -172,7 +155,19 @@ class WebsocketStreamer:
         resp = self.client.post(url, json=payload, authenticate=True)
 
         if resp.fail:
-            raise WebSocketError("Could not register device", error=resp.error.string)
+            try:
+                print("\nREGISTER DEVICE FAILED")
+                print(f"device_id     = {self.device_id}")
+                print(f"connection_id = {self.connection_id}")
+                print(f"error         = {resp.error.string}")
+                print(f"response      = {resp.response}")
+            except Exception:
+                pass
+
+            raise WebSocketError(
+                "Could not register device",
+                error=resp.error.string
+            )
 
     def connect_device(self) -> Dict[str, Any]:
         url = f"https://gue1-spclient.spotify.com/connect-state/v1/devices/hobs_{self.device_id}"
@@ -195,7 +190,19 @@ class WebsocketStreamer:
         resp = self.client.put(url, json=payload, authenticate=True, headers=headers)
 
         if resp.fail:
-            raise WebSocketError("Could not connect device", error=resp.error.string)
+            try:
+                print("\nCONNECT DEVICE FAILED")
+                print(f"device_id     = {self.device_id}")
+                print(f"connection_id = {self.connection_id}")
+                print(f"error         = {resp.error.string}")
+                print(f"response      = {resp.response}")
+            except Exception:
+                pass
+
+            raise WebSocketError(
+                "Could not connect device",
+                error=resp.error.string
+            )
 
         return resp.response
 
@@ -214,7 +221,7 @@ class WebsocketStreamer:
                     self.reconnect()
                 except Exception as reconnectError:
                     print(f"Reconnect failed: {reconnectError}")
-                return
+                time.sleep(5)
 
     def get_packet(self):
         while True:
