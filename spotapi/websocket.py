@@ -228,12 +228,14 @@ class WebsocketStreamer:
     def get_packet(self):
         while True:
             try:
-                ws_dump = dict(json.loads(self.ws.recv()))
+                with self.rlock:
+                    ws_dump = dict(json.loads(self.ws.recv()))
 
                 self.ws_dump = ws_dump
                 return ws_dump
 
-            except Exception:
+            except Exception as e:
+                print(e)
                 try:
                     self.reconnect()
                 except Exception as e:
@@ -243,15 +245,15 @@ class WebsocketStreamer:
 
     def get_init_packet(self) -> str:
         """Gets the Spotify Connection ID in the init packet"""
-        packet = self.get_packet()
+        self.ws_dump = dict(json.loads(self.ws.recv()))
 
         if (
-            packet.get("headers") is None
-            or dict(packet["headers"]).get("Spotify-Connection-Id") is None
+            self.ws_dump.get("headers") is None
+            or dict(self.ws_dump["headers"]).get("Spotify-Connection-Id") is None
         ):
             raise ValueError("Invalid init packet")
 
-        return packet["headers"]["Spotify-Connection-Id"]
+        return self.ws_dump["headers"]["Spotify-Connection-Id"]
 
     def handle_interrupt(self, signum: int, frame: Any) -> None:
         """Handle interrupt signal (Ctrl+C)"""
