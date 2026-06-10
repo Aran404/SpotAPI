@@ -5,6 +5,7 @@ import atexit
 import json
 import time
 import signal
+import traceback
 from typing import Any, Dict
 from spotapi.login import Login
 from spotapi.client import BaseClient
@@ -42,20 +43,15 @@ class WebsocketStreamer:
     def __init__(self, login: Login) -> None:
         if not login.logged_in:
             raise ValueError("Must be logged in")
-
-        self.base = BaseClient(login.client)
-        self.client = self.base.client
-
-        self.base.get_session()
-        self.base.get_client_token()
+        
+        self.login = login
 
         self.device_id = random_hex_string(32)
 
         self.rlock = threading.Lock()
         self.ws_dump = None
         self.ws = None
-
-        self._create_websocket()
+        self.connect()
 
         self.keep_alive_thread = threading.Thread(
             target=self.keep_alive,
@@ -63,17 +59,6 @@ class WebsocketStreamer:
         )
         self.keep_alive_thread.start()
 
-        def _cleanup():
-            try:
-                if self.ws != None:
-                    try:
-                        self.ws.close()
-                    except Exception:
-                        pass
-            except Exception:
-                pass
-
-        atexit.register(_cleanup)
 
         self.supervisor_thread = threading.Thread(
             target=self._supervise,
@@ -85,6 +70,11 @@ class WebsocketStreamer:
             signal.signal(signal.SIGINT, self.handle_interrupt)
         except ValueError:  #< Not running in the main thread
             pass
+        
+        def _cleanup():
+            print("Websockets closing due to program ending")
+            self.disconnect()
+        atexit.register(_cleanup)
 
     def _create_websocket(self) -> None:
         uri = f"wss://dealer.spotify.com/?access_token={self.base.access_token}"
@@ -99,13 +89,11 @@ class WebsocketStreamer:
         )
 
         self.connection_id = self.get_init_packet()
-
-    def reconnect(self) -> None:
+    
+    def connect(self):
         with self.rlock:
-            try:
-                self.ws.close()
-            except:
-                pass
+            self.base = BaseClient(self.login.client)
+            self.client = self.base.client
 
             self.base.get_session()
             self.base.get_client_token()
@@ -113,6 +101,20 @@ class WebsocketStreamer:
             self._create_websocket()
 
             self.register_device()
+
+    def disconnect(self):
+        with self.rlock:
+            if self.ws == None:
+                return
+            try:
+                self.ws.close()
+                self.ws = None
+            except Exception as e:
+                print(f"Failed to close websocket: {e}")
+
+    def reconnect(self) -> None:
+        self.disconnect()
+        self.connect()
 
     def register_device(self) -> None:
         url = f"https://gue1-spclient.spotify.com/track-playback/v1/devices"
@@ -254,7 +256,8 @@ class WebsocketStreamer:
 
     def handle_interrupt(self, signum: int, frame: Any) -> None:
         """Handle interrupt signal (Ctrl+C)"""
-        self.ws.close()
+        print("Ctrl+C detected, exiting spotapi")
+        self.disconnect()
         exit(0)
 
     def _supervise(self) -> None:
@@ -274,14 +277,13 @@ class WebsocketStreamer:
                     except Exception:
                         need_reconnect = True
 
-                if self.keep_alive_thread.is_alive() == False:
-                    need_reconnect = True
-
                 if need_reconnect:
                     try:
                         self.reconnect()
                         backoff = 1
-                    except Exception:
+                    except Exception as e:
+                        print(f"Spotapi failed to reconnect: {e}")
+                        traceback.print_exc()
                         time.sleep(backoff)
                         backoff = min(backoff * 2, 60)
 
