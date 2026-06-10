@@ -228,8 +228,7 @@ class WebsocketStreamer:
     def get_packet(self):
         while True:
             try:
-                with self.rlock:
-                    ws_dump = dict(json.loads(self.ws.recv()))
+                ws_dump = dict(json.loads(self.ws.recv()))
 
                 self.ws_dump = ws_dump
                 return ws_dump
