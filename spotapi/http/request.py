@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Type, Dict
-from tls_client.settings import ClientIdentifiers
-from tls_client.exceptions import TLSClientExeption
-from tls_client.response import Response as TLSResponse
-from spotapi.exceptions import ParentException, RequestError
-from spotapi.http.data import Response
-from tls_client import Session
-import requests
 import atexit
 import json
+from typing import Any, Callable, Dict, Type
+
+import requests
+from curl_cffi.requests import Response as TLSResponse
+from curl_cffi.requests import Session
+from curl_cffi.requests.exceptions import RequestException
+
+from spotapi.exceptions import ParentException, RequestError
+from spotapi.http.data import Response
+
+ClientIdentifiers = str
 
 __all__ = [
     "StdClient",
@@ -110,7 +113,7 @@ class StdClient:
 
 class TLSClient(Session):
     """
-    TLS-HTTP Client implementation wrapped around the tls_client library.
+    TLS-HTTP Client implementation wrapped around the curl_cffi library.
 
     This is fully undetected by Spotify.com.
     """
@@ -123,11 +126,12 @@ class TLSClient(Session):
         auto_retries: int = 0,
         auth_rule: Callable[[Dict[Any, Any]], Dict[Any, Any]] | None = None,
     ) -> None:
-        super().__init__(client_identifier=profile, random_tls_extension_order=True)
+        super().__init__(impersonate=profile)
 
         if proxy:
             self.proxies = {"http": f"http://{proxy}", "https": f"http://{proxy}"}
 
+        self.client_identifier = profile
         self.auto_retries = auto_retries + 1
         self.authenticate = auth_rule
         self.on_auth_failure: Callable[[Response], bool] | None = None
@@ -150,8 +154,8 @@ class TLSClient(Session):
         err = "Unknown"
         for _ in range(self.auto_retries):
             try:
-                response = self.execute_request(method.upper(), url, **kwargs)
-            except TLSClientExeption as e:
+                response = self.request(method.upper(), url, **kwargs)
+            except RequestException as e:
                 err = str(e)
                 continue
             else:
@@ -181,9 +185,6 @@ class TLSClient(Session):
         if not body:
             body = None
 
-        # Why is status_code a None type...
-        assert response.status_code is not None, "Status Code is None"
-
         resp = Response(
             status_code=int(response.status_code), response=body, raw=response
         )
@@ -210,7 +211,7 @@ class TLSClient(Session):
 
         response = self.build_request(method, url, allow_redirects=True, **kwargs)
         if response is None:
-            raise TLSClientExeption("Request kept failing after retries.")
+            raise RequestError("Request kept failing after retries.")
 
         parsed = self.parse_response(response, method, False)
 
@@ -224,7 +225,7 @@ class TLSClient(Session):
             kwargs = self.authenticate(kwargs)
             response = self.build_request(method, url, allow_redirects=True, **kwargs)
             if response is None:
-                raise TLSClientExeption("Request kept failing after retries.")
+                raise RequestError("Request kept failing after retries.")
             parsed = self.parse_response(response, method, False)
 
         if danger and self.fail_exception and parsed.fail:

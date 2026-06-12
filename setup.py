@@ -6,7 +6,7 @@ __install_require__ = [
     "colorama",
     "Pillow",
     "readerwriterlock",
-    "tls_client",
+    "curl_cffi",
     "typing_extensions",
     "validators",
     "pyotp",
