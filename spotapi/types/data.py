@@ -30,7 +30,7 @@ __all__ = [
 class Config:
     logger: LoggerProtocol
     solver: CaptchaProtocol | None = field(default=None)
-    client: TLSClient = field(default=TLSClient("chrome_120", "", auto_retries=3))
+    client: TLSClient = field(default=TLSClient("chrome120", "", auto_retries=3))
 
     def __str__(self) -> str:
         return "Config()"

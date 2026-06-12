@@ -131,7 +131,6 @@ class TLSClient(Session):
         if proxy:
             self.proxies = {"http": f"http://{proxy}", "https": f"http://{proxy}"}
 
-        self.client_identifier = profile
         self.auto_retries = auto_retries + 1
         self.authenticate = auth_rule
         self.on_auth_failure: Callable[[Response], bool] | None = None
