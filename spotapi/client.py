@@ -1,3 +1,4 @@
+import re
 import time
 import json
 import base64
@@ -93,7 +94,8 @@ class BaseClient:
         self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)
         self.client.on_auth_failure = lambda resp: self._handle_auth_failure(resp)
 
-        self.browser_version = self.client.client_identifier.split("_")[1]
+        match = re.search(r"\d+", self.client.impersonate)
+        self.browser_version = match.group()
         self.client.headers.update(
             {
                 "Content-Type": "application/json;charset=UTF-8",

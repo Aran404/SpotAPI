@@ -44,7 +44,7 @@ class Pooler(Generic[T]):
 
 
 client_pool: Pooler[TLSClient] = Pooler(
-    factory=lambda: TLSClient("chrome_120", "", auto_retries=3)
+    factory=lambda: TLSClient("chrome120", "", auto_retries=3)
 )
 GeneratorType: TypeAlias = Generator[Mapping[str, Any], None, None]
 
