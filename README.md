@@ -2,6 +2,12 @@
 
 > **Disclaimer**: This repository and any associated code are provided "as is" without warranty of any kind, either expressed or implied. The author of this repository does not accept any responsibility for the use or misuse of this repository or its contents. The author does not endorse any actions or consequences arising from the use of this repository. Any copies, forks, or re-uploads made by other users are not the responsibility of the author. The repository is solely intended as a Proof Of Concept for educational purposes regarding the use of a service's private API. By using this repository, you acknowledge that the author makes no claims about the accuracy, legality, or safety of the code and accepts no liability for any issues that may arise. More information can be found [HERE](./LEGAL_NOTICE.md).
 
+# Async Rewrite
+
+SpotAPI v2 async rewrite is currently in progress. The async-v2 branch contains the latest implementation if you want to view or test it. 
+The current prerelease version is `2.0.0b1`. 
+Early benchmarks show the async version is already ~4× faster in concurrent workloads compared to the sync implementation.
+
 # SpotAPI
 
 Welcome to SpotAPI! This Python library is designed to interact with the private and public Spotify APIs, emulating the requests typically made through a web browser. This wrapper provides a convenient way to access Spotify’s rich set of features programmatically.
