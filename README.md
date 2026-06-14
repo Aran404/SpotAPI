@@ -1,160 +1,239 @@
-# Legal Notice
+<div align="center">
 
-> **Disclaimer**: This repository and any associated code are provided "as is" without warranty of any kind, either expressed or implied. The author of this repository does not accept any responsibility for the use or misuse of this repository or its contents. The author does not endorse any actions or consequences arising from the use of this repository. Any copies, forks, or re-uploads made by other users are not the responsibility of the author. The repository is solely intended as a Proof Of Concept for educational purposes regarding the use of a service's private API. By using this repository, you acknowledge that the author makes no claims about the accuracy, legality, or safety of the code and accepts no liability for any issues that may arise. More information can be found [HERE](./LEGAL_NOTICE.md).
+![alt text](image.png)
 
-# SpotAPI
+# SpotAPI v2
 
-Welcome to SpotAPI! This Python library is designed to interact with the private and public Spotify APIs, emulating the requests typically made through a web browser. This wrapper provides a convenient way to access Spotify’s rich set of features programmatically.
+**The fully async Python client for Spotify's public & private API.**
+No API key. No Premium. No rate-limit babysitting.
 
-**Note**: This project is intended solely for educational purposes and should be used responsibly. Accessing private endpoints and scraping data without proper authorization may violate Spotify's terms of service.
+[![PyPI](https://img.shields.io/pypi/v/spotapi?color=1DB954&label=pypi)](https://pypi.org/project/spotapi/)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://python.org)
+[![Async](https://img.shields.io/badge/asyncio-native-1DB954)](https://docs.python.org/3/library/asyncio.html)
+[![Typed](https://img.shields.io/badge/typed-py.typed-%230075A8)](https://peps.python.org/pep-0561/)
+[![License](https://img.shields.io/github/license/Aran404/SpotAPI)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/Aran404/SpotAPI?style=social)](https://github.com/Aran404/SpotAPI/stargazers)
 
-## Table of Contents
+> ⚠️ **This is the `async-v2` beta branch.** It is under active development and the API may change before the stable `spotapi.v2.0.0` release. For the stable v1 library see [main](https://github.com/Aran404/SpotAPI/tree/main).
 
-1. [Introduction](#spotapi)
-2. [Features](#features)
-3. [Docs](#docs)
-4. [Installation](#installation)
-5. [Quick Examples](#quick-examples)
-6. [Import Cookies](#import-cookies)
-7. [Contributing](#contributing)
-8. [License](#license)
-9. **[Extended Functionality & Private Modules](#private-modules)**
+</div>
 
+---
 
-## Features
-- **No Premium Required**: Unlike the Web API which requires Spotify Premium, **SpotAPI** requires no Spotify Premium at all!
-- **Public API Access**: Retrieve and manipulate public Spotify data such as playlists, albums, and tracks with ease.
-- **Private API Access**: Explore private Spotify endpoints to tailor your application to your needs.
-- **Ready to Use**: **SpotAPI** is designed for immediate integration, allowing you to accomplish tasks with just a few lines of code.
-- **No API Key Required**: Seamlessly use **SpotAPI** without needing a Spotify API key. It's straightforward and hassle free!
-- **Browser-like Requests**: Accurately replicate the HTTP requests Spotify makes in the browser, providing a true to web experience while remaining undetected.
-- **Multi-Language Support**: Set your preferred language for API responses using ISO 639-1 language codes (e.g., 'ko', 'ja', 'zh', 'en').
+## What's new in v2
 
-Everything you can do with Spotify, **SpotAPI** can do with just a user’s login credentials.
+| | v1 | v2 |
+|---|---|---|
+| **I/O model** | Synchronous | Fully async (`asyncio`) |
+| **Pagination** | `for page in gen:` | `async for page in gen:` |
+| **Type safety** | Partial | Full — `py.typed`, typed data wrappers |
+| **HTTP** | `tls-client` | `wreq` with connection pooling & retry |
+| **Auth** | CAPTCHA solver required | TOTP-based (no solver needed) |
+| **Session** | Manual refresh | Auto-refresh background task |
+| **Codebase** | Flat structure | Layered: `connection/`, `datastruct/`, `specialized/` |
 
-
-## Docs
-- [**Public.py**](./docs/public.md)
-- [**Artist.py**](./docs/artist.md)
-- [**Album.py**](./docs/album.md)
-- [**Creator.py**](./docs/creator.md)
-- [**Family.py**](./docs/family.md)
-- [**Login.py**](./docs/login.md)
-- [**Password.py**](./docs/password.md)
-- [**Player.py**](./docs/player.md)
-- [**Song.py**](./docs/song.md)
-- [**Playlist.py**](./docs/playlist.md)
-- [**Status.py**](./docs/status.md)
-- [**User.py**](./docs/user.md)
-
+---
 
 ## Installation
-```
-pip install spotapi
-```
 
-## Quick Examples
+```bash
+# Latest beta
+pip install "spotapi==2.0.0b1"
 
-### With User Authentication
-```py
-from spotapi import (
-    Login, 
-    Config, 
-    NoopLogger, 
-    solver_clients, 
-    PrivatePlaylist, 
-    MongoSaver
-)
-
-cfg = Config(
-    solver=solver_clients.Capsolver("YOUR_API_KEY", proxy="YOUR_PROXY"), # Proxy is optional
-    logger=NoopLogger(),
-    # You can add a proxy by passing a custom TLSClient
-)
-
-instance = Login(cfg, "YOUR_PASSWORD", email="YOUR_EMAIL")
-# Now we have a valid Login instance to pass around
-instance.login()
-
-# Do whatever you want now
-playlist = PrivatePlaylist(instance)
-playlist.create_playlist("SpotAPI Showcase!")
-
-# Save the session
-instance.save(MongoSaver())
+# Or directly from this branch
+pip install "git+https://github.com/Aran404/SpotAPI@async-v2"
 ```
 
-### Without User Authentication
-```py
-"""Here's the example from spotipy https://github.com/spotipy-dev/spotipy?tab=readme-ov-file#quick-start"""
+---
+
+## Quick start
+
+### Unauthenticated — public search
+
+```python
+import asyncio
+import spotapi
+
+async def main() -> None:
+    async for page in spotapi.sync.Public.search_tracks("Radiohead"):
+        for track in page:
+            duration_s = track.duration.total_milliseconds // 1000
+            print(f"{track.name}  ({duration_s}s)  —  {track.uri}")
+
+asyncio.run(main())
+```
+
+### Search artists with pagination control
+
+```python
+import asyncio
+import spotapi
+
+async def main() -> None:
+    # Yields one page (up to 100 results) at a time
+    async for page in spotapi.sync.Public.search_artists("Tame Impala"):
+        for artist in page:
+            verified = artist.on_platform_reputation_trait.verification.is_verified
+            print(f"{artist.profile.name}  verified={verified}")
+
+asyncio.run(main())
+```
+
+### Search albums
+
+```python
+import asyncio
+import spotapi
+
+async def main() -> None:
+    async for page in spotapi.sync.Public.search_albums("OK Computer"):
+        for album in page:
+            artists = ", ".join(a.profile.name for a in album.artists.items)
+            print(f"{album.name} ({album.date.year}) — {artists}")
+
+asyncio.run(main())
+```
+
+### Search podcasts
+
+```python
+import asyncio
+import spotapi
+
+async def main() -> None:
+    async for page in spotapi.sync.Public.search_podcasts("Lex Fridman"):
+        for podcast in page:
+            print(f"{podcast.name} by {podcast.publisher.name}")
+
+asyncio.run(main())
+```
+
+---
+
+## Architecture overview
+
+```
+v2/
+├── base.py                  # BaseClient — pathfinder query + pagination
+├── client.py                # AsyncClient — thin HTTP facade + context manager
+├── session.py               # BundleSession + AuthSession — tokens, TOTP, auto-refresh
+├── public.py                # Public — typed search generators
+│
+├── connection/
+│   ├── http.py              # HTTPClient — wreq wrapper, retry + backoff, browser emulation
+│   ├── websocket.py         # WebSocketClient — heartbeat, event dispatch
+│   └── types.py             # ResponseSuccess / ResponseFailure, backoff types
+│
+├── datastruct/
+│   ├── object_dict.py       # ObjectDict — attribute-access dict for raw JSON
+│   ├── pool.py              # Pool[T] — generic async object pool
+│   └── event_handler.py     # EventDispatcher — async event system
+│
+├── specialized/
+│   ├── totp.py              # TOTP generation — no CAPTCHA solver required
+│   └── data_wrappers/
+│       ├── _common.py       # Shared color/visual dataclasses
+│       ├── track.py         # Track
+│       ├── artist.py        # Artist
+│       ├── album.py         # Album
+│       ├── playlist.py      # Playlist
+│       └── podcast.py       # Podcast
+│
+├── types/
+│   ├── logger.py            # LoggerProtocol + 5 concrete loggers
+│   └── exceptions.py        # HTTPError, WebsocketError, BaseClientError
+│
+└── utils/
+    ├── cache.py             # timed_cache — TTL-based async/sync cache decorator
+    ├── random.py            # Weighted random selection
+    └── strings.py           # JS bundle parsing, hash extraction
+```
+
+---
+
+## Logging
+
+v2 ships five ready-to-use loggers. All implement `LoggerProtocol` so you can drop in your own.
+
+```python
+from spotapi.v2.types import LoggerColour, JsonLogger, NoopLogger, MultiLogger, Level
+
+# Pretty coloured output to stderr (default)
+logger = LoggerColour(min_level=Level.INFO)
+
+# Structured JSON — good for log aggregation pipelines
+json_logger = JsonLogger(min_level=Level.WARNING)
+
+# Fan-out to multiple loggers at once
+combined = MultiLogger(logger, json_logger)
+
+# Silence everything
+noop = NoopLogger()
+
+# Bind extra context fields that appear on every subsequent record
+scoped = logger.bind(request_id="abc123")
+scoped.info("Token refreshed", token_version=2)
+```
+
+---
+
+## Connection pool & browser emulation
+
+Every `HTTPClient` automatically selects a randomised browser profile (Chrome, Edge, Firefox, Opera) weighted towards modern versions, and a randomised OS (Windows 30×, macOS 6×, Linux 2×). A shared `ClientPool` reuses connections across requests.
+
+```python
+from spotapi.v2.connection import HTTPClient, ClientPool
+
+# Get a pooled client (shared across BaseClient instances)
+http = await ClientPool.get()
+
+# Or create a dedicated client with a proxy
+async with HTTPClient(proxies=[wreq.Proxy.http("http://user:pass@host:port")]) as http:
+    response = await http.get("https://open.spotify.com/")
+```
+
+---
+
+## Migration from v1
+
+For a full side-by-side comparison of the v1 and v2 APIs, see [MIGRATION.md](MIGRATION.md).
+
+```python
+# v1
 from spotapi import Song
-
 song = Song()
-gen = song.paginate_songs("weezer")
+for batch in song.paginate_songs("weezer"):
+    for item in batch:
+        print(item["item"]["data"]["name"])
 
-# Paginates 100 songs at a time till there's no more
-for batch in gen:
-    for idx, item in enumerate(batch):
-        print(idx, item['item']['data']['name'])
-    
-# ^ ONLY 6 LINES OF CODE
-
-# Alternatively, you can query a specfic amount
-songs = song.query_songs("weezer", limit=20)
-data = songs["data"]["searchV2"]["tracksV2"]["items"]
-for idx, item in enumerate(data):
-    print(idx, item['item']['data']['name'])
+# v2
+import spotapi
+async for page in spotapi.sync.Public.search_tracks("weezer"):
+    for track in page:
+        print(track.name)
 ```
 
-### With Language Support
-```py
-from spotapi import Artist, PublicPlaylist, Song
-
-# Initialize with Korean language
-artist = Artist(language="ko")
-playlist = PublicPlaylist("37i9dQZF1DXcBWIGoYBM5M", language="ko")
-
-# Change language at runtime
-song = Song(language="en")
-song.base.set_language("ja")  # Switch to Japanese
-
-# Supported languages: ko, ja, zh, en, and any ISO 639-1 code
-```
-### Results
-```
-0 Island In The Sun
-1 Say It Ain't So
-2 Buddy Holly
-.
-.
-.
-18 Holiday
-19 We Are All On d***s
-```
-
-## Import Cookies
-If you prefer not to use a third party CAPTCHA solver, you can import cookies to manage your session.
-
-### Steps to Import Cookies:
-
-1. **Choose a Session Saver**:
-   - Select a session saver for storing your session data. 
-   - For simplicity, you should use `JSONSaver`, especially if performance or quantity of sessions is not a big concern.
-
-2. **Prepare Session Data**:
-   - Create an object with the following keys:
-     - **`identifier`**: This should be your email address or username.
-     - **`cookies`**: These are the cookies you obtain when logged in. To get these cookies, visit [Spotify](https://open.spotify.com/), log in, and copy the cookies from your browser.
-       - It can be a dict[str, str] or a string representation
-
-3. **Load the Session**:
-   - Use `Login.from_saver` (or your own implementation) to load the session from cache. This will enable you to use Spotify with a fully functional session without needing additional **CAPTCHA solving**.
+---
 
 ## Contributing
-Contributions are welcome! If you find any issues or have suggestions, please open an issue or submit a pull request.
+
+All contributions are welcome. The async rewrite is still in progress and there are plenty of well-scoped tasks available — see [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and the open [good first issues](https://github.com/Aran404/SpotAPI/labels/good%20first%20issue).
+
+```bash
+git clone https://github.com/Aran404/SpotAPI
+cd SpotAPI
+git checkout async-v2
+pip install -e ".[dev]"
+```
+
+---
+
+## Legal notice
+
+> **Disclaimer**: This repository is provided for educational purposes only. The author accepts no responsibility for misuse. Accessing private Spotify endpoints may violate Spotify's Terms of Service. Use responsibly. See [LEGAL_NOTICE.md](LEGAL_NOTICE.md) for full details.
+
+---
 
 ## License
-This project is licensed under the **GPL 3.0** License. See [LICENSE](https://choosealicense.com/licenses/gpl-3.0/) for details.
 
-## **Private Modules**
-For the full scale account generation and "engagement" modules that can't be posted here, reach out on Telegram: **@aran_xyz**
+[GPL-3.0](LICENSE) © [Aran404](https://github.com/Aran404)

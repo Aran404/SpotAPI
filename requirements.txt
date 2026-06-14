@@ -1,10 +1,2 @@
-colorama==0.4.6
-Pillow==10.4.0
-readerwriterlock==1.0.9
-requests==2.31.0
-curl_cffi==0.15.0
-typing_extensions==4.12.2
-validators==0.33.0
-websockets==12.0
-pyotp==2.9.0
-beautifulsoup4
+platformdirs==4.10.0
+wreq==0.12.0
