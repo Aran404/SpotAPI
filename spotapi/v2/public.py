@@ -17,6 +17,11 @@ __all__: tuple[str, ...] = (
     "Operations",
     "Public",
     "QueryWrapper",
+    "Podcast",
+    "Artist",
+    "Playlist",
+    "Track",
+    "Album",
 )
 
 
@@ -99,8 +104,37 @@ class QueryWrapper:
             obey_total_count=obey_total_count,
         )
 
+    async def typed_search(
+        self,
+        typ: type[_SearchResultT],
+        op: Operations,
+        query: str,
+        /,
+    ) -> AsyncGenerator[Sequence[_SearchResultT]]:
+        gen = await self.search(query, operation=op)
+        try:
+            async for raw in gen:
+                results: list[_SearchResultT] = []
+                for item in raw._items:
+                    data = self.extract_data(item)
+                    results.append(from_dict(typ, data))
+                yield results
+        finally:
+            await gen.aclose()
+
 
 class Public:
+    """Provides access to Spotify's public search endpoints.
+
+    This class exposes asynchronous generators for searching queries
+    without requiring user authentication.
+
+    All search methods yield pages of results as they are retrieved
+    from Spotify.
+
+    Use :meth:`anext` for non-paginated results.
+    """
+
     __slots__ = ()
 
     @staticmethod
@@ -111,18 +145,11 @@ class Public:
         /,
     ) -> AsyncGenerator[Sequence[_SearchResultT]]:
         bc = await BaseClientPool.get()
-        qw = QueryWrapper(bc)
-
-        gen = await qw.search(query, operation=op)
+        gen = QueryWrapper(bc).typed_search(typ, op, query)
         try:
-            async for raw in gen:
-                results: list[_SearchResultT] = []
-                for item in raw._items:
-                    data = qw.extract_data(item)
-                    results.append(from_dict(typ, data))
-                yield results
+            async for typed in gen:
+                yield typed
         finally:
-            await gen.aclose()
             BaseClientPool.put(bc)
 
     @staticmethod
