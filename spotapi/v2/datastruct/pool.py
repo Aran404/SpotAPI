@@ -92,7 +92,6 @@ class Pool(Generic[T]):
             evicted = self._store.popleft()
             if self._teardown is not None:
                 teardown = self._teardown
-                # Use get_running_loop() — get_event_loop() is deprecated in 3.10+
                 loop = asyncio.get_running_loop()
                 if iscoroutinefunction(teardown):
                     async_teardown = cast(Callable[[T], Coroutine[Any, Any, None]], teardown)

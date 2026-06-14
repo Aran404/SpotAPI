@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-__all__ = (
+__all__: tuple[str, ...] = (
     "InclusionParameters",
     "Operations",
     "Public",
@@ -101,6 +101,8 @@ class QueryWrapper:
 
 
 class Public:
+    __slots__ = ()
+
     @staticmethod
     async def search(
         typ: type[_SearchResultT],
