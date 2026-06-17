@@ -272,14 +272,15 @@ class WebsocketStreamer:
                     need_reconnect = True
                 else:
                     try:
-                        closed_attr = self.ws.closed
-                        if closed_attr is True:
+                        if self.ws.state.name == "CLOSED":
                             need_reconnect = True
-                    except Exception:
+                    except Exception as e:
+                        print(e)
                         need_reconnect = True
 
                 if need_reconnect:
                     try:
+                        print("Websockets need to reconnect, reconnecting")
                         self.reconnect()
                         backoff = 1
                     except Exception as e:
