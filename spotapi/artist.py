@@ -37,7 +37,7 @@ class Artist:
         self,
         login: Login | None = None,
         *,
-        client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
+        client: TLSClient = TLSClient("chrome120", "", auto_retries=3),
         language: str = "en",
     ) -> None:
         if login and not login.logged_in:

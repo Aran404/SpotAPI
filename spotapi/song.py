@@ -31,7 +31,7 @@ class Song:
         self,
         playlist: PrivatePlaylist | None = None,
         *,
-        client: TLSClient = TLSClient("chrome_120", "", auto_retries=3),
+        client: TLSClient = TLSClient("chrome120", "", auto_retries=3),
         language: str = "en",
     ) -> None:
         self.playlist = playlist
