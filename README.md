@@ -55,7 +55,7 @@ import asyncio
 import spotapi
 
 async def main() -> None:
-    async for page in spotapi.sync.Public.search_tracks("Radiohead"):
+    async for page in spotapi.v2.Public.search_tracks("Radiohead"):
         for track in page:
             duration_s = track.duration.total_milliseconds // 1000
             print(f"{track.name}  ({duration_s}s)  —  {track.uri}")
@@ -71,7 +71,7 @@ import spotapi
 
 async def main() -> None:
     # Yields one page (up to 100 results) at a time
-    async for page in spotapi.sync.Public.search_artists("Tame Impala"):
+    async for page in spotapi.v2.Public.search_artists("Tame Impala"):
         for artist in page:
             verified = artist.on_platform_reputation_trait.verification.is_verified
             print(f"{artist.profile.name}  verified={verified}")
@@ -86,7 +86,7 @@ import asyncio
 import spotapi
 
 async def main() -> None:
-    async for page in spotapi.sync.Public.search_albums("OK Computer"):
+    async for page in spotapi.v2.Public.search_albums("OK Computer"):
         for album in page:
             artists = ", ".join(a.profile.name for a in album.artists.items)
             print(f"{album.name} ({album.date.year}) — {artists}")
@@ -101,7 +101,7 @@ import asyncio
 import spotapi
 
 async def main() -> None:
-    async for page in spotapi.sync.Public.search_podcasts("Lex Fridman"):
+    async for page in spotapi.v2.Public.search_podcasts("Lex Fridman"):
         for podcast in page:
             print(f"{podcast.name} by {podcast.publisher.name}")
 
@@ -208,7 +208,7 @@ for batch in song.paginate_songs("weezer"):
 
 # v2
 import spotapi
-async for page in spotapi.sync.Public.search_tracks("weezer"):
+async for page in spotapi.v2.Public.search_tracks("weezer"):
     for track in page:
         print(track.name)
 ```
