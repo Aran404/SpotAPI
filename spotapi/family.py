@@ -96,7 +96,7 @@ class JoinFamily:
         raise FamilyError("Could not get address")
 
     def _add_to_family(self, place_id: str) -> None:
-        url = "https://www.spotify.com/api/family/v1/family/member/"
+        url = "https://www.spotify.com/api/family/add-member/"
         payload = {
             "address": self.address,
             "placeId": place_id,
