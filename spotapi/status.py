@@ -3,7 +3,7 @@ import functools
 from spotapi.login import Login
 from spotapi.types.annotations import enforce
 from spotapi.types.data import PlayerState, Devices, Track
-from spotapi.websocket import WebsocketStreamer
+from spotapi.websocket import WebsocketStreamer, WebSocketError
 from typing import Dict, Any, Callable, List, ParamSpec, TypeVar
 
 __all__ = [
@@ -47,8 +47,15 @@ class PlayerStatus(WebsocketStreamer):
 
     def renew_state(self) -> None:
         self._device_dump = self.connect_device()
-        self._state = self._device_dump["player_state"]
-        self._devices = self._device_dump["devices"]
+
+        if type(self._device_dump) != dict:
+            raise WebSocketError("Invalid device dump received", error=str(self._device_dump))
+
+        self._state = self._device_dump.get("player_state")
+        if self._state == None:
+            raise WebSocketError("Could not obtain 'player_state' from connect_device response", error=str(self._device_dump))
+
+        self._devices = self._device_dump.get("devices", {})
 
     @functools.cached_property
     def saved_state(self) -> PlayerState:
