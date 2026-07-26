@@ -1,0 +1,86 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spotapi"
+version = "2.0.0b1"
+description = "Fully async Python client for Spotify's public & private API. No API key. No Premium."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Aran404", url = "https://github.com/Aran404" }]
+keywords = [
+    "spotify",
+    "async",
+    "asyncio",
+    "api",
+    "wrapper",
+    "spotify-api",
+    "spotify-private-api",
+    "no-api-key",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "wreq>=0.1.0",
+    "platformdirs>=4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.0",
+    "pyright>=1.1",
+    "python-dotenv>=1.0",
+    "ruff>=0.4",
+]
+
+[project.urls]
+Homepage     = "https://github.com/Aran404/SpotAPI"
+Repository   = "https://github.com/Aran404/SpotAPI"
+"Bug Tracker" = "https://github.com/Aran404/SpotAPI/issues"
+Changelog    = "https://github.com/Aran404/SpotAPI/blob/async-v2/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["v2"]
+
+# ---------------------------------------------------------------------------
+# Formatting (Black)
+# ---------------------------------------------------------------------------
+[tool.black]
+line-length = 99
+target-version = ["py311"]
+
+# ---------------------------------------------------------------------------
+# Linting (Ruff)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 99
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "TID"]
+ignore  = ["E501", "B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["v2"]
+
+# ---------------------------------------------------------------------------
+# Type Checking (Pyright)
+# ---------------------------------------------------------------------------
+[tool.pyright]
+include = ["v2"]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"

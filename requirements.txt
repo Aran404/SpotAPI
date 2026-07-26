@@ -1,0 +1,2 @@
+platformdirs==4.10.0
+wreq==0.12.0
