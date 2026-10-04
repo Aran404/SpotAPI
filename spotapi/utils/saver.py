@@ -6,9 +6,6 @@ These are popular savers that are used for session storing, but if you need a di
 import atexit
 import json
 import os
-import pymongo
-import redis
-import sqlite3
 from typing import Any, List, Mapping
 from readerwriterlock import rwlock
 from spotapi.types.interfaces import SaverProtocol
@@ -161,6 +158,13 @@ class SqliteSaver(SaverProtocol):
     )
 
     def __init__(self, path: str = "sessions.db") -> None:
+        try:
+            import sqlite3
+        except ImportError as exc:
+            raise ImportError(
+                "SqliteSaver requires a Python installation with SQLite support."
+            ) from exc
+
         self.path = path
         self.conn = sqlite3.connect(self.path, check_same_thread=False)
         self.cursor = self.conn.cursor()
@@ -283,6 +287,13 @@ class MongoSaver(SaverProtocol):
         database_name: str = "spotify",
         collection: str = "sessions",
     ) -> None:
+        try:
+            import pymongo
+        except ImportError as exc:
+            raise ImportError(
+                "MongoSaver requires pymongo. Install it with: pip install 'spotapi[pymongo]'"
+            ) from exc
+
         self.conn = pymongo.MongoClient(host)
         self.database = self.conn[database_name]
         self.collection = self.database[collection]
@@ -318,6 +329,13 @@ class MongoSaver(SaverProtocol):
 
 class RedisSaver(SaverProtocol):
     def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0) -> None:
+        try:
+            import redis
+        except ImportError as exc:
+            raise ImportError(
+                "RedisSaver requires redis. Install it with: pip install 'spotapi[redis]'"
+            ) from exc
+
         self.client = redis.StrictRedis(host=host, port=port, db=db)
         atexit.register(self.client.close)
 
