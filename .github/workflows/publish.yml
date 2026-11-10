@@ -1,0 +1,61 @@
+name: Publish a tagged release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check the tag matches package metadata
+        run: |
+          python - <<'PY'
+          import os, tomllib
+          from pathlib import Path
+          version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+          assert os.environ["GITHUB_REF_NAME"] == f"v{version}", "Tag and package versions differ"
+          PY
+      - run: python -m pip install build twine
+      - run: python -m pip install -e '.[dev,demo]'
+      - run: python -m playwright install --with-deps chromium
+      - run: python -m pytest -m 'not live' -q
+      - run: python -m pyright
+      - run: python -m ruff check .
+      - run: python -m black --check .
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - run: python -m pip install --force-reinstall --no-deps dist/*.whl
+      - name: Smoke-test the installed wheel outside the checkout
+        working-directory: /tmp
+        run: |
+          python -I - <<'PY'
+          import os
+          from pathlib import Path
+          import spotapi
+          from spotapi import Public
+          from spotapi.models import PlaylistTrack
+          assert not Path(spotapi.__file__).resolve().is_relative_to(Path(os.environ["GITHUB_WORKSPACE"]).resolve())
+          assert Public.parse_url("spotify:track:abc").id == "abc"
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

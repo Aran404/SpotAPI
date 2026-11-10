@@ -1,0 +1,100 @@
+{
+  "payloads": [
+    {
+      "type": "replace_state",
+      "state_ref": {
+        "state_index": 2,
+        "paused": false
+      },
+      "seek_to": null,
+      "state_machine": {
+        "state_machine_id": "captured-machine",
+        "states": [
+          {
+            "state_id": "state-0",
+            "track": 0
+          },
+          {
+            "state_id": "state-1",
+            "track": 1
+          },
+          {
+            "state_id": "state-2",
+            "track": 1
+          },
+          {
+            "state_id": "state-3",
+            "track": 2
+          },
+          {
+            "state_id": "state-4",
+            "track": 0
+          },
+          {
+            "state_id": "state-5",
+            "track": 1
+          },
+          {
+            "state_id": "state-6",
+            "track": 2
+          },
+          {
+            "state_id": "state-7",
+            "track": 2
+          }
+        ],
+        "tracks": [
+          {
+            "uri": "spotify:track:7EBy2V93Ykyvfc5CMApTGc",
+            "metadata": {
+              "uri": "spotify:track:7EBy2V93Ykyvfc5CMApTGc",
+              "name": "Barbarian",
+              "group_name": "The Party Never Ends 2.0",
+              "authors": [
+                {
+                  "name": "Juice WRLD",
+                  "uri": "spotify:artist:4MCBfE4596Uoi2O4DtmEMz"
+                }
+              ],
+              "duration": 150888
+            }
+          },
+          {
+            "uri": "spotify:track:3T06rGO2dVEntMvym0vpQu",
+            "metadata": {
+              "uri": "spotify:track:3T06rGO2dVEntMvym0vpQu",
+              "name": "Empty",
+              "group_name": "Death Race For Love (Bonus Track Version)",
+              "authors": [
+                {
+                  "name": "Juice WRLD",
+                  "uri": "spotify:artist:4MCBfE4596Uoi2O4DtmEMz"
+                }
+              ],
+              "duration": 248431
+            }
+          },
+          {
+            "uri": "spotify:track:3xBHLZwRfi0fjO9euaj5zf",
+            "metadata": {
+              "uri": "spotify:track:3xBHLZwRfi0fjO9euaj5zf",
+              "name": "WRLD On Drugs",
+              "group_name": "Future & Juice WRLD Present... WRLD ON DRUGS",
+              "authors": [
+                {
+                  "name": "Future",
+                  "uri": "spotify:artist:1RyvyyTE3xzB2ZywiAwp0i"
+                },
+                {
+                  "name": "Juice WRLD",
+                  "uri": "spotify:artist:4MCBfE4596Uoi2O4DtmEMz"
+                }
+              ],
+              "duration": 217000
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

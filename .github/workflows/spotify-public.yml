@@ -1,0 +1,48 @@
+name: Spotify API checks
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 8 * * *" # Daily contract check; reports upstream breaking changes
+  workflow_dispatch:
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e '.[dev,demo]'
+      - run: python -m pytest -m 'not live'
+      - run: python -m pyright
+      - run: python -m ruff check .
+      - run: python -m black --check .
+
+  public-api:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m pytest --live=read -m live -vv
+
+  studio-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m playwright install --with-deps chromium
+      - run: python -m pytest tests/test_studio.py tests/test_studio_browser.py -q

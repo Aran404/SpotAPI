@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'nonce-{{nonce}}' 'unsafe-eval'; style-src 'nonce-{{nonce}}'; img-src https: data:; connect-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>SpotAPI Studio</title>
+    <style nonce="{{nonce}}">
+      /* STUDIO_STYLE */
+    </style>
+  </head>
+  <body>
+    <svg class="symbols" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <symbol id="i-wave" viewBox="0 0 24 24">
+          <path d="M3 10v4m4-8v12m5-16v20m5-16v12m4-8v4" />
+        </symbol>
+        <symbol id="i-search" viewBox="0 0 24 24">
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="m16 16 5 5" />
+        </symbol>
+        <symbol id="i-grid" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="2" />
+          <rect x="14" y="3" width="7" height="7" rx="2" />
+          <rect x="3" y="14" width="7" height="7" rx="2" />
+          <rect x="14" y="14" width="7" height="7" rx="2" />
+        </symbol>
+        <symbol id="i-heart" viewBox="0 0 24 24">
+          <path
+            d="M20.5 4.5a5.5 5.5 0 0 0-8.5 1 5.5 5.5 0 0 0-8.5 7L12 21l8.5-8.5a5.5 5.5 0 0 0 0-8Z"
+          />
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 24 24">
+          <path d="m8 4 13 8-13 8Z" />
+        </symbol>
+        <symbol id="i-next" viewBox="0 0 24 24">
+          <path d="m5 4 12 8-12 8ZM20 4v16" />
+        </symbol>
+        <symbol id="i-pause" viewBox="0 0 24 24">
+          <path d="M8 4v16M16 4v16" />
+        </symbol>
+        <symbol id="i-repeat" viewBox="0 0 24 24">
+          <path d="m17 2 4 4-4 4M3 10V6h18M7 22l-4-4 4-4m14 0v4H3" />
+        </symbol>
+        <symbol id="i-shuffle" viewBox="0 0 24 24">
+          <path d="m17 2 4 4-4 4M3 18h3L18 6h3M3 6h3l12 12h3m-4-4 4 4-4 4" />
+        </symbol>
+        <symbol id="i-list" viewBox="0 0 24 24">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+        </symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 6v6l4 2" />
+        </symbol>
+        <symbol id="i-bell" viewBox="0 0 24 24">
+          <path d="M5 10a7 7 0 0 1 14 0c0 7 3 7 3 7H2s3 0 3-7m4 10h6" />
+        </symbol>
+        <symbol id="i-flask" viewBox="0 0 24 24">
+          <path
+            d="M8 2h8m-6 0v7l-7 11a1 1 0 0 0 1 2h16a1 1 0 0 0 1-2L14 9V2M6 16h12"
+          />
+        </symbol>
+        <symbol id="i-user" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 22v-3a8 8 0 0 1 16 0v3" />
+        </symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24">
+          <path d="M4 12h16m-6-6 6 6-6 6" />
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24">
+          <path d="M12 4v16M4 12h16" />
+        </symbol>
+        <symbol id="i-volume" viewBox="0 0 24 24">
+          <path
+            d="m11 4-6 5H2v6h3l6 5Zm5 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"
+          />
+        </symbol>
+      </defs>
+    </svg>
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark"><!-- STUDIO_LOGO --></span>
+        <div class="brand-name">SpotAPI<span>the listening desk</span></div>
+      </div>
+      <div class="edition">STUDIO / V2 BETA</div>
+      <p class="nav-label">YOUR COLLECTION</p>
+      <nav aria-label="Main navigation">
+        <button class="nav active" data-view="discover">
+          <svg><use href="#i-grid" /></svg>Discover<span class="nav-dot"></span>
+        </button>
+        <button class="nav" data-view="library">
+          <svg><use href="#i-list" /></svg>Your library
+        </button>
+        <button class="nav" data-view="liked">
+          <svg><use href="#i-heart" /></svg>Liked songs
+        </button>
+        <button class="nav" data-view="top">
+          <svg><use href="#i-wave" /></svg>Your rotation
+        </button>
+        <button class="nav" data-view="recents">
+          <svg><use href="#i-clock" /></svg>Recently played
+        </button>
+        <button class="nav" data-view="notifications">
+          <svg><use href="#i-bell" /></svg>What's new
+        </button>
+      </nav>
+      <p class="nav-label">THE WORKBENCH</p>
+      <button class="nav" data-view="lab">
+        <svg><use href="#i-flask" /></svg>Feature lab<span class="pill"
+          >API</span
+        >
+      </button>
+      <button class="nav" data-view="events">
+        <svg><use href="#i-wave" /></svg>Live events
+      </button>
+      <button class="nav" data-view="account">
+        <svg><use href="#i-user" /></svg>Account
+      </button>
+      <div class="sidebar-bottom">
+        <div class="connection">
+          <span id="session-dot"></span
+          ><span id="session-label">Public session</span>
+        </div>
+        <p>
+          A little further down the rabbit hole.<br />Made for curious
+          listeners.
+        </p>
+        <button class="sign-in" id="login">
+          Connect Spotify <svg><use href="#i-arrow" /></svg>
+        </button>
+      </div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <form id="search-form" role="search">
+          <svg><use href="#i-search" /></svg
+          ><input
+            id="search"
+            aria-label="Search Spotify"
+            placeholder="Artists, tracks, albums… or paste a Spotify link"
+            autocomplete="off"
+          /><kbd>/</kbd>
+        </form>
+        <span class="local-badge">INDEPENDENT BY DESIGN</span
+        ><button class="avatar" id="account-button" aria-label="Open account">
+          S
+        </button>
+      </header>
+      <div class="content-layout">
+        <main id="main" tabindex="-1">
+          <section class="hero" id="hero">
+            <div class="hero-copy">
+              <span class="eyebrow">SIDE A / THE OPEN CATALOGUE</span>
+              <h1>Good music.<br /><span>Take the long way.</span></h1>
+              <p>
+                Follow a credit. Find a B-side. Lose an afternoon.<br />
+                There’s always another way into a record.
+              </p>
+              <button id="hero-explore" class="primary">
+                Start digging <svg><use href="#i-arrow" /></svg></button
+              ><span class="hero-note">No login needed.</span>
+            </div>
+            <div class="hero-art" id="hero-art" aria-hidden="true">
+              <span class="sleeve-note">one more track.</span>
+              <div class="art-label">
+                <span class="pulse"></span>33⅓ / PLAY SOMETHING GOOD
+              </div>
+            </div>
+          </section>
+          <div class="section-head">
+            <div>
+              <span class="eyebrow" id="section-kicker">PULL UP A RECORD</span>
+              <h2 id="section-title">Start somewhere good.</h2>
+            </div>
+            <div id="section-tools">
+              <button class="chip active" data-kind="tracks">Tracks</button
+              ><button class="chip" data-kind="artists">Artists</button
+              ><button class="chip" data-kind="albums">Albums</button
+              ><button class="chip" data-kind="playlists">Playlists</button
+              ><button class="chip" data-kind="podcasts">Podcasts</button
+              ><button class="chip" id="more-search">More</button>
+            </div>
+          </div>
+          <div id="view-status" role="status" aria-live="polite"></div>
+          <section id="view" class="cards" aria-label="Results"></section>
+          <footer class="page-footer">
+            <span>KEEP DIGGING.</span
+            ><span>SpotAPI / an independent music workbench</span>
+          </footer>
+        </main>
+        <aside class="right-panel">
+          <div class="rail-head">
+            <span>ON THE TURNTABLE</span
+            ><button
+              class="icon"
+              id="refresh-player"
+              aria-label="Connect or refresh player"
+            >
+              <svg><use href="#i-repeat" /></svg>
+            </button>
+          </div>
+          <div id="now-art" class="now-art empty-art">
+            <svg><use href="#i-wave" /></svg>
+          </div>
+          <div class="track-heading">
+            <h3 id="now-name">Your music, right here</h3>
+            <p id="now-artist">Connect an existing Spotify player</p>
+          </div>
+          <button class="chip wide" id="lyrics">
+            View synchronized lyrics <svg><use href="#i-arrow" /></svg>
+          </button>
+          <div class="rail-head queue-heading">
+            <span>UP NEXT</span><span id="queue-count" class="subtle">—</span>
+          </div>
+          <div id="queue" class="queue">
+            <p class="empty-copy">
+              Your real queue will appear here. Studio controls Spotify on your
+              existing devices.
+            </p>
+          </div>
+          <div class="rail-note">
+            <span class="pulse"></span>
+            <div>
+              Good things happen between tracks.<small
+                >Take a look behind the music.</small
+              >
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <footer class="playerbar">
+      <div class="playing-summary">
+        <span class="mini-cover" id="mini-cover"
+          ><svg><use href="#i-wave" /></svg
+        ></span>
+        <div>
+          <strong id="bar-title">Nothing playing yet</strong
+          ><span id="bar-artist">Choose an existing device to begin</span>
+        </div>
+        <button class="icon" id="like-current" aria-label="Like current track">
+          <svg><use href="#i-heart" /></svg>
+        </button>
+      </div>
+      <div class="transport">
+        <div class="transport-buttons">
+          <button class="icon" id="shuffle" aria-label="Toggle shuffle">
+            <svg><use href="#i-shuffle" /></svg></button
+          ><button
+            class="icon previous"
+            data-command="previous"
+            aria-label="Previous track"
+          >
+            <svg><use href="#i-next" /></svg></button
+          ><button
+            class="play-toggle"
+            data-command="toggle"
+            aria-label="Play or pause"
+          >
+            <svg id="play-icon"><use href="#i-play" /></svg></button
+          ><button class="icon" data-command="next" aria-label="Next track">
+            <svg><use href="#i-next" /></svg></button
+          ><button class="icon" id="repeat" aria-label="Cycle repeat">
+            <svg><use href="#i-repeat" /></svg>
+          </button>
+        </div>
+        <div class="timeline">
+          <span id="elapsed">0:00</span
+          ><input
+            type="range"
+            id="seek"
+            min="0"
+            max="1"
+            value="0"
+            aria-label="Playback position"
+          /><span id="duration">0:00</span>
+        </div>
+      </div>
+      <div class="output">
+        <select id="devices" aria-label="Playback device">
+          <option value="">Connect a player</option></select
+        ><svg><use href="#i-volume" /></svg
+        ><input
+          id="volume"
+          type="range"
+          min="0"
+          max="100"
+          value="50"
+          aria-label="Volume"
+        />
+      </div>
+    </footer>
+    <dialog id="detail">
+      <div class="dialog-head">
+        <span class="eyebrow" id="detail-label">A CLOSER LOOK</span
+        ><button class="icon close-dialog" aria-label="Close details">×</button>
+      </div>
+      <div id="detail-body"></div>
+    </dialog>
+    <dialog id="confirm">
+      <form method="dialog">
+        <span class="eyebrow">YOU'RE IN CONTROL</span>
+        <h2 id="confirm-title">Apply this change?</h2>
+        <p>
+          This sends a real request to your Spotify account. Reading data never
+          triggers this action.
+        </p>
+        <div class="dialog-actions">
+          <button value="cancel" class="chip">Keep things as they are</button
+          ><button value="apply" class="primary">Apply change</button>
+        </div>
+      </form>
+    </dialog>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script nonce="{{nonce}}">
+      // STUDIO_SCRIPT
+    </script>
+  </body>
+</html>

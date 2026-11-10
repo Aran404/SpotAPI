@@ -1,166 +1,119 @@
-# Legal Notice
+<p align="center">
+  <img src="assets/logo.svg" width="84" height="84" alt="SpotAPI symbol">
+</p>
 
-> **Disclaimer**: This repository and any associated code are provided "as is" without warranty of any kind, either expressed or implied. The author of this repository does not accept any responsibility for the use or misuse of this repository or its contents. The author does not endorse any actions or consequences arising from the use of this repository. Any copies, forks, or re-uploads made by other users are not the responsibility of the author. The repository is solely intended as a Proof Of Concept for educational purposes regarding the use of a service's private API. By using this repository, you acknowledge that the author makes no claims about the accuracy, legality, or safety of the code and accepts no liability for any issues that may arise. More information can be found [HERE](./LEGAL_NOTICE.md).
+<h1 align="center">SpotAPI</h1>
+<p align="center">Async Spotify for Python. No API key for public data.</p>
+<p align="center">
+  <a href="#quickstart">Quickstart</a> ·
+  <a href="#studio">Try Studio</a> ·
+  <a href="#build-with-it">Build with it</a> ·
+  <a href="#guides">Guides</a>
+</p>
 
-# Async Rewrite
+Search the catalogue, follow song credits, explore radio, and work with playlists.
+Connect your account for saved music, personal rankings and a live player with
+async event listeners. Results are typed dataclasses; pagination stays lazy.
 
-SpotAPI v2 async rewrite is currently in progress. The async-v2 branch contains the latest implementation if you want to view or test it. 
-The current prerelease version is `2.0.0b1`. 
-Early benchmarks show the async version is already ~4× faster in concurrent workloads compared to the sync implementation.
+**v2 beta.** Install from this checkout to try the rewrite.
+Spotify's unofficial endpoints can change. [Release checks and limits](docs/release-2.0.0b3.md).
 
-# SpotAPI
+[Sponsor SpotAPI](SPONSORSHIP.md) · Monthly placements with category exclusivity available.
 
-Welcome to SpotAPI! This Python library is designed to interact with the private and public Spotify APIs, emulating the requests typically made through a web browser. This wrapper provides a convenient way to access Spotify’s rich set of features programmatically.
+## Quickstart
 
-**Note**: This project is intended solely for educational purposes and should be used responsibly. Accessing private endpoints and scraping data without proper authorization may violate Spotify's terms of service.
+Requires Python 3.11 or newer.
 
-## Table of Contents
-
-1. [Introduction](#spotapi)
-2. [Features](#features)
-3. [Docs](#docs)
-4. [Installation](#installation)
-5. [Quick Examples](#quick-examples)
-6. [Import Cookies](#import-cookies)
-7. [Contributing](#contributing)
-8. [License](#license)
-9. **[Extended Functionality & Private Modules](#private-modules)**
-
-
-## Features
-- **No Premium Required**: Unlike the Web API which requires Spotify Premium, **SpotAPI** requires no Spotify Premium at all!
-- **Public API Access**: Retrieve and manipulate public Spotify data such as playlists, albums, and tracks with ease.
-- **Private API Access**: Explore private Spotify endpoints to tailor your application to your needs.
-- **Ready to Use**: **SpotAPI** is designed for immediate integration, allowing you to accomplish tasks with just a few lines of code.
-- **No API Key Required**: Seamlessly use **SpotAPI** without needing a Spotify API key. It's straightforward and hassle free!
-- **Browser-like Requests**: Accurately replicate the HTTP requests Spotify makes in the browser, providing a true to web experience while remaining undetected.
-- **Multi-Language Support**: Set your preferred language for API responses using ISO 639-1 language codes (e.g., 'ko', 'ja', 'zh', 'en').
-
-Everything you can do with Spotify, **SpotAPI** can do with just a user’s login credentials.
-
-
-## Docs
-- [**Public.py**](./docs/public.md)
-- [**Artist.py**](./docs/artist.md)
-- [**Album.py**](./docs/album.md)
-- [**Creator.py**](./docs/creator.md)
-- [**Family.py**](./docs/family.md)
-- [**Login.py**](./docs/login.md)
-- [**Password.py**](./docs/password.md)
-- [**Player.py**](./docs/player.md)
-- [**Song.py**](./docs/song.md)
-- [**Playlist.py**](./docs/playlist.md)
-- [**Status.py**](./docs/status.md)
-- [**User.py**](./docs/user.md)
-
-
-## Installation
-```
-pip install spotapi
+```bash
+python -m pip install -e .
 ```
 
-## Quick Examples
+```python
+import asyncio
+from spotapi import Public
 
-### With User Authentication
-```py
-from spotapi import (
-    Login, 
-    Config, 
-    NoopLogger, 
-    solver_clients, 
-    PrivatePlaylist, 
-    MongoSaver
-)
 
-cfg = Config(
-    solver=solver_clients.Capsolver("YOUR_API_KEY", proxy="YOUR_PROXY"), # Proxy is optional
-    logger=NoopLogger(),
-    # You can add a proxy by passing a custom TLSClient
-)
+async def main() -> None:
+    results = await Public.search("Daft Punk", limit=5)
+    for track in results.tracks:
+        print(track.name, track.uri)
 
-instance = Login(cfg, "YOUR_PASSWORD", email="YOUR_EMAIL")
-# Now we have a valid Login instance to pass around
-instance.login()
 
-# Do whatever you want now
-playlist = PrivatePlaylist(instance)
-playlist.create_playlist("SpotAPI Showcase!")
-
-# Save the session
-instance.save(MongoSaver())
+asyncio.run(main())
 ```
 
-### Without User Authentication
-```py
-"""Here's the example from spotipy https://github.com/spotipy-dev/spotipy?tab=readme-ov-file#quick-start"""
-from spotapi import Song
+No login is needed. Search ten categories, resolve Spotify links, or stream tracks
+from a public playlist. `Public` cleans up its connections for you.
 
-song = Song()
-gen = song.paginate_songs("weezer")
+## Studio
 
-# Paginates 100 songs at a time till there's no more
-for batch in gen:
-    for idx, item in enumerate(batch):
-        print(idx, item['item']['data']['name'])
-    
-# ^ ONLY 6 LINES OF CODE
+A small music workbench built on the same library: discovery, credits, your
+collection, a live queue, lyrics and an interactive feature lab.
 
-# Alternatively, you can query a specfic amount
-songs = song.query_songs("weezer", limit=20)
-data = songs["data"]["searchV2"]["tracksV2"]["items"]
-for idx, item in enumerate(data):
-    print(idx, item['item']['data']['name'])
+![SpotAPI Studio: the listening desk](examples/studio/preview.png)
+
+```bash
+python -m pip install -e ".[studio]"
+python -m examples.studio
 ```
 
-### With Language Support
-```py
-from spotapi import Artist, PublicPlaylist, Song
+Use **Connect Spotify** to sign in through Spotify's normal login window, or set
+`SPOTIFY_COOKIE` in a local `.env`. Cookies stay in Python. Playback controls an
+existing Spotify device; Studio does not provide an audio renderer.
 
-# Initialize with Korean language
-artist = Artist(language="ko")
-playlist = PublicPlaylist("37i9dQZF1DXcBWIGoYBM5M", language="ko")
+[Studio guide](docs/studio.md) · [Terminal inspector](examples/discover.py) · [Small examples](examples)
 
-# Change language at runtime
-song = Song(language="en")
-song.base.set_language("ja")  # Switch to Japanese
+## Build with it
 
-# Supported languages: ko, ja, zh, en, and any ISO 639-1 code
+| Your idea | Start with |
+|---|---|
+| A DJ crate with tempo and harmonic keys | [Playlist crate](examples/playlist_crate.py) |
+| A credits rabbit hole | [Song credits](examples/credits.py) |
+| A playlist discovery companion | `Public.get_radio()` · `Public.get_playlist_recommendations()` |
+| Your own music dashboard | [Account, rankings and saved music](docs/account.md) |
+| A duplicate-aware playlist curator | `Playlist.items()` · `Playlist.remove_occurrences()` |
+| A player or live lyrics display | [Player events](docs/player.md) · [Lyrics example](examples/lyrics.py) |
+
+For several operations, reuse a `Catalogue` context. Inside your async application:
+
+```python
+from spotapi import Catalogue
+
+async with Catalogue() as spotify:
+    results = await spotify.search("Daft Punk")
+    artist = await spotify.get_artist(results.artists[0].uri)
 ```
-### Results
+
+Authenticated helpers accept the same client. One context owns authentication,
+refresh tasks and HTTP connections:
+
+```python
+from spotapi import Account, AsyncClient
+
+async with await AsyncClient.from_cookies(cookie) as client:
+    favorites = await Account(client).stats.get(time_range="medium_term", limit=5)
 ```
-0 Island In The Sun
-1 Say It Ain't So
-2 Buddy Holly
-.
-.
-.
-18 Holiday
-19 We Are All On d***s
-```
 
-## Import Cookies
-If you prefer not to use a third party CAPTCHA solver, you can import cookies to manage your session.
+Import result types from `spotapi.models`. Optional metadata stays optional, and
+reading a model never makes hidden HTTP requests. Catch `SpotAPIError` for library
+failures. See the guides for ownership, cancellation and explicit mutations.
 
-### Steps to Import Cookies:
+## Guides
 
-1. **Choose a Session Saver**:
-   - Select a session saver for storing your session data. 
-   - For simplicity, you should use `JSONSaver`, especially if performance or quantity of sessions is not a big concern.
+[Catalogue](docs/catalogue.md) · [Account](docs/account.md) · [Player](docs/player.md) ·
+[API layout](docs/api-layout.md) · [Migration from v1](MIGRATION.md)
 
-2. **Prepare Session Data**:
-   - Create an object with the following keys:
-     - **`identifier`**: This should be your email address or username.
-     - **`cookies`**: These are the cookies you obtain when logged in. To get these cookies, visit [Spotify](https://open.spotify.com/), log in, and copy the cookies from your browser.
-       - It can be a dict[str, str] or a string representation
+[Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Release review](docs/release-2.0.0b3.md) ·
+[Legal notice](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)
 
-3. **Load the Session**:
-   - Use `Login.from_saver` (or your own implementation) to load the session from cache. This will enable you to use Spotify with a fully functional session without needing additional **CAPTCHA solving**.
+If SpotAPI helps you build something, a star helps other developers find it.
 
-## Contributing
-Contributions are welcome! If you find any issues or have suggestions, please open an issue or submit a pull request.
+## Sponsorship
 
-## License
-This project is licensed under the **GPL 3.0** License. See [LICENSE](https://choosealicense.com/licenses/gpl-3.0/) for details.
+Sponsor SpotAPI's maintenance and development. Monthly placements include a
+labeled spot above Quickstart and, where relevant, a link in the guide your
+customers would use. Category exclusivity is available by agreement.
 
-## **Private Modules**
-For further private API modules, reach out on Telegram: **@aran_xyz**
+Contact [aran.inbox.personal@gmail.com](mailto:aran.inbox.personal@gmail.com)
+to discuss a placement and arrange payment directly through PayPal.
+See [sponsorship details](SPONSORSHIP.md).
