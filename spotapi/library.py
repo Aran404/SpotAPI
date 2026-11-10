@@ -1,4 +1,4 @@
-"""Authenticated access to Spotify's liked tracks."""
+"""Authenticated access to Spotify's library, liked tracks, and followed artists."""
 
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ class _LibraryActions:
                 saved = mapping(item.get("data")).get("saved")
 
                 if not isinstance(saved, bool):
-                    raise BaseClientError("Spotify returned an invalid saved-track flag")
+                    raise BaseClientError("Spotify returned an invalid saved-item flag")
 
                 flags.append(saved)
 
@@ -153,6 +153,20 @@ class LikedTracks(_LibraryActions):
 
 class Library(_LibraryActions):
     """Browse saved items with ``get()`` or stream them with ``items()``."""
+
+    async def is_following_artists(self, *artists: str) -> tuple[bool, ...]:
+        """Return follow flags for artist IDs, URIs, or URLs in input order."""
+        return await self.contains(
+            [parse_spotify_resource(artist, "artist").uri for artist in artists]
+        )
+
+    async def follow_artists(self, *artists: str) -> None:
+        """Add artists to Your Library using artist IDs, URIs, or URLs."""
+        await self.add([parse_spotify_resource(artist, "artist").uri for artist in artists])
+
+    async def unfollow_artists(self, *artists: str) -> None:
+        """Remove artists from Your Library using artist IDs, URIs, or URLs."""
+        await self.remove([parse_spotify_resource(artist, "artist").uri for artist in artists])
 
     @staticmethod
     def _page(response: ObjectDict) -> ObjectDict:

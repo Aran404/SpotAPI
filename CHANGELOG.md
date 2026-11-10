@@ -5,6 +5,7 @@
 - Use `spotapi` for all async imports. The synchronous release remains available as `spotapi==1.2.8`.
 - Install the `spotapi` command for anonymous track search and JSON resource lookups.
 - Open a managed account session with `Private.from_cookies()`.
+- Follow, unfollow and check artists by ID, URI or URL through `account.library`.
 
 ### Added
 

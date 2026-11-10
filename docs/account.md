@@ -30,6 +30,10 @@ Use `Catalogue(client)` for authenticated catalogue reads, including private pla
 | Read the subscription card | `await account.get_plan()` |
 | Get top artists and tracks together | `await account.stats.get()` |
 | Stream saved tracks | `async for page in account.liked_tracks.pages(): ...` |
+| Like or unlike tracks | `await account.liked_tracks.add([track])` / `await account.liked_tracks.remove([track])` |
+| Check whether a track is liked | `await account.liked_tracks.contains([track])` |
+| Follow or unfollow an artist | `await account.library.follow_artists(artist)` / `await account.library.unfollow_artists(artist)` |
+| Check artist follows | `await account.library.is_following_artists(artist)` |
 | Stream the library | `async for item in account.library.items(): ...` |
 | Inspect available library filters | `(await account.library.get()).filters` |
 | Read notifications | `await account.notifications.get()` |
@@ -42,6 +46,9 @@ Affinity ranges are `short_term`, `medium_term` and `long_term`. These are Spoti
 rankings, not a complete listening history or a replacement for Wrapped. Library
 filter IDs and sort orders come from the returned page; do not invent category IDs.
 Follower lists are server previews capped at 1,000, not complete paginated exports.
+Artist follows use Your Library. Use `account.profiles.follow()` for Spotify
+user profiles. Liked-track add/remove and artist follow lookups have live
+coverage. Artist follow and unfollow writes have offline contract coverage.
 
 ## Profile changes and CAPTCHA
 

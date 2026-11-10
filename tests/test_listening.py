@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from spotapi import LikedTracks, ListeningHistory
+from spotapi import Library, LikedTracks, ListeningHistory
 from spotapi.datastruct import ObjectDict
 from spotapi.models import RecentItem
 from spotapi.query import QueryClient
@@ -13,6 +13,29 @@ from spotapi.session import AuthSession
 from spotapi.types import BaseClientError
 
 TRACK = "33XUHrCbrAW6me9ewdCZip"
+ARTIST = "4tZwfgrHOc3mvqYlEYSvVi"
+
+
+async def test_artist_follow_uses_library_mutations_and_rejects_track_uris() -> None:
+    library = Library(Mock(spec=AuthSession))
+    query = AsyncMock(
+        side_effect=[
+            ObjectDict({"addLibraryItems": {"__typename": "AddLibraryItemsResponse"}}),
+            ObjectDict({"removeLibraryItems": {"__typename": "RemoveLibraryItemsResponse"}}),
+        ]
+    )
+    library.queries = Mock(spec=QueryClient, pathfinder_query=query)
+
+    await library.follow_artists(ARTIST)
+    await library.unfollow_artists(f"https://open.spotify.com/artist/{ARTIST}")
+    with pytest.raises(ValueError, match="artist"):
+        await library.follow_artists(f"spotify:track:{TRACK}")
+
+    added, removed = query.await_args_list
+    assert added.args[0]["libraryItemUris"] == [f"spotify:artist:{ARTIST}"]
+    assert added.args[1] == "addToLibrary"
+    assert removed.args == ({"libraryItemUris": [f"spotify:artist:{ARTIST}"]}, "removeFromLibrary")
+    assert added.kwargs == removed.kwargs == {"max_attempts": 1}
 
 
 async def test_library_batches_without_losing_input_order() -> None:

@@ -28,6 +28,8 @@ async def test_live_account_and_content() -> None:
         assert all(entry.uri for entry in saved)
         library = await account.library.get(limit=2)
         assert all(entry.uri and entry.name for entry in library.items)
+        (following,) = await account.library.is_following_artists("4tZwfgrHOc3mvqYlEYSvVi")
+        assert isinstance(following, bool)
         await account.notifications.get(limit=2)
         assert type(await account.notifications.has_unread()) is bool
 

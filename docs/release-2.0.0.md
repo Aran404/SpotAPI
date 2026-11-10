@@ -50,7 +50,7 @@ dependencies. Hosted GitHub Actions jobs remain pending until the branch is push
 
 ## Boundaries
 
-Signup/password login, creator/family/billing features, audio rendering and
+Jam, signup/password login, creator/family/billing features, audio rendering and
 automated browser challenges are outside the current API. Canvas availability and
 live video switching remain unverified. Some account, password, and social writes
 have offline or source coverage only. See [account boundaries](account.md),
