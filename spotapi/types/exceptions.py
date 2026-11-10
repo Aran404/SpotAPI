@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from spotapi.v2.connection.types import Response
+    from spotapi.connection.types import Response
 
 __all__ = (
     "SpotAPIError",

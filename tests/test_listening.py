@@ -6,11 +6,11 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from spotapi import LikedTracks, ListeningHistory
+from spotapi.datastruct import ObjectDict
 from spotapi.models import RecentItem
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.query import QueryClient
-from spotapi.v2.session import AuthSession
-from spotapi.v2.types import BaseClientError
+from spotapi.query import QueryClient
+from spotapi.session import AuthSession
+from spotapi.types import BaseClientError
 
 TRACK = "33XUHrCbrAW6me9ewdCZip"
 

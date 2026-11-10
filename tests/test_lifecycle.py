@@ -6,9 +6,9 @@ import asyncio
 
 import pytest
 
-from spotapi.v2 import query
-from spotapi.v2.datastruct import EventDispatcher, Pool
-from spotapi.v2.query import SharedQueryClient
+from spotapi import query
+from spotapi.datastruct import EventDispatcher, Pool
+from spotapi.query import SharedQueryClient
 
 
 async def test_concurrent_queries_share_one_initialization(

@@ -18,14 +18,14 @@ from spotapi import (
     Notifications,
     Profiles,
 )
+from spotapi.connection import Response
+from spotapi.datastruct import ObjectDict
+from spotapi.discovery import recommended_tracks
 from spotapi.models import BlendInvitation
-from spotapi.v2.connection import Response
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.discovery import recommended_tracks
-from spotapi.v2.protobuf import encode_field
-from spotapi.v2.query import QueryClient
-from spotapi.v2.session import AuthSession
-from spotapi.v2.types import BaseClientError
+from spotapi.protobuf import encode_field
+from spotapi.query import QueryClient
+from spotapi.session import AuthSession
+from spotapi.types import BaseClientError
 
 TRACK = "33XUHrCbrAW6me9ewdCZip"
 

@@ -7,8 +7,8 @@ from typing import cast
 
 import pytest
 
-from spotapi.v2.public import Public
-from spotapi.v2.specialized.data_wrappers import (
+from spotapi.public import Public
+from spotapi.specialized.data_wrappers import (
     AlbumDetails,
     ArtistDetails,
     TrackDetails,

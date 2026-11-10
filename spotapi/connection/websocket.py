@@ -22,11 +22,11 @@ from urllib.parse import urlsplit
 
 import wreq
 
-from spotapi.v2.datastruct import EventDispatcher
-from spotapi.v2.types import DefaultLogger
+from spotapi.datastruct import EventDispatcher
+from spotapi.types import DefaultLogger
 
 if TYPE_CHECKING:
-    from spotapi.v2.types import LoggerProtocol
+    from spotapi.types import LoggerProtocol
 
     from .http import HTTPClient
 

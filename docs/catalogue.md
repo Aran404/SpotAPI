@@ -32,7 +32,7 @@ async with Catalogue() as spotify:
 
 When you stop a page stream early, use `contextlib.aclosing` around it.
 `Catalogue.queries` exposes raw persisted queries within the same scope;
-`Queries.open()` from `spotapi.v2.queries` offers a lower-level query scope.
+`Queries.open()` from `spotapi.queries` offers a lower-level query scope.
 
 Catch `SpotAPIError` for library failures. Invalid arguments raise `ValueError`
 or `TypeError`; cancellation propagates. The default logger uses stdlib

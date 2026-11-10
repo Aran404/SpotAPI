@@ -6,11 +6,11 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.playlist import Playlist, PlaylistHandler, _as_uri
-from spotapi.v2.query import QueryClient
-from spotapi.v2.session import AuthSession
-from spotapi.v2.types import PlaylistError
+from spotapi.datastruct import ObjectDict
+from spotapi.playlist import Playlist, PlaylistHandler, _as_uri
+from spotapi.query import QueryClient
+from spotapi.session import AuthSession
+from spotapi.types import PlaylistError
 
 
 @pytest.mark.parametrize(

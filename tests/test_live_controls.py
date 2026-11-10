@@ -85,12 +85,11 @@ async def test_live_queue_options_and_pause_timer_restore_original_state() -> No
             await player.resume()
             await wait_state(player, lambda state: state.is_playing)
 
-            paused = asyncio.create_task(player.wait_for("pause", timeout=10))
-
-            await asyncio.sleep(0)
-            await player.sleep_timer(2)
-
-            assert (await paused).is_paused
+            async with asyncio.TaskGroup() as tasks:
+                tasks.create_task(player.wait_for("sleep_timer_finished", timeout=10))
+                await asyncio.sleep(0)
+                await player.sleep_timer(2)
+            await wait_state(player, lambda state: state.is_paused)
         finally:
             await restore_playback(player, baseline, original_position, original_uids)
 
@@ -124,10 +123,35 @@ async def restore_playback(
             await attempt("remove temporary queue entry", player.set_queue(remaining))
         await attempt("restore shuffle", player.shuffle(baseline.shuffle))
         await attempt("restore repeat", player.repeat(baseline.repeat_mode))
-        if baseline.allows("seek") and state.track and state.track.uri == uri:
-            await attempt("restore position", player.seek(position))
+
+        # Restore play/pause before seeking. The test device could acknowledge
+        # a paused seek but fail to process the following resume.
         await attempt(
             "restore pause state", player.pause() if baseline.is_paused else player.resume()
         )
+        before_seek = player.state
+        if (
+            baseline.allows("seek")
+            and before_seek is not None
+            and before_seek.track
+            and before_seek.track.uri == uri
+            and abs(before_seek.position_ms - position) >= 1500
+        ):
+            await attempt("restore position", player.seek(position))
+            try:
+                await wait_state(
+                    player,
+                    lambda snapshot: snapshot is not before_seek
+                    and abs(snapshot.position_ms - position) < 1500,
+                )
+            except TimeoutError as error:
+                error.add_note("Playback restoration: confirm position")
+                errors.append(error)
+        if not errors:
+            await wait_state(
+                player,
+                lambda state: state.is_paused == baseline.is_paused
+                and state.is_playing == baseline.is_playing,
+            )
     if errors:
         raise ExceptionGroup("Playback restoration failed", errors)

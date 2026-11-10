@@ -9,6 +9,8 @@ from typing import Any, cast
 import pytest
 
 from spotapi import Public
+from spotapi import catalogue as catalogue
+from spotapi.datastruct import ObjectDict
 from spotapi.models import (
     Audiobook,
     Author,
@@ -18,9 +20,7 @@ from spotapi.models import (
     PublicProfile,
     User,
 )
-from spotapi.v2 import catalogue as catalogue
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.queries import Queries
+from spotapi.queries import Queries
 
 
 def test_all_search_categories_have_typed_payloads(monkeypatch: pytest.MonkeyPatch) -> None:

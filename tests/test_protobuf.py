@@ -2,8 +2,8 @@
 
 import pytest
 
-from spotapi.v2.protobuf import ProtoMessage, encode_field
-from spotapi.v2.types import BaseClientError
+from spotapi.protobuf import ProtoMessage, encode_field
+from spotapi.types import BaseClientError
 
 
 def test_wire_roundtrip_preserves_repeated_and_nested_fields() -> None:

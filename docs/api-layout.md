@@ -1,11 +1,12 @@
 # API layout
 
-Import application-facing clients from `spotapi` or `spotapi.v2`; both expose the
-same deliberate surface. Import result dataclasses from `spotapi.models`.
+Import application-facing clients from `spotapi` and result dataclasses from
+`spotapi.models`.
 
 | Surface | Responsibility |
 |---|---|
 | `Public` | One-shot anonymous reads with automatic cleanup |
+| `Private` | Own a cookie-authenticated account scope with automatic cleanup |
 | `Catalogue` | Reuse one connection scope for typed catalogue operations |
 | `AsyncClient` | Own HTTP, cookies, authorization and token refresh |
 | `Account` | Compose borrowed account, library, profile, rankings and social helpers |
@@ -20,8 +21,8 @@ same deliberate surface. Import result dataclasses from `spotapi.models`.
 `SearchResults`, `SpotifyResource` and `SpotAPIError` are also root exports because
 application code commonly uses them directly.
 
-`Queries` (`spotapi.v2.queries`) and `QueryClient` (`spotapi.v2.query`) remain explicit
-lower-level imports. Transport implementations live in `spotapi.v2.connection`.
+`Queries` (`spotapi.queries`) and `QueryClient` (`spotapi.query`) remain explicit
+lower-level imports. Transport implementations live in `spotapi.connection`.
 They are available to expert integrations without crowding the normal entry point.
 
 Account-page parsing, CSRF coordination, protobuf wire decoding, command-state

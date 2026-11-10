@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from spotapi.v2.operations import (
+from spotapi.operations import (
     SEARCH_DESKTOP_SECTIONS,
     SEARCH_RAW_OPERATIONS,
     SEARCH_RESULT_FIELDS,

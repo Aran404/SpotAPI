@@ -66,7 +66,7 @@ registration, and closes the socket. The supplied authenticated client remains
 the caller's responsibility. A native silent-WebSocket regression test covers
 idle reads blocking send/close in wreq's serialized command actor.
 
-Advanced integrations can use `RegisteredDevice` from `spotapi.v2.devices`
+Advanced integrations can use `RegisteredDevice` from `spotapi.devices`
 directly or the Player registration/report helpers with their renderer's actual
 capabilities. Playback and HOBS observer IDs remain separate. Automatic cleanup
 only removes registrations created by the instance.
@@ -100,4 +100,4 @@ controllers can omit dealer ACKs, so known commands may complete on a fresh snap
 proving their result. Unsupported context actions are rejected locally; an autoplay
 or radio context can explicitly disable shuffle and repeat. The current live control
 suite verifies queue changes and a timer-driven pause, and changes shuffle/repeat
-only when Spotify permits them. See the [beta release checks](release-2.0.0b3.md).
+only when Spotify permits them. See the [release checks](release-2.0.0.md).

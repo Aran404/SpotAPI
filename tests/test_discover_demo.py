@@ -37,7 +37,7 @@ async def test_ten_tabs_render_and_finish_their_feeds(monkeypatch: pytest.Monkey
 
 def test_playlist_rows_show_optional_bpm_and_keys() -> None:
     from spotapi.models import PlaylistTrack
-    from spotapi.v2.specialized.data_wrappers import from_dict
+    from spotapi.specialized.data_wrappers import from_dict
 
     track = from_dict(
         PlaylistTrack,

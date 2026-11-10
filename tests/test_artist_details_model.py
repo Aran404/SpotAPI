@@ -1,7 +1,7 @@
 """Regression tests for the artist model's public display-name interface."""
 
-from spotapi.v2.specialized.data_wrappers.artist import Artist, ArtistProfile
-from spotapi.v2.specialized.data_wrappers.artist_details import (
+from spotapi.specialized.data_wrappers.artist import Artist, ArtistProfile
+from spotapi.specialized.data_wrappers.artist_details import (
     ArtistDetails,
     ArtistProfileDetails,
 )

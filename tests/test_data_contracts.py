@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.operations import Operations
-from spotapi.v2.queries import Queries
-from spotapi.v2.session import QueryCache
-from spotapi.v2.specialized.data_wrappers import Track, from_dict
-from spotapi.v2.utils import timed_cache
+from spotapi.datastruct import ObjectDict
+from spotapi.operations import Operations
+from spotapi.queries import Queries
+from spotapi.session import QueryCache
+from spotapi.specialized.data_wrappers import Track, from_dict
+from spotapi.utils import timed_cache
 
 
 def test_object_dict_preserves_colliding_keys_through_mutations() -> None:

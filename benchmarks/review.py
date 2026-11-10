@@ -27,13 +27,13 @@ from unittest.mock import patch
 import wreq
 
 from spotapi import Catalogue, Public, close_query_clients
-from spotapi.v2.connection.http import HTTPClient
-from spotapi.v2.connection.types import Methods, Response
-from spotapi.v2.datastruct import ObjectDict, Pool
-from spotapi.v2.queries import Queries
-from spotapi.v2.query import QueryClient, SharedQueryClient
-from spotapi.v2.session import QueryCache
-from spotapi.v2.specialized.data_wrappers import Track, from_dict
+from spotapi.connection.http import HTTPClient
+from spotapi.connection.types import Methods, Response
+from spotapi.datastruct import ObjectDict, Pool
+from spotapi.queries import Queries
+from spotapi.query import QueryClient, SharedQueryClient
+from spotapi.session import QueryCache
+from spotapi.specialized.data_wrappers import Track, from_dict
 
 
 class Options(argparse.Namespace):
@@ -347,7 +347,7 @@ async def live(samples: int) -> dict[str, object]:
             cache = QueryCache(Path(directory) / "queries.json")
             before = calls
 
-            with patch("spotapi.v2.session.QueryCache", return_value=cache):
+            with patch("spotapi.session.QueryCache", return_value=cache):
                 elapsed = await timed(lambda: Public.search("Daft Punk", types="track", limit=5))
 
                 await close_query_clients()

@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 import wreq
 
-from spotapi.v2.connection.http import HTTPClient
-from spotapi.v2.connection.websocket import WebSocketClient
+from spotapi.connection.http import HTTPClient
+from spotapi.connection.websocket import WebSocketClient
 
 
 class Socket:

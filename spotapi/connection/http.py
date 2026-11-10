@@ -22,9 +22,9 @@ from urllib.parse import urlsplit
 
 import wreq
 
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.types import DefaultLogger, HTTPError
-from spotapi.v2.utils import random_with_weights
+from spotapi.datastruct import ObjectDict
+from spotapi.types import DefaultLogger, HTTPError
+from spotapi.utils import random_with_weights
 
 from .types import (
     DefaultOSList,
@@ -36,7 +36,7 @@ from .types import (
 if TYPE_CHECKING:
     from wreq import ClientConfig
 
-    from spotapi.v2.types import LoggerProtocol
+    from spotapi.types import LoggerProtocol
 
     from .types import (
         BackoffStrategy,

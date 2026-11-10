@@ -33,13 +33,17 @@ jobs:
       - name: Smoke-test the installed wheel outside the checkout
         working-directory: /tmp
         run: |
+          spotapi --help
           python -I - <<'PY'
           import os
+          from importlib.util import find_spec
           from pathlib import Path
           import spotapi
-          from spotapi import Public
+          from spotapi import Private, Public
           from spotapi.models import PlaylistTrack
           assert not Path(spotapi.__file__).resolve().is_relative_to(Path(os.environ["GITHUB_WORKSPACE"]).resolve())
+          assert find_spec("spotapi.v2") is None
+          assert callable(Private.from_cookies)
           assert Public.parse_url("spotify:track:abc").id == "abc"
           PY
       - uses: actions/upload-artifact@v4

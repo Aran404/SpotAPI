@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "spotapi"
-version = "2.0.0b3"
+version = "2.0.0"
 description = "Typed async access to Spotify's public catalogue and existing players. No API key."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,7 +21,6 @@ keywords = [
     "no-api-key",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
     "Framework :: AsyncIO",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
@@ -37,6 +36,9 @@ classifiers = [
 dependencies = [
     "wreq==0.12.0",
 ]
+
+[project.scripts]
+spotapi = "spotapi.cli:main"
 
 [project.optional-dependencies]
 studio = ["pywebview>=6.2,<7", "python-dotenv>=1.0"]
@@ -64,7 +66,7 @@ Repository   = "https://github.com/Aran404/SpotAPI"
 Changelog    = "https://github.com/Aran404/SpotAPI/blob/main/CHANGELOG.md"
 
 [tool.hatch.build]
-exclude = ["spotapi/v2_", "spotapi/*.zip"]
+exclude = ["spotapi/*.zip"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["spotapi"]
@@ -107,7 +109,6 @@ ban-relative-imports = "parents"
 # ---------------------------------------------------------------------------
 [tool.pyright]
 include = ["spotapi", "examples", "tests", "benchmarks"]
-exclude = ["spotapi/v2_"]
 pythonVersion = "3.11"
 typeCheckingMode = "strict"
 executionEnvironments = [{ root = "tests", extraPaths = ["."], reportPrivateUsage = false }]

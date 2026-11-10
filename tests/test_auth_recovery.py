@@ -9,12 +9,12 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from spotapi import AsyncClient, Catalogue
-from spotapi.v2.connection import HTTPClient, Response
-from spotapi.v2.connection.types import Methods
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.query import QueryClient
-from spotapi.v2.session import AccessToken, AuthSession
-from spotapi.v2.types import HTTPError
+from spotapi.connection import HTTPClient, Response
+from spotapi.connection.types import Methods
+from spotapi.datastruct import ObjectDict
+from spotapi.query import QueryClient
+from spotapi.session import AccessToken, AuthSession
+from spotapi.types import HTTPError
 
 
 def response(status: int) -> Mock:
@@ -107,7 +107,7 @@ async def test_permanent_refresh_failure_stops_without_a_retry_loop(
     session._token = AccessToken("client", "old", 0)
     issue = AsyncMock(side_effect=HTTPError("Unauthorized", status_code=401))
     monkeypatch.setattr(AuthSession, "_issue_token", issue)
-    monkeypatch.setattr("spotapi.v2.session._MIN_REFRESH_DELAY", 0.001)
+    monkeypatch.setattr("spotapi.session._MIN_REFRESH_DELAY", 0.001)
 
     with pytest.raises(HTTPError):
         await asyncio.wait_for(session._auto_refresh(), 0.1)

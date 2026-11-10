@@ -2,14 +2,19 @@
 
 import asyncio
 import os
+from contextlib import suppress
 
-from spotapi import AsyncClient, Player
+from spotapi import Player, Private
 from spotapi.models import PlaybackTrack
 
 
 async def main() -> None:
-    async with await AsyncClient.from_cookies(os.environ["SPOTIFY_COOKIE"]) as client:
-        player = Player(client)
+    cookie = os.environ.get("SPOTIFY_COOKIE")
+    if not cookie:
+        raise SystemExit("Set SPOTIFY_COOKIE to your own Spotify session. See docs/studio.md.")
+
+    async with Private.from_cookies(cookie) as spotify:
+        player = Player(spotify.session)
 
         @player.event
         async def on_track_change(
@@ -19,14 +24,12 @@ async def main() -> None:
                 print(f"{after.artist} - {after.name}")
 
         async with player.connect():
+            print("Watching Spotify. Play a track on an existing device. Press Ctrl+C to exit.")
             if player.state and player.state.track:
                 print(f"{player.state.track.artist} - {player.state.track.name}")
-
-            for device in player.devices:
-                print(f"{'*' if device.is_active else ' '} {device.name}: {device.id}")
-
             await player.wait_until_disconnected()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    with suppress(KeyboardInterrupt):
+        asyncio.run(main())

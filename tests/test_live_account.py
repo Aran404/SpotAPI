@@ -6,15 +6,14 @@ import os
 
 import pytest
 
-from spotapi import Account, AsyncClient, Profiles
+from spotapi import Private, Profiles
 from spotapi.models import TimeRange
 
 pytestmark = [pytest.mark.live, pytest.mark.authenticated]
 
 
 async def test_live_account_and_content() -> None:
-    async with await AsyncClient.from_cookies(os.environ["SPOTIFY_COOKIE"]) as client:
-        account = Account(client)
+    async with Private.from_cookies(os.environ["SPOTIFY_COOKIE"]) as account:
         profile = await account.get_profile()
         assert profile.username
         assert (await account.get_plan()).name
@@ -32,7 +31,7 @@ async def test_live_account_and_content() -> None:
         await account.notifications.get(limit=2)
         assert type(await account.notifications.has_unread()) is bool
 
-        json_profile = await Profiles(client).get("spotify")
-        proto_profile = await Profiles(client, protobuf=True).get("spotify")
+        json_profile = await account.profiles.get("spotify")
+        proto_profile = await Profiles(account.session, protobuf=True).get("spotify")
         assert json_profile.uri == proto_profile.uri
         assert json_profile.name == proto_profile.name

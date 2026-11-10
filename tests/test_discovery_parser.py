@@ -1,7 +1,7 @@
 """Chunk discovery must not confuse CSS hashes with JS names."""
 
-from spotapi.v2.bundle_parsing import extract_mappings
-from spotapi.v2.session import BundleSession
+from spotapi.bundle_parsing import extract_mappings
+from spotapi.session import BundleSession
 
 
 def test_javascript_loader_owns_its_name_and_hash_maps() -> None:

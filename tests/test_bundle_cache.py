@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 from spotapi import AsyncClient
-from spotapi.v2.session import BundleSession, QueryCache
+from spotapi.session import BundleSession, QueryCache
 
 
 class Session(BundleSession):

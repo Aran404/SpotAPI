@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 import wreq
 
-from spotapi.v2.connection import HTTPClient, WebSocketClient
+from spotapi.connection import HTTPClient, WebSocketClient
 
 
 @asynccontextmanager

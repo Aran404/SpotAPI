@@ -11,8 +11,8 @@ from typing import Any, Self
 import pytest
 import wreq
 
-from spotapi.v2.connection.http import HTTPClient, RateLimiter, _parse_retry_after
-from spotapi.v2.types import HTTPError
+from spotapi.connection.http import HTTPClient, RateLimiter, _parse_retry_after
+from spotapi.types import HTTPError
 
 
 class Status:
@@ -262,7 +262,7 @@ async def test_script_and_html_are_not_parsed_as_json(
     def unexpected_parse(text: str):
         raise AssertionError("non-JSON body passed to JSON parser")
 
-    monkeypatch.setattr("spotapi.v2.connection.http._parse_json_object", unexpected_parse)
+    monkeypatch.setattr("spotapi.connection.http._parse_json_object", unexpected_parse)
 
     raw = RawResponse(headers=[(b"content-type", content_type)], body=body)
     http, _ = client(monkeypatch, [raw])

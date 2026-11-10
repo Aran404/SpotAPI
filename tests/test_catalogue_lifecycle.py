@@ -10,10 +10,10 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from spotapi import Catalogue, Public
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.queries import Queries
-from spotapi.v2.query import QueryClient, SharedQueryClient
-from spotapi.v2.session import AuthSession
+from spotapi.datastruct import ObjectDict
+from spotapi.queries import Queries
+from spotapi.query import QueryClient, SharedQueryClient
+from spotapi.session import AuthSession
 
 
 class Client(QueryClient):

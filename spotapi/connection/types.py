@@ -8,7 +8,7 @@ from typing import Literal, NamedTuple, TypeAlias
 
 from wreq import Platform, StatusCode
 
-from spotapi.v2.datastruct import ObjectDict
+from spotapi.datastruct import ObjectDict
 
 __all__ = (
     "BackoffStrategy",

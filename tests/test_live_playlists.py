@@ -6,7 +6,7 @@ import os
 import pytest
 
 from spotapi import AsyncClient, Library, LikedTracks, Playlist, PlaylistHandler
-from spotapi.v2.datastruct import ObjectDict
+from spotapi.datastruct import ObjectDict
 
 pytestmark = [pytest.mark.live, pytest.mark.authenticated, pytest.mark.mutates]
 

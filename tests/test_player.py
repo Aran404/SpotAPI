@@ -15,12 +15,12 @@ import pytest
 import wreq
 
 from spotapi import AsyncClient, LyricsClient, Player, PlayerStatus
+from spotapi.connect import ConnectEndpoints
+from spotapi.connection import HTTPClient, Response
+from spotapi.datastruct import ObjectDict
 from spotapi.models import PlaybackTrack, PlaybackUpdate, PlayerState
-from spotapi.v2.connect import ConnectEndpoints
-from spotapi.v2.connection import HTTPClient, Response
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.session import AccessToken, AuthSession
-from spotapi.v2.types import BaseClientError, HTTPError
+from spotapi.session import AccessToken, AuthSession
+from spotapi.types import BaseClientError, HTTPError
 
 FIXTURES = Path(__file__).parent / "fixtures" / "connect"
 
@@ -156,7 +156,7 @@ async def test_old_snapshot_does_not_replace_new_state(session: Mock) -> None:
 async def test_connection_subscribes_and_cleans_only_its_observer(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
     status = PlayerStatus(session)
 
@@ -182,7 +182,7 @@ async def test_connection_subscribes_and_cleans_only_its_observer(
 async def test_commands_transfer_and_volume_are_single_attempt(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
     player = Player(session, device="target", source="source")
 
@@ -217,7 +217,7 @@ async def test_commands_transfer_and_volume_are_single_attempt(
 async def test_owned_device_registration_reporting_and_removal(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
     player = Player(session, device="existing")
 
@@ -299,7 +299,7 @@ async def test_cancellation_preserved_when_observer_cleanup_fails(
     session: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
     session.client.protocols.http.delete.side_effect = ValueError("cleanup failed")
 
@@ -338,7 +338,7 @@ async def test_listeners_stop_before_observer_is_removed(
     session: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
     player = Player(session)
     started, stopped = asyncio.Event(), asyncio.Event()
@@ -372,7 +372,7 @@ async def test_external_device_and_hobs_are_removed_by_their_exact_ids(
     session: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
     async with Player(session).connect() as player:
         await player.deregister_device("full-device-id", observer_id="hobs_short-id", seq_num=7)
@@ -488,7 +488,7 @@ async def test_wait_for_timeout_and_check_failure_leave_no_listeners(session: Mo
 async def test_managed_listener_can_close_from_ready_callback(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     status = PlayerStatus(session)
     completed = asyncio.Event()
 
@@ -508,7 +508,7 @@ async def test_managed_listener_can_close_from_ready_callback(
 async def test_managed_listener_does_not_retry_rejected_authorization(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     session.client.get.side_effect = HTTPError("Unauthorized", status_code=401)
     status = PlayerStatus(session)
 
@@ -522,7 +522,7 @@ async def test_managed_listener_does_not_retry_rejected_authorization(
 async def test_managed_listener_reconnects_and_can_stop_from_reconnect_callback(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     status = PlayerStatus(session)
     connections = 0
 
@@ -562,7 +562,7 @@ async def test_close_cancels_pending_event_waiters(session: Mock) -> None:
 async def test_command_acknowledgement_handles_early_and_late_replies(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
     async with Player(session).connect() as player:
 
@@ -595,7 +595,7 @@ async def test_command_acknowledgement_handles_early_and_late_replies(
 async def test_unacknowledged_command_is_not_replayed(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
     async with Player(session).connect() as player:
         session.client.post.reset_mock()
@@ -615,7 +615,7 @@ async def test_unacknowledged_command_is_not_replayed(
 async def test_shutdown_wakes_command_waiters_and_ack_history_is_bounded(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
     async with Player(session).connect() as player:
         for number in range(200):
@@ -635,7 +635,7 @@ async def test_shutdown_wakes_command_waiters_and_ack_history_is_bounded(
 async def test_controller_keepalive_failure_disconnects_and_preserves_cause(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     session.client.post.return_value = response(
         {"initial_seq_num": 8, "device_keep_alive_update_seconds": 1}
     )
@@ -666,7 +666,7 @@ async def test_controller_keepalive_failure_disconnects_and_preserves_cause(
 async def test_queue_removal_preserves_duplicate_occurrences_and_revision(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     cluster = packet(2)["payloads"][0]["cluster"]
     uri = "spotify:episode:33XUHrCbrAW6me9ewdCZip"
     cluster["player_state"]["next_tracks"] = [
@@ -699,7 +699,7 @@ async def test_queue_removal_preserves_duplicate_occurrences_and_revision(
 async def test_sleep_timer_pauses_and_connection_cleanup_cancels_replacement(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     player = Player(session)
     pause = AsyncMock()
     monkeypatch.setattr(player, "pause", pause)
@@ -724,7 +724,7 @@ async def test_sleep_timer_pauses_and_connection_cleanup_cancels_replacement(
 def test_position_accounts_for_snapshot_age_and_stops_when_paused(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.playback.time.monotonic", lambda: 100.0)
+    monkeypatch.setattr("spotapi.playback.time.monotonic", lambda: 100.0)
     cluster: dict[str, Any] = {
         "timestamp": "3000",
         "server_timestamp_ms": "5000",
@@ -741,7 +741,7 @@ def test_position_accounts_for_snapshot_age_and_stops_when_paused(
 
     assert state.position_ms == 14500
 
-    monkeypatch.setattr("spotapi.v2.playback.time.monotonic", lambda: state.received_at + 2)
+    monkeypatch.setattr("spotapi.playback.time.monotonic", lambda: state.received_at + 2)
 
     assert state.position_ms == 17500
 
@@ -755,7 +755,7 @@ def test_position_accounts_for_snapshot_age_and_stops_when_paused(
 async def test_video_signals_use_advertised_player_capabilities(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     player = Player(session)
     async with player.connect():
         assert player.state is not None
@@ -771,7 +771,7 @@ async def test_default_command_source_is_the_existing_active_player(
     session: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     player = Player(session)
     async with player.connect():
         assert player.state is not None and player.state.active_device_id
@@ -787,7 +787,7 @@ async def test_missing_ack_can_complete_only_after_a_proven_state_change(
     monkeypatch: pytest.MonkeyPatch,
     body: dict[str, str],
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     player = Player(session)
     async with player.connect():
         before = player.state
@@ -815,7 +815,7 @@ async def test_missing_ack_and_unchanged_state_fail_without_replaying(
     monkeypatch: pytest.MonkeyPatch,
     body: dict[str, str],
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     player = Player(session)
     async with player.connect():
         session.client.post.return_value = response(body)
@@ -830,7 +830,7 @@ async def test_disconnected_observer_stops_claiming_readiness_and_sending_comman
     session: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("spotapi.v2.status.WebSocketClient", Socket)
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     player = Player(session)
     async with player.connect():
         assert player.is_ready

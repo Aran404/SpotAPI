@@ -22,7 +22,7 @@ from spotapi import (
     PlaylistHandler,
 )
 from spotapi.models import PlaybackTrack, PlayerState, TimeRange
-from spotapi.v2.types import HTTPError, SpotAPIError
+from spotapi.types import HTTPError, SpotAPIError
 
 from .actions import ACTIONS, manifest
 

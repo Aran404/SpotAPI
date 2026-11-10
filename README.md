@@ -11,12 +11,12 @@
   <a href="#guides">Guides</a>
 </p>
 
-Search the catalogue, follow song credits, explore radio, and work with playlists.
-Connect your account for saved music, personal rankings and a live player with
-async event listeners. Results are typed dataclasses; pagination stays lazy.
+Search Spotify from your terminal or build a Python app with typed async results.
+Start with the public catalogue, then connect your account for saved music,
+playlist editing and live player events.
 
-**v2 beta.** Install from this checkout to try the rewrite.
-Spotify's unofficial endpoints can change. [Release checks and limits](docs/release-2.0.0b3.md).
+**SpotAPI 2** is a breaking async release. Synchronous projects can pin
+`spotapi==1.2.8`. [Migration guide](MIGRATION.md) · [Release checks](docs/release-2.0.0.md)
 
 [Sponsor SpotAPI](SPONSORSHIP.md) · Monthly placements with category exclusivity available.
 
@@ -25,8 +25,15 @@ Spotify's unofficial endpoints can change. [Release checks and limits](docs/rele
 Requires Python 3.11 or newer.
 
 ```bash
-python -m pip install -e .
+python -m pip install spotapi
+spotapi search "Daft Punk"
 ```
+
+![Running spotapi search Daft Punk returns track names and Spotify URIs](assets/cli-demo.gif)
+
+To try an unreleased checkout, run `python -m pip install -e .` from its root.
+
+`spotapi get SPOTIFY_URL` prints details as JSON. Both commands work anonymously.
 
 ```python
 import asyncio
@@ -63,6 +70,13 @@ existing Spotify device; Studio does not provide an audio renderer.
 
 [Studio guide](docs/studio.md) · [Terminal inspector](examples/discover.py) · [Small examples](examples)
 
+For a keyboard-driven catalogue browser, run these commands from the checkout:
+
+```bash
+python -m pip install -e ".[demo]"
+python -m examples.discover "Daft Punk"
+```
+
 ## Build with it
 
 | Your idea | Start with |
@@ -72,7 +86,7 @@ existing Spotify device; Studio does not provide an audio renderer.
 | A playlist discovery companion | `Public.get_radio()` · `Public.get_playlist_recommendations()` |
 | Your own music dashboard | [Account, rankings and saved music](docs/account.md) |
 | A duplicate-aware playlist curator | `Playlist.items()` · `Playlist.remove_occurrences()` |
-| A player or live lyrics display | [Player events](docs/player.md) · [Lyrics example](examples/lyrics.py) |
+| A live now-playing display | [Player example](examples/player.py) · [Lyrics example](examples/lyrics.py) |
 
 For several operations, reuse a `Catalogue` context. Inside your async application:
 
@@ -84,15 +98,21 @@ async with Catalogue() as spotify:
     artist = await spotify.get_artist(results.artists[0].uri)
 ```
 
-Authenticated helpers accept the same client. One context owns authentication,
-refresh tasks and HTTP connections:
+For your own account, `Private` opens and closes the authenticated session:
 
 ```python
-from spotapi import Account, AsyncClient
+import os
 
-async with await AsyncClient.from_cookies(cookie) as client:
-    favorites = await Account(client).stats.get(time_range="medium_term", limit=5)
+from spotapi import Private
+
+async with Private.from_cookies(os.environ["SPOTIFY_COOKIE"]) as spotify:
+    favorites = await spotify.stats.get(time_range="medium_term", limit=5)
+    for track in favorites.tracks:
+        print(track.name)
 ```
+
+See [sign-in setup](docs/studio.md#sign-in) for Studio login or a local cookie.
+Use `AsyncClient` directly to share transports and configure connection options.
 
 Import result types from `spotapi.models`. Optional metadata stays optional, and
 reading a model never makes hidden HTTP requests. Catch `SpotAPIError` for library
@@ -103,7 +123,7 @@ failures. See the guides for ownership, cancellation and explicit mutations.
 [Catalogue](docs/catalogue.md) · [Account](docs/account.md) · [Player](docs/player.md) ·
 [API layout](docs/api-layout.md) · [Migration from v1](MIGRATION.md)
 
-[Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Release review](docs/release-2.0.0b3.md) ·
+[Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Release review](docs/release-2.0.0.md) ·
 [Legal notice](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)
 
 If SpotAPI helps you build something, a star helps other developers find it.

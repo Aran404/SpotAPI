@@ -11,12 +11,12 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from spotapi import Account, AsyncClient, CaptchaRequired, CaptchaSolver, PasswordReset
+from spotapi.account_session import AccountPage, AccountSession
+from spotapi.connection import Response
+from spotapi.datastruct import ObjectDict
 from spotapi.models import AccountChallenge
-from spotapi.v2.account_session import AccountPage, AccountSession
-from spotapi.v2.connection import Response
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.session import AuthSession
-from spotapi.v2.types import BaseClientError, HTTPError
+from spotapi.session import AuthSession
+from spotapi.types import BaseClientError, HTTPError
 
 
 def response(
@@ -217,7 +217,7 @@ def test_nonce_matches_two_unsigned_browser_words(
         assert bits == 32
         return next(words)
 
-    monkeypatch.setattr("spotapi.v2.account.secrets.randbits", word)
+    monkeypatch.setattr("spotapi.account.secrets.randbits", word)
     assert Account(session).client_nonce == "42949672957"
 
 

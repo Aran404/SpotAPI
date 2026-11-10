@@ -9,12 +9,12 @@ from unittest.mock import Mock
 
 import pytest
 
-from spotapi.v2 import catalogue as public_module
-from spotapi.v2.catalogue import Catalogue
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.operations import InclusionParameters, Operations
-from spotapi.v2.public import Public, SearchResults, SpotifyResource
-from spotapi.v2.queries import Queries
+from spotapi import catalogue as public_module
+from spotapi.catalogue import Catalogue
+from spotapi.datastruct import ObjectDict
+from spotapi.operations import InclusionParameters, Operations
+from spotapi.public import Public, SearchResults, SpotifyResource
+from spotapi.queries import Queries
 
 TRACK_ID = "39MK3d3fonIP8Mz9oHCTBB"
 ARTIST_ID = "0OdUWJ0sBjDrqHygGUXeCF"

@@ -7,10 +7,10 @@ from typing import Any
 
 import pytest
 
-from spotapi.v2.datastruct import ObjectDict
-from spotapi.v2.operations import Operations
-from spotapi.v2.queries import Queries
-from spotapi.v2.types import BaseClientError
+from spotapi.datastruct import ObjectDict
+from spotapi.operations import Operations
+from spotapi.queries import Queries
+from spotapi.types import BaseClientError
 
 
 @dataclass(slots=True)
@@ -36,7 +36,7 @@ def test_parse_items_deserializes_typed_models(monkeypatch: pytest.MonkeyPatch) 
     def fake_from_dict(typ: type[Any], payload: ObjectDict) -> Any:
         return typ(**payload)
 
-    monkeypatch.setattr("spotapi.v2.queries.from_dict", fake_from_dict)
+    monkeypatch.setattr("spotapi.queries.from_dict", fake_from_dict)
 
     page = _object(
         {
@@ -58,7 +58,7 @@ def test_parse_items_skips_null_and_incomplete_search_hits(
     def fake_from_dict(typ: type[Any], payload: ObjectDict) -> Any:
         return typ(**payload)
 
-    monkeypatch.setattr("spotapi.v2.queries.from_dict", fake_from_dict)
+    monkeypatch.setattr("spotapi.queries.from_dict", fake_from_dict)
 
     page = _object(
         {
@@ -107,7 +107,7 @@ def test_parse_items_can_skip_deserialization_failures(
     def fail_from_dict(typ: type[Any], payload: ObjectDict) -> Any:
         raise ValueError("bad entity")
 
-    monkeypatch.setattr("spotapi.v2.queries.from_dict", fail_from_dict)
+    monkeypatch.setattr("spotapi.queries.from_dict", fail_from_dict)
 
     page = _object({"items": [{"data": {"id": "1", "name": "broken"}}]})
 

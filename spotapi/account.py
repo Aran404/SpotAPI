@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import secrets
-from collections.abc import Mapping
+from collections.abc import AsyncGenerator, Mapping
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any
+from typing import Any, Self
 
 from .account_session import AccountPage, AccountSession
 from .blend import Blends
@@ -270,3 +271,14 @@ class Account:
         await self.http.request(
             "PUT", "/api/account-settings/v1/set-password", body={"new_password": new_password}
         )
+
+
+class Private(Account):
+    """Authenticated account operations with a managed cookie sign-in shortcut."""
+
+    @classmethod
+    @asynccontextmanager
+    async def from_cookies(cls, cookies: str) -> AsyncGenerator[Self]:
+        """Open an authenticated account and close its client on context exit."""
+        async with await AsyncClient.from_cookies(cookies) as client:
+            yield cls(client)

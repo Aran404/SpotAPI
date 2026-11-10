@@ -25,6 +25,14 @@ stored by Studio or returned from the bridge. The login WebView uses private mod
 Login may require Spotify's own browser challenge. Stealth and CAPTCHA bypass are
 not part of this example.
 
+For your own scripts, you can copy your session from Chrome after signing in
+to `open.spotify.com`. Open DevTools, select **Application → Storage → Cookies**,
+select `https://open.spotify.com`, and copy the value of `sp_dc`. Set
+`SPOTIFY_COOKIE` to `sp_dc=<value>` in your shell or local `.env`. Studio reads
+the file automatically. Python scripts that use `os.environ` need the variable
+exported by their shell or loaded by their own configuration. Treat the cookie
+like a password and keep the file out of version control.
+
 ## Explore
 
 - **Discover:** ten search categories, direct Spotify links, typed details, credits,

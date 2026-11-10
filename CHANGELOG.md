@@ -1,6 +1,10 @@
 # Changelog
 
-## 2.0.0b3 — unreleased
+## 2.0.0 — unreleased
+
+- Use `spotapi` for all async imports. The synchronous release remains available as `spotapi==1.2.8`.
+- Install the `spotapi` command for anonymous track search and JSON resource lookups.
+- Open a managed account session with `Private.from_cookies()`.
 
 ### Added
 
@@ -40,8 +44,8 @@
 - Playback restrictions, canonical playlist metadata reads, and optional model
   fields are handled explicitly.
 
-This is a beta rewrite, not complete Spotify or v1 parity. See the
-[release checks](docs/release-2.0.0b3.md) and [player coverage](docs/player-coverage.md).
+See the [release checks](docs/release-2.0.0.md) and [player coverage](docs/player-coverage.md)
+for supported workflows and known gaps.
 
 ## v1 history
 

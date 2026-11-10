@@ -1,14 +1,12 @@
-# Migrating to the v2 beta
+# Migrating to SpotAPI 2
 
-v2 requires Python 3.11+ and uses `async`/`await`. Sync v1 functionality is not
-implicitly available through the v2 package. Cookie-authenticated player controls
-and provider-neutral CAPTCHA integration are available in v2. Pin `spotapi<2`
-if you still depend on v1-only password login, family management, or session savers;
-that pin does not establish whether those unofficial endpoints still work.
+SpotAPI 2 requires Python 3.11+ and uses `async`/`await` under `spotapi`.
+For a synchronous application, install the legacy release in its own environment
+with `python -m pip install "spotapi<2"`. SpotAPI 2 is a breaking upgrade.
 
 | Old | New | Reason |
 |---|---|---|
-| `QueryWrapper` / `spotapi.v2.query_wrapper` | `Queries` / `spotapi.v2.queries` (old module removed) | Name the persisted-query responsibility directly |
+| `QueryWrapper` / `spotapi.v2.query_wrapper` | `Queries` / `spotapi.queries` | Name the persisted-query responsibility directly |
 | Deep `specialized.data_wrappers` application imports | `from spotapi.models import ...` (old imports still work) | Discoverable public model namespace |
 | Extended searches return raw dictionaries through separate operations | Typed Audiobook/Episode/User/Author/Genre results from one `searchDesktop` request | Working anonymous search with stable return types |
 | `Public.get(playlist_url)` returns raw data | `PlaylistDetails`; use `Queries` for raw operations | Metadata is typed; track occurrence pagination is explicit |
@@ -19,7 +17,7 @@ that pin does not establish whether those unofficial endpoints still work.
 | Query-cache format 1 | Format 2, rebuilt once | Discard incomplete hashes produced by the former JS/CSS chunk-map mix-up |
 | v1 `Song().paginate_songs(...)` | `Public.search_tracks(...)` with `async for` | Async I/O and typed results |
 | Nested raw search dictionaries | `result.tracks`, `track.name`, `artist.name` | Discoverable result models |
-| Deep v2 imports | `from spotapi import Public, SpotAPIError` | Small explicit root exports; existing `spotapi.v2` imports remain |
+| `spotapi.v2` | `spotapi` | One import namespace for the async package |
 | Public operations rely on an implicit loop pool | `Public` owns each operation; `async with Catalogue()` reuses a client | Deterministic cleanup and explicit connection reuse |
 | `query_client_pool()` returns generic `Pool` | Shared owner with `acquire()`, `close()`, `closed` | Preserve borrowing/shutdown interface; generic-pool internals are no longer available |
 | Global `connection.ClientPool` | `async with HTTPClient()` or `AsyncClient()` | Remove an unused, globally loop-bound pool above wreq's pool |
@@ -55,7 +53,7 @@ A catalogue cannot be reopened after closing. Injected `Queries` remain
 owned by their caller. `close_query_clients()` only applies to lower-level
 code using the implicit `Queries()` pool.
 
-Authenticated playlist operations live in `spotapi.v2.playlist` and accept an
+Authenticated playlist operations live in `spotapi.playlist` and accept an
 authorized `AuthSession`. They deliberately use one attempt. Reconcile state
 after ambiguous failures before deciding whether to retry yourself. The
 low-level WebSocket API retains wreq's error types.

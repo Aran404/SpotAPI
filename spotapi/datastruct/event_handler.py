@@ -8,7 +8,7 @@ import inspect
 from collections.abc import Callable, Coroutine
 from typing import Any, TypeAlias
 
-from spotapi.v2.types import DefaultLogger, LoggerProtocol
+from spotapi.types import DefaultLogger, LoggerProtocol
 
 __all__ = ("EventDispatcher",)
 
