@@ -52,6 +52,22 @@ asyncio.run(main())
 No login is needed. Search ten categories, resolve Spotify links, or stream tracks
 from a public playlist. `Public` cleans up its connections for you.
 
+### Try this next
+
+From the checkout, run either example with the same install:
+
+```bash
+python -m examples.credit_trail
+python -m examples.mix_map
+```
+
+[Credit trail](examples/credit_trail.py) connects **One More Time**, **Harder,
+Better, Faster, Stronger**, and **Starboy** through shared contributor IDs. It
+shows where the same person is credited as a producer, writer, or lyricist.
+[Mix map](examples/mix_map.py) finds harmonically compatible transitions in a
+public playlist and tells you how far to shift the incoming track's tempo.
+Pass your own Spotify links to either script.
+
 ## Studio
 
 Explore a track's credits, follow links into artists and albums, or expand the
