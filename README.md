@@ -3,24 +3,29 @@
 </p>
 
 <h1 align="center">SpotAPI</h1>
-<p align="center">Async Spotify for Python. No API key for public data.</p>
+<p align="center"><b>Spotify for Python. Async, typed, and no API key for public data.</b></p>
 <p align="center">
-  <a href="#quickstart">Quickstart</a> ·
-  <a href="#studio">Try Studio</a> ·
-  <a href="#build-with-it">Build with it</a> ·
+  <a href="#30-second-start">Start</a> ·
+  <a href="#see-it-in-action">Demos</a> ·
+  <a href="#studio">Studio</a> ·
+  <a href="#build-it-into-your-app">Integrate</a> ·
   <a href="#guides">Guides</a>
 </p>
 
-Search Spotify from your terminal or build a Python app with typed async results.
-Start with the public catalogue, then connect your account for saved music,
-playlist editing and live player events.
+<p align="center"><sub>Sponsored placements available · <a href="SPONSORSHIP.md">Sponsor SpotAPI</a></sub></p>
 
-**SpotAPI 2** is a breaking async release. Synchronous projects can pin
-`spotapi==1.2.8`. [Migration guide](MIGRATION.md) · [Release checks](docs/release-2.0.0.md)
+---
 
-[Sponsor SpotAPI](SPONSORSHIP.md) · Monthly placements with category exclusivity available.
+Search the Spotify catalogue from your terminal, or build a Python app on top of
+fully typed async results. Start with public data, no signup and no developer
+dashboard. Connect your account later for saved music, playlist editing and live
+player events.
 
-## Quickstart
+> **SpotAPI 2 is a breaking async release.** Synchronous projects can pin
+> `spotapi==1.2.8`. See the [migration guide](MIGRATION.md) and the
+> [release checks](docs/release-2.0.0.md).
+
+## 30-second start
 
 Requires Python 3.11 or newer.
 
@@ -31,26 +36,9 @@ spotapi search "Daft Punk"
 
 ![Running spotapi search Daft Punk returns track names and Spotify URIs](assets/cli-demo.gif)
 
-To try an unreleased checkout, run `python -m pip install -e .` from its root.
+That's it. No key, no login, no config.
 
-`spotapi get SPOTIFY_URL` prints details as JSON. Both commands work anonymously.
-
-The CLI can also look up song credits, list playlist occurrences, manage liked
-tracks, and control an existing Spotify player:
-
-```bash
-spotapi search "Daft Punk" --type artist --json
-spotapi credits 0DiWol3AO6WpXZgp0goxAV
-spotapi playlist items PLAYLIST_ID --limit 10
-spotapi library list
-spotapi player status
-```
-
-Library and player commands, playlist edits, and `playlist items --private`
-use `SPOTIFY_COOKIE` from your environment. See [sign-in setup](docs/studio.md#sign-in).
-Run `spotapi playlist --help`, `spotapi library --help`, or `spotapi player --help`
-for the available actions. Playlist `remove` and `move` take occurrence IDs
-from `playlist items`, so duplicate tracks can be edited individually.
+Prefer Python?
 
 ```python
 import asyncio
@@ -66,33 +54,39 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-No login is needed. Search ten categories, resolve Spotify links, or stream tracks
-from a public playlist. `Public` cleans up its connections for you.
+`Public` searches ten categories, resolves Spotify links and streams tracks from
+public playlists. It cleans up its own connections.
 
-### Try this next
+## Why SpotAPI
 
-From the checkout, run either example with the same install:
+- **No API key for public data.** Search, lookups, credits, lyrics and playlists work anonymously.
+- **Typed and async.** Every result is a model you can autocomplete, not a dict you have to guess at.
+- **No surprises.** Reading a model never triggers a hidden HTTP request. Optional metadata stays optional.
+- **Duplicate-aware playlists.** Edit one occurrence of a track without touching its twin.
+- **Your account when you want it.** Liked songs, rankings, playlist edits and live player events.
+- **A CLI that does real work.** Search, credits, playlists, library and player control from one command.
+
+## See it in action
+
+Clone the repo and run any of these from its root. Install once:
 
 ```bash
-python -m examples.discover # I recommend trying this one!
-python -m examples.credit_trail
-python -m examples.mix_map
+python -m pip install -e ".[demo]"
 ```
 
-[Discover](examples/discover.py) uses a minimalistic Terminal User Interface (TUI) 
-to navigate the public search functionality of Spotify, no log in necessary. 
-[Credit trail](examples/credit_trail.py) connects **One More Time**, **Harder,
-Better, Faster, Stronger**, and **Starboy** through shared contributor IDs. It
-shows where the same person is credited as a producer, writer, or lyricist.
-[Mix map](examples/mix_map.py) finds harmonically compatible transitions in a
-public playlist and tells you how far to shift the incoming track's tempo.
-Pass your own Spotify links to either script.
+| Demo | What you get | Run it |
+|---|---|---|
+| **[Discover](examples/discover.py)** ⭐ | A keyboard-driven terminal UI for browsing Spotify's public search. No login. **Start here.** | `python -m examples.discover "Daft Punk"` |
+| **[Credit trail](examples/credit_trail.py)** | Connects *One More Time*, *Harder, Better, Faster, Stronger* and *Starboy* through shared contributor IDs, showing where one person is credited as producer, writer or lyricist. | `python -m examples.credit_trail` |
+| **[Mix map](examples/mix_map.py)** | Finds harmonically compatible transitions in a public playlist and tells you how far to shift the incoming track's tempo. | `python -m examples.mix_map` |
+
+Credit trail and Mix map accept your own Spotify links. Discover takes a search query.
 
 ## Studio
 
-Explore a track's credits, follow links into artists and albums, or expand the
-typed data behind each view. Studio can also show public lyrics and seek to a
-timed line on a connected Spotify player.
+Open a track, read its credits, follow links into artists and albums, or expand
+the typed data behind every view. Studio also shows public lyrics and can seek to
+a timed line on a connected Spotify player.
 
 ![SpotAPI Studio: the listening desk](examples/studio/preview.png)
 
@@ -103,18 +97,35 @@ python -m examples.studio
 
 Use **Connect Spotify** to sign in through Spotify's normal login window, or set
 `SPOTIFY_COOKIE` in a local `.env`. Cookies stay in Python. Playback controls an
-existing Spotify device; Studio does not provide an audio renderer.
+existing Spotify device; Studio does not render audio.
 
-[Studio guide](docs/studio.md) · [Terminal inspector](examples/discover.py) · [Small examples](examples)
+[Studio guide](docs/studio.md) · [Small examples](examples)
 
-For a keyboard-driven catalogue browser, run these commands from the checkout:
+## Go beyond search
+
+The CLI also looks up credits, lists playlist occurrences, manages liked tracks
+and controls an existing Spotify player:
 
 ```bash
-python -m pip install -e ".[demo]"
-python -m examples.discover "Daft Punk"
+spotapi search "Daft Punk" --type artist --json
+spotapi get SPOTIFY_URL
+spotapi credits 0DiWol3AO6WpXZgp0goxAV
+spotapi playlist items PLAYLIST_ID --limit 10
+spotapi library list
+spotapi player status
 ```
 
-## Build with it
+`search` and `get` work anonymously. Library and player commands, playlist edits
+and `playlist items --private` read `SPOTIFY_COOKIE` from your environment. See
+[sign-in setup](docs/studio.md#sign-in).
+
+Run `spotapi playlist --help`, `spotapi library --help` or `spotapi player --help`
+for every action. Playlist `remove` and `move` take occurrence IDs from
+`playlist items`, so duplicate tracks can be edited individually.
+
+## Build it into your app
+
+Pick the idea closest to yours:
 
 | Your idea | Start with |
 |---|---|
@@ -125,7 +136,9 @@ python -m examples.discover "Daft Punk"
 | A duplicate-aware playlist curator | `Playlist.items()` · `Playlist.move_occurrences()` · `Playlist.remove_occurrences()` |
 | A live now-playing display | [Player example](examples/player.py) · [Lyrics example](examples/lyrics.py) |
 
-For several operations, reuse a `Catalogue` context. Inside your async application:
+### Public data: reuse one `Catalogue`
+
+For several operations, share a single context inside your async application:
 
 ```python
 from spotapi import Catalogue
@@ -135,7 +148,9 @@ async with Catalogue() as spotify:
     artist = await spotify.get_artist(results.artists[0].uri)
 ```
 
-For your own account, `Private` opens and closes the authenticated session:
+### Your own account: `Private`
+
+`Private` opens and closes the authenticated session for you:
 
 ```python
 import os
@@ -148,22 +163,17 @@ async with Private.from_cookies(os.environ["SPOTIFY_COOKIE"]) as spotify:
         print(track.name)
 ```
 
-See [sign-in setup](docs/studio.md#sign-in) for Studio login or a local cookie.
-Use `AsyncClient` directly to share transports and configure connection options.
+### Production details
 
-Import result types from `spotapi.models`. Optional metadata stays optional, and
-reading a model never makes hidden HTTP requests. Catch `SpotAPIError` for library
-failures. See the guides for ownership, cancellation and explicit mutations.
+- Import result types from `spotapi.models`.
+- Catch `SpotAPIError` for library failures.
+- Use `AsyncClient` directly to share transports and configure connection options.
+- See the guides for ownership, cancellation and explicit mutations.
 
 ## Guides
 
 [Catalogue](docs/catalogue.md) · [Account](docs/account.md) · [Player](docs/player.md) ·
 [API layout](docs/api-layout.md) · [Migration from v1](MIGRATION.md)
-
-[Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Release review](docs/release-2.0.0.md) ·
-[Legal notice](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)
-
-If SpotAPI helps you build something, a star helps other developers find it.
 
 ## Sponsorship
 
@@ -174,3 +184,10 @@ customers would use. Category exclusivity is available by agreement.
 Contact [aran.inbox.personal@gmail.com](mailto:aran.inbox.personal@gmail.com)
 to discuss a placement and arrange payment directly through PayPal.
 See [sponsorship details](SPONSORSHIP.md).
+
+## Contributing
+
+[Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Release review](docs/release-2.0.0.md) ·
+[Legal notice](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)
+
+If SpotAPI helps you build something, a ⭐ helps other developers find it.
