@@ -1,298 +1,429 @@
-import re
-import time
-import json
-import base64
-import pyotp
-import atexit
-import requests
-from typing import Tuple, Literal
+"""Asynchronous HTTP and WebSocket client with validated HTTP responses."""
+
+from __future__ import annotations
+
+import asyncio
+import logging
 from collections.abc import Mapping
-from spotapi.utils.logger import Logger
-from spotapi.types.annotations import enforce
-from spotapi.types.alias import _UStr, _Undefined
-from spotapi.exceptions import BaseClientError
-from spotapi.http.data import Response
-from spotapi.http.request import TLSClient
-from spotapi.utils.strings import extract_js_links, extract_mappings, combine_chunks
+from types import TracebackType
+from typing import TYPE_CHECKING, Any, NamedTuple, Self, Unpack
 
-# Default recaptcha site key, will update on startup if necessary
-RECAPTCHA_SITE_KEY: str = "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39"
-# Fallback hardcoded secret (version 18)
-_FALLBACK_SECRET: Tuple[Literal[18], bytearray] = (
-    61,
-    bytearray(
-        [44,55,47,42,70,40,34,114,76,74,50,111,120,97,75,76,94,102,43,69,49,120,118,80,64,78]
-    ),
-)
+import wreq
 
-# Cache storage for TOTP
-_secret_cache: Tuple[int, bytearray] | None = None
-_cache_expiry: float = -1
-_CACHE_TTL = 15 * 60
+from .connection import HTTPClient, Response, WebSocketClient
+from .connection.types import Methods
+from .types import DefaultLogger, HTTPError
 
-__all__ = ["BaseClient", "BaseClientError"]
+if TYPE_CHECKING:
+    from wreq import ClientConfig
+
+    from .connection import RateLimiter
+    from .connection.types import BackoffStrategy, JitterStrategy
+    from .session import AuthSession
+    from .types import LoggerProtocol
+
+    class _AsyncClientOptions(ClientConfig, total=False):
+        backoff: BackoffStrategy
+        jitter: JitterStrategy
+        max_attempts: int
+        max_delay: float
+        rate_limiter: RateLimiter | None
+        logger: LoggerProtocol
+
+else:
+    _AsyncClientOptions = Any
+
+__all__ = ("AsyncClient",)
 
 
-def get_latest_totp_secret() -> Tuple[int, bytearray]:
-    global _secret_cache, _cache_expiry
+class _RawClients(NamedTuple):
+    """The HTTP and WebSocket transports owned by an open client."""
 
-    if _secret_cache and time.time() < _cache_expiry:
-        return _secret_cache
+    http: HTTPClient
+    ws: WebSocketClient
+
+
+async def _close_transports(
+    http: HTTPClient | None,
+    websocket: WebSocketClient | None,
+) -> None:
+    """Close owned transports and report all ordinary shutdown failures."""
+    errors: list[Exception] = []
 
     try:
-        url = "https://code.thetadev.de/ThetaDev/spotify-secrets/raw/branch/main/secrets/secretDict.json"
-        response = requests.get(url, timeout=5)
-        if not response.ok:
-            raise BaseClientError(f"Failed to fetch secrets: {response.status_code}")
-
-        secrets = response.json()
-        version = max(secrets, key=int)
-        secret_list = secrets[version]
-
-        if not isinstance(secret_list, list):
-            raise BaseClientError(
-                f"Expected a list of integers, got {type(secret_list)}"
-            )
-
-        _secret_cache = (version, bytearray(secret_list))
-        _cache_expiry = time.time() + _CACHE_TTL
-        return _secret_cache
-    except Exception as e:
-        Logger.error(f"Failed to fetch secrets: {e}. Falling back to default secret.")
-        return _FALLBACK_SECRET
-
-
-def generate_totp() -> Tuple[str, int]:
-    version, secret_bytes = get_latest_totp_secret()
-    transformed = [e ^ ((t % 33) + 9) for t, e in enumerate(secret_bytes)]
-    joined = "".join(str(num) for num in transformed)
-    hex_str = joined.encode().hex()
-    secret = base64.b32encode(bytes.fromhex(hex_str)).decode().rstrip("=")
-    totp = pyotp.TOTP(secret).now()
-    return totp, version
-
-
-@enforce
-class BaseClient:
-    # There are many Javasript packs, but this one contains all the "xpui" packs which contain further packs that contain the hashes we need
-    js_pack: _UStr = _Undefined
-    client_version: _UStr = _Undefined
-    access_token: _UStr = _Undefined
-    access_token_expires_at_ms: float = 0
-    client_token: _UStr = _Undefined
-    client_id: _UStr = _Undefined
-    device_id: _UStr = _Undefined
-    raw_hashes: _UStr = _Undefined
-    language: str = "en"
-
-    # Refresh a bit before real expiry to avoid skew-induced 401s
-    _REFRESH_SKEW_MS: float = 30_000
-
-    def __init__(self, client: TLSClient, language: str = "en") -> None:
-        self.client = client
-        self.language = language
-        self.client.authenticate = lambda kwargs: self._auth_rule(kwargs)
-        self.client.on_auth_failure = lambda resp: self._handle_auth_failure(resp)
-
-        match = re.search(r"\d+", self.client.impersonate)
-        self.browser_version = match.group()
-        self.client.headers.update(
-            {
-                "Content-Type": "application/json;charset=UTF-8",
-                "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{self.browser_version}.0.0.0 Safari/537.36",
-                "Sec-Ch-Ua": f'"Chromium";v="{self.browser_version}", "Not(A:Brand";v="24", "Google Chrome";v="{self.browser_version}"',
-            }
-        )
-
-        atexit.register(self.client.close)
-
-    def _auth_rule(self, kwargs: dict) -> dict:
-        if self.client_token is _Undefined:
-            self.get_client_token()
-
-        if self.access_token is _Undefined:
-            self.get_session()
-
-        if (
-            self.access_token_expires_at_ms
-            and time.time() * 1000 + self._REFRESH_SKEW_MS
-            >= self.access_token_expires_at_ms
-        ):
-            self.access_token = _Undefined
-            self._get_auth_vars()
-
-        if "headers" not in kwargs:
-            kwargs["headers"] = {}
-
-        kwargs["headers"].update(
-            {
-                "Authorization": "Bearer " + str(self.access_token),
-                "Client-Token": self.client_token,
-                "Spotify-App-Version": self.client_version,
-                "Accept-Language": self.language,
-            }.items()
-        )
-
-        return kwargs
-
-    def _handle_auth_failure(self, resp: Response) -> bool:
-        if resp.status_code == 401:
-            self.access_token = _Undefined
-            self._get_auth_vars()
-            return True
-
-        if resp.status_code == 400:
+        if websocket is not None:
+            await websocket.close()
+    except Exception as exc:
+        errors.append(exc)
+    finally:
+        if http is not None:
             try:
-                headers = {k.lower(): v for k, v in resp.raw.headers.items()}
-            except Exception:
-                headers = {}
-            if headers.get("client-token-error") == "INVALID_CLIENTTOKEN":
-                self.client_token = _Undefined
-                self.get_client_token()
-                return True
+                await http.close()
+            except Exception as exc:
+                errors.append(exc)
 
-        return False
+    if len(errors) == 1:
+        raise errors[0]
 
-    def set_language(self, language: str) -> None:
-        """Set the language for API requests. Uses ISO 639-1 language codes (e.g., 'ko', 'en', 'ja')."""
-        self.language = language
+    if errors:
+        raise ExceptionGroup("AsyncClient shutdown failed", errors)
 
-    def _get_auth_vars(self) -> None:
-        if self.access_token is _Undefined or self.client_id is _Undefined:
-            totp, version = generate_totp()
-            query = {
-                "reason": "init",
-                "productType": "web-player",
-                "totp": totp,
-                "totpVer": version,
-                "totpVer": version,
-                "totpServer": totp,
-            }
-            resp = self.client.get("https://open.spotify.com/api/token", params=query)
 
-            if resp.fail:
-                raise BaseClientError(
-                    "Could not get session auth tokens", error=resp.error.string
-                )
+def _observe_shutdown(task: asyncio.Task[None]) -> None:
+    """Retrieve background shutdown failures to avoid unhandled task warnings."""
+    if not task.cancelled() and (error := task.exception()) is not None:
+        logging.getLogger(__name__).error("AsyncClient shutdown failed", exc_info=error)
 
-            self.access_token = resp.response["accessToken"]
-            self.client_id = resp.response["clientId"]
-            self.access_token_expires_at_ms = float(
-                resp.response.get("accessTokenExpirationTimestampMs") or 0
-            )
 
-    def get_session(self) -> None:
-        resp = self.client.get("https://open.spotify.com")
-        if resp.fail:
-            raise BaseClientError("Could not get session", error=resp.error.string)
+class AsyncClient:
+    """Manage reusable HTTP and WebSocket transports.
 
-        _all_js_packs = extract_js_links(resp.response)
-        self.js_pack = next(
-            (
-                link
-                for link in _all_js_packs
-                if "web-player/web-player" in link and link.endswith(".js")
-            ),
-            "",
+    Use :meth:`new` or ``async with`` to open the client, and :meth:`close`
+    to release its transports. HTTP request methods require an open client
+    and return validated successful responses.
+    """
+
+    __slots__ = ("_http", "_ws", "_proxy", "_close_task", "_session")
+
+    def __init__(self, *, proxy: str | None = None) -> None:
+        """Create an unopened client.
+
+        Args:
+            proxy: Optional proxy URL for the underlying HTTP transport.
+        """
+        self._session: AuthSession | None = None
+        self._proxy = proxy
+        self._http: HTTPClient | None = None
+        self._ws: WebSocketClient | None = None
+        self._close_task: asyncio.Task[None] | None = None
+
+    def __repr__(self) -> str:
+        """Return a concise diagnostic representation."""
+        return f"<AsyncClient open={self._http is not None} proxy={self._proxy is not None}>"
+
+    @property
+    def protocols(self) -> _RawClients:
+        """Return the underlying HTTP and WebSocket transports.
+
+        Returns:
+            A named tuple containing the open transports.
+
+        Raises:
+            RuntimeError: If the client is not open.
+        """
+        if self._http is None or self._ws is None:
+            raise RuntimeError("Client is not open")
+
+        return _RawClients(self._http, self._ws)
+
+    @classmethod
+    async def new(cls, *, proxy: str | None = None, **kwargs: Unpack[_AsyncClientOptions]) -> Self:
+        """Create and open a client.
+
+        Args:
+            proxy: Optional proxy URL for the underlying HTTP transport.
+            **kwargs: Additional keyword arguments for ``HTTPClient``.
+
+        Returns:
+            An initialized instance of the calling class.
+        """
+        client = cls(proxy=proxy)
+
+        await client._setup(**kwargs)
+
+        return client
+
+    @classmethod
+    async def from_cookies(
+        cls,
+        cookies: str | list[Mapping[str, Any]],
+        *,
+        proxy: str | None = None,
+        language: str = "en",
+        **kwargs: Unpack[_AsyncClientOptions],
+    ) -> Self:
+        """Create a managed cookie-authenticated client with optional transport settings."""
+        from .session import AuthSession, normalize_language
+
+        language = normalize_language(language)
+        kwargs.setdefault(
+            "emulation",
+            wreq.Emulation(platform=wreq.Platform.Windows, profile=wreq.Profile.Chrome147),
         )
-
-        self._raw_app_server_config = resp.response.split(
-            '<script id="appServerConfig" type="text/plain">'
-        )[1].split("</script>")[0]
-        self.server_cfg = json.loads(
-            base64.b64decode(self._raw_app_server_config).decode("utf-8")
-        )
-
-        _recaptcha_key = self.server_cfg["recaptchaWebPlayerFraudSiteKey"]
-        if _recaptcha_key:
-            global RECAPTCHA_SITE_KEY
-            RECAPTCHA_SITE_KEY = _recaptcha_key
-
-        self.client_version = self.server_cfg["clientVersion"]
-        self.device_id = self.client.cookies.get("sp_t") or ""
-        self._get_auth_vars()
-
-    def get_client_token(self) -> None:
-        if not (self.client_id and self.device_id and self.client_version):
-            self.get_session()
-
-        url = "https://clienttoken.spotify.com/v1/clienttoken"
-        payload = {
-            "client_data": {
-                "client_version": self.client_version,
-                "client_id": self.client_id,
-                "js_sdk_data": {
-                    "device_brand": "unknown",
-                    "device_model": "unknown",
-                    "os": "windows",
-                    "os_version": "NT 10.0",
-                    "device_id": self.device_id,
-                    "device_type": "computer",
-                },
-            }
-        }
-        headers = {
-            "Authority": "clienttoken.spotify.com",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        }
-
-        resp = self.client.post(url, json=payload, headers=headers)
-
-        if resp.fail:
-            raise BaseClientError("Could not get client token", error=resp.error.string)
-
-        if resp.response.get("response_type") != "RESPONSE_GRANTED_TOKEN_RESPONSE":
-            raise BaseClientError(
-                "Could not get client token", error=resp.response.get("response_type")
-            )
-
-        if not isinstance(resp.response, Mapping):
-            raise BaseClientError("Invalid JSON")
-
-        self.client_token = resp.response["granted_token"]["token"]
-
-    def part_hash(self, name: str) -> str:
-        if self.raw_hashes is _Undefined:
-            self.get_sha256_hash()
-
-        if self.raw_hashes is _Undefined:
-            raise ValueError("Could not get playlist hashes")
+        client = await cls.new(proxy=proxy, **kwargs)
 
         try:
-            return str(self.raw_hashes).split(f'"{name}","query","')[1].split('"')[0]
-        except IndexError:
-            return str(self.raw_hashes).split(f'"{name}","mutation","')[1].split('"')[0]
+            session = await AuthSession.from_cookies(cookies, client=client, language=language)
+        except BaseException:
+            await client.close()
+            raise
+        client._session = session
 
-    def get_sha256_hash(self) -> None:
-        if self.js_pack is _Undefined:
-            self.get_session()
+        return client
 
-        if self.js_pack is _Undefined:
-            raise ValueError("Could not get playlist hashes")
+    @property
+    def session(self) -> AuthSession:
+        """Return the managed authentication session; require authorization first."""
+        if self._session is None:
+            raise RuntimeError("Use AsyncClient.from_cookies() for an authorized client")
 
-        resp = self.client.get(str(self.js_pack))
-        if resp.fail:
-            raise BaseClientError(
-                "Could not get general hashes", error=resp.error.string
+        return self._session
+
+    async def __aenter__(self) -> Self:
+        """Open the transports and return this client."""
+        await self._setup()
+
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        """Close the transports without suppressing context exceptions."""
+        try:
+            await self.close()
+        except Exception as exc:
+            if isinstance(exc_value, asyncio.CancelledError):
+                raise exc_value from exc
+
+            raise
+
+    async def close(self) -> None:
+        """Close both transports; concurrent callers share the same shutdown."""
+        task = self._close_task
+
+        if task is None:
+            http, websocket = self._http, self._ws
+            self._http = self._ws = None
+
+            if http is None and websocket is None:
+                return
+
+            session, self._session = self._session, None
+
+            async def shutdown() -> None:
+                """Finish the owned shutdown task even when its caller is cancelled."""
+                try:
+                    if session is not None:
+                        await session.stop_refresh()
+                finally:
+                    await _close_transports(http, websocket)
+
+            task = asyncio.create_task(shutdown(), name="spotapi-client-close")
+            self._close_task = task
+
+            task.add_done_callback(_observe_shutdown)
+
+        try:
+            await asyncio.shield(task)
+        finally:
+            if task.done() and self._close_task is task:
+                self._close_task = None
+
+    async def _setup(self, **kwargs: Unpack[_AsyncClientOptions]) -> None:
+        """Initialize the transports once, cleaning up on setup failure."""
+        close_task = self._close_task
+
+        if close_task is not None:
+            await asyncio.shield(close_task)
+
+            if self._close_task is close_task:
+                self._close_task = None
+
+        if self._http is not None:
+            return
+
+        if self._proxy:
+            kwargs["proxies"] = [wreq.Proxy.all(self._proxy)]
+
+        http = HTTPClient(**kwargs)
+
+        try:
+            websocket = WebSocketClient(
+                http_client=http, logger=kwargs.get("logger") or DefaultLogger
             )
 
-        self.raw_hashes = resp.response
+            websocket.start_pinging()
+        except Exception:
+            await http.close()
 
-        str_mapping, hash_mapping = extract_mappings(str(self.raw_hashes))
-        urls = map(
-            lambda s: f"https://open.spotifycdn.com/cdn/build/web-player/{s}",
-            combine_chunks(hash_mapping, str_mapping),
+            raise
+
+        self._http, self._ws = http, websocket
+
+    def _require_http(self) -> HTTPClient:
+        """Return the open HTTP transport or raise ``RuntimeError``."""
+        if self._http is None:
+            raise RuntimeError("Client is not open; use AsyncClient.new() or async with")
+
+        return self._http
+
+    async def request(
+        self,
+        method: Methods,
+        url: str,
+        *,
+        max_attempts: int | None = None,
+        retry_safe: bool | None = None,
+        **kwargs: Unpack[wreq.Request],
+    ) -> Response:
+        """Send a validated request.
+
+        Args:
+            method: HTTP method.
+            url: Request URL.
+            max_attempts: Retry limit; use ``1`` for operations that must not be replayed.
+                An explicit larger value permits replay.
+            retry_safe: Enable retries for a known read-only operation such as
+                a catalogue POST. Defaults to safe HTTP methods only.
+            **kwargs: Options forwarded to ``wreq``.
+
+        Returns:
+            The validated HTTP response.
+
+        Raises:
+            RuntimeError: If this client is not open.
+            ValueError: If ``max_attempts`` is less than one.
+            HTTPError: If the response is unsuccessful or JSON is invalid.
+        """
+        session = self._session
+        provided = kwargs.get("headers")
+        headers: Mapping[str, str] = provided if isinstance(provided, Mapping) else {}
+        token = session.token.access_token if session is not None else None
+        authorized = (
+            token is not None
+            and headers.get("authorization", headers.get("Authorization")) == f"Bearer {token}"
+        )
+        safe = retry_safe is True or (retry_safe is None and method in {"GET", "HEAD", "OPTIONS"})
+
+        response = await self._require_http().request(
+            method, url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
         )
 
-        for url in urls:
-            resp = self.client.get(url)
-            if resp.fail:
-                raise BaseClientError(
-                    "Could not get general hashes", error=resp.error.string
-                )
+        if response.status_code.as_int() == 401 and authorized and safe and session is not None:
+            await session.refresh(previous_token=token)
+            renewed = session.authorized_headers
+            kwargs["headers"] = {
+                **{
+                    key: value
+                    for key, value in headers.items()
+                    if key.casefold() not in {"authorization", "client-token"}
+                },
+                "authorization": renewed["authorization"],
+                "client-token": renewed["client-token"],
+            }
+            response = await self._require_http().request(
+                method, url, max_attempts=1, retry_safe=retry_safe, **kwargs
+            )
 
-            self.raw_hashes += resp.response
+        return _validate(response)
 
-    def __str__(self) -> str:
-        return f"{self.__class__.__name__}(...)"
+    async def get(
+        self,
+        url: str,
+        *,
+        max_attempts: int | None = None,
+        retry_safe: bool | None = None,
+        **kwargs: Unpack[wreq.Request],
+    ) -> Response:
+        """Send a GET request with an optional per-request retry limit."""
+        return await self.request(
+            "GET", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+        )
+
+    async def post(
+        self,
+        url: str,
+        *,
+        max_attempts: int | None = None,
+        retry_safe: bool | None = None,
+        **kwargs: Unpack[wreq.Request],
+    ) -> Response:
+        """Send a POST request with an optional per-request retry limit."""
+        return await self.request(
+            "POST", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+        )
+
+    async def put(
+        self,
+        url: str,
+        *,
+        max_attempts: int | None = None,
+        retry_safe: bool | None = None,
+        **kwargs: Unpack[wreq.Request],
+    ) -> Response:
+        """Send a PUT request with an optional per-request retry limit."""
+        return await self.request(
+            "PUT", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+        )
+
+    async def delete(
+        self,
+        url: str,
+        *,
+        max_attempts: int | None = None,
+        retry_safe: bool | None = None,
+        **kwargs: Unpack[wreq.Request],
+    ) -> Response:
+        """Send a DELETE request with an optional per-request retry limit."""
+        return await self.request(
+            "DELETE", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+        )
+
+    async def head(
+        self,
+        url: str,
+        *,
+        max_attempts: int | None = None,
+        retry_safe: bool | None = None,
+        **kwargs: Unpack[wreq.Request],
+    ) -> Response:
+        """Send a HEAD request with an optional per-request retry limit."""
+        return await self.request(
+            "HEAD", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+        )
+
+    async def patch(
+        self,
+        url: str,
+        *,
+        max_attempts: int | None = None,
+        retry_safe: bool | None = None,
+        **kwargs: Unpack[wreq.Request],
+    ) -> Response:
+        """Send a PATCH request with an optional per-request retry limit."""
+        return await self.request(
+            "PATCH", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+        )
+
+
+def _validate(response: Response) -> Response:
+    """Validate and return the original response.
+
+    Args:
+        response: Response returned by the underlying HTTP transport.
+
+    Returns:
+        The response after all validation checks succeed.
+
+    Raises:
+        HTTPError: If the status is unsuccessful, or a JSON response
+            has no parsed object payload.
+    """
+    if not response.ok:
+        raise HTTPError(
+            f"Request returned non-ok status code: {response.status_code.as_int()}",
+            status_code=response.status_code.as_int(),
+            response=response,
+        )
+
+    content_type = response.headers.get("content-type")
+
+    if content_type and "json" in content_type and response.json is None:
+        raise HTTPError(
+            "Expected a JSON payload but received an empty or invalid body", response=response
+        )
+
+    return response

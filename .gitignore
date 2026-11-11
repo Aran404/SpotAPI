@@ -164,3 +164,14 @@ cython_debug/
 main.py
 build.bat
 sessions.json
+
+# Local planning, review notes, and exploratory captures
+/docs/growth-and-coverage.md
+/docs/research/
+/ARCHITECTURE_REVIEW.md
+/PUBLIC_FEATURES.md
+/REVIEW_REPORT.md
+/V2_REVIEW.md
+/docs/independent-review.md
+/docs/release-audit.md
+/benchmarks/*.json

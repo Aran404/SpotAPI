@@ -1,0 +1,382 @@
+{
+  "payloads": [
+    {
+      "cluster": {
+        "timestamp": "1794275794860",
+        "active_device_id": "2222222222222222222222222222222222222222",
+        "player_state": {
+          "timestamp": "1794275794750",
+          "playback_speed": 0.0,
+          "position_as_of_timestamp": "0",
+          "duration": "248431",
+          "is_playing": true,
+          "is_paused": false,
+          "options": {
+            "shuffling_context": false,
+            "repeating_context": false,
+            "repeating_track": false,
+            "playback_speed": 1.0,
+            "modes": {
+              "context_enhancement": "NONE",
+              "media": "audio",
+              "jam": "off"
+            }
+          },
+          "track": {
+            "uri": "spotify:track:3T06rGO2dVEntMvym0vpQu",
+            "metadata": {
+              "artist_name": "Juice WRLD",
+              "image_url": "https://i.scdn.co/image/ab67616d00001e028b27d35aa2c6dcf99895d664",
+              "title": "Empty",
+              "duration": "248431",
+              "album_title": "Death Race For Love (Bonus Track Version)"
+            }
+          },
+          "next_tracks": [
+            {
+              "uri": "spotify:track:3xBHLZwRfi0fjO9euaj5zf",
+              "metadata": {
+                "artist_name": "Future",
+                "image_url": "https://i.scdn.co/image/ab67616d00001e02644c510e8d4c02ae69028297",
+                "title": "WRLD On Drugs",
+                "duration": "217000",
+                "album_title": "Future & Juice WRLD Present... WRLD ON DRUGS"
+              }
+            },
+            {
+              "uri": "spotify:track:7EBy2V93Ykyvfc5CMApTGc",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1Gno5IBUHh6vUKp4nxu2Yd",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:0flSGzqHO12p9fU9kqaHGE",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:0T6lPMGTyaaNcvmpZ801sH",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:0IWi2ZDDldYKBHYmG7mqPm",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:47IySiC5o08gz0z5VDiH93",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:3GqB3q2lYK3qsvhghx92rS",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:7xLXJ4ovxe21uQZsT34cC7",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4Y5IZAa51QUdIuX0VvSe7v",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4Gw9IZtebeyWZk1X3Ons1K",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:3oDkdAySo1VQQG0ptV7uwa",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4S2uhQE8L9V6p7rj7SiauJ",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2QxekHjOYDnzNO5w8hu2D9",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:52WWw9qNZXZZtWU336TtKG",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2xwwY0EN7dtnXzMU8xRDxX",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4lH5L59hPQGr05aJyb2Q2E",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2U5WueTLIK5WJLD7mvDODv",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1XRzIGsdYaLi0jHeGlcHGP",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2XhatQ5NqfdqZMLCegWnbD",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:6XO8RlYuJCiI0v3IA48FeJ",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:55XOUxXsBBbC07PD3Zml3F",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2EL58P9iKGM5L2sO203i5y",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4oFhT5d5TDTJnkc22hiczk",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:6tT5Tm7NNC178qXyarHeED",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:6iaSML1PIYq936g62BDtBq",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2vs5ubqg8QUbfyWZpMfvWe",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1wa6QQsdSE3X2GbRljGpFk",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:6cZH4rX1KTt1aJ3Ql6Ynja",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:5WQrDB34o6M8V0jxNiX6RU",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:5E9YnE354Ua2h05nu4lmcA",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:0INehbMZOFPnaPBAjK97i3",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:5R2rsbwCDXORX2tLfprRmM",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4K06PO78fW4mnBVenxGNob",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:7DxhXT58gjkueScZGAMj6C",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:5wujBwqG7INdStqGd4tRMX",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1zgr5tpXBG9SXXeluXyfcz",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:55ZNNY6D8FkNFAlVceAwIZ",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1C8ux1YWLMHCenYJFiIV4Z",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1fCeXjoRExPP2qwSBh2aST",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4YFdnGd92wP6KBcaFa5v64",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4UoDSs5VAw6xHdzbkjocTM",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2QqJTIlGKRLJC3onkavYEz",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1n4eqIG0RRUCuPT4vnsVlv",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:7nD5MiXspW533xaREDma2N",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:43CIWpJaJHRcI4mUSjqgc2",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:5ELSwaFzL5rsSk9GCLdb52",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:21CkzgKCBCq5V4XKjiGSIj",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:33nyKeW0LWN72nPiXRcmOC",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:delimiter",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:3T06rGO2dVEntMvym0vpQu",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:3xBHLZwRfi0fjO9euaj5zf",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:7EBy2V93Ykyvfc5CMApTGc",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1Gno5IBUHh6vUKp4nxu2Yd",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:0flSGzqHO12p9fU9kqaHGE",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:0T6lPMGTyaaNcvmpZ801sH",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:0IWi2ZDDldYKBHYmG7mqPm",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:47IySiC5o08gz0z5VDiH93",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:3GqB3q2lYK3qsvhghx92rS",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:7xLXJ4ovxe21uQZsT34cC7",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4Y5IZAa51QUdIuX0VvSe7v",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4Gw9IZtebeyWZk1X3Ons1K",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:3oDkdAySo1VQQG0ptV7uwa",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4S2uhQE8L9V6p7rj7SiauJ",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2QxekHjOYDnzNO5w8hu2D9",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:52WWw9qNZXZZtWU336TtKG",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2xwwY0EN7dtnXzMU8xRDxX",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4lH5L59hPQGr05aJyb2Q2E",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2U5WueTLIK5WJLD7mvDODv",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1XRzIGsdYaLi0jHeGlcHGP",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2XhatQ5NqfdqZMLCegWnbD",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:6XO8RlYuJCiI0v3IA48FeJ",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:55XOUxXsBBbC07PD3Zml3F",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2EL58P9iKGM5L2sO203i5y",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:4oFhT5d5TDTJnkc22hiczk",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:6tT5Tm7NNC178qXyarHeED",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:6iaSML1PIYq936g62BDtBq",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:2vs5ubqg8QUbfyWZpMfvWe",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:1wa6QQsdSE3X2GbRljGpFk",
+              "metadata": {}
+            },
+            {
+              "uri": "spotify:track:6cZH4rX1KTt1aJ3Ql6Ynja",
+              "metadata": {}
+            }
+          ],
+          "prev_tracks": []
+        },
+        "devices": {
+          "1111111111111111111111111111111111111111": {
+            "can_play": true,
+            "volume": 65535,
+            "device_type": "COMPUTER",
+            "name": "Device 1"
+          },
+          "2222222222222222222222222222222222222222": {
+            "can_play": true,
+            "volume": 65535,
+            "device_type": "COMPUTER",
+            "name": "Device 2"
+          }
+        }
+      }
+    }
+  ]
+}
