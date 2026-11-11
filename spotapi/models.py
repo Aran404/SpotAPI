@@ -36,12 +36,13 @@ from .specialized.data_wrappers.artist_details import (
     ArtistRelease,
     ArtistTopTrack,
 )
-from .specialized.data_wrappers.catalogue import ProfilePlaylist
+from .specialized.data_wrappers.catalogue import AudiobookChapter, ProfilePlaylist
 from .specialized.data_wrappers.credits import Credit, TrackCredits
 from .specialized.data_wrappers.playlist_track import MusicalKey
 from .stats import TimeRange, TopContent
 
 __all__ = (
+    "AudiobookChapter",
     "AccountChallenge",
     "AccountPlan",
     "AccountProfile",

@@ -57,6 +57,12 @@ class ProfilePlaylists:
 class Profiles:
     """Read profile views; opt into the smaller binary format with protobuf=True."""
 
+    __slots__ = (
+        "session",
+        "queries",
+        "protobuf",
+    )
+
     def __init__(self, client: AsyncClient | AuthSession, *, protobuf: bool = False) -> None:
         """Borrow a client and optionally request the verified protobuf representation."""
         self.session = client.session if isinstance(client, AsyncClient) else client

@@ -85,7 +85,7 @@ python -m examples.discover "Daft Punk"
 | A credits rabbit hole | [Song credits](examples/credits.py) |
 | A playlist discovery companion | `Public.get_radio()` · `Public.get_playlist_recommendations()` |
 | Your own music dashboard | [Account, rankings and saved music](docs/account.md) |
-| A duplicate-aware playlist curator | `Playlist.items()` · `Playlist.remove_occurrences()` |
+| A duplicate-aware playlist curator | `Playlist.items()` · `Playlist.move_occurrences()` · `Playlist.remove_occurrences()` |
 | A live now-playing display | [Player example](examples/player.py) · [Lyrics example](examples/lyrics.py) |
 
 For several operations, reuse a `Catalogue` context. Inside your async application:

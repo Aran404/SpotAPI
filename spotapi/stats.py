@@ -27,6 +27,8 @@ class TopContent:
 class ListeningStats:
     """Get both rankings in one request with ``await stats.get()``."""
 
+    __slots__ = ("queries",)
+
     def __init__(self, client: AsyncClient | AuthSession) -> None:
         """Borrow an authenticated client for Spotify affinity rankings."""
         session = client.session if isinstance(client, AsyncClient) else client

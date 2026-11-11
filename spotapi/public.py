@@ -44,14 +44,21 @@ from .catalogue import (
 from .datastruct import ObjectDict
 from .discovery import Canvas, RecommendedTrack
 from .operations import DEFAULT_SEARCH_TYPES
+from .specialized.data_wrappers.catalogue import AudiobookChapter
 
-__all__ = ("Public", "SearchResults", "SpotifyResource")
+__all__ = (
+    "Public",
+    "SearchResults",
+    "SpotifyResource",
+)
 
 _ResultT = TypeVar("_ResultT")
 
 
 class Public:
     """Use one catalogue operation without managing a client yourself."""
+
+    __slots__ = ()
 
     @staticmethod
     def parse_url(value: str, /, *, kind: ResourceInputKind | None = None) -> SpotifyResource:
@@ -429,6 +436,24 @@ class Public:
             return await catalogue.get_track(uri)
 
     @staticmethod
+    async def get_tracks(tracks: Sequence[str], /) -> tuple[TrackDetails, ...]:
+        """Fetch several tracks in input order using one client."""
+        async with Catalogue() as catalogue:
+            return await catalogue.get_tracks(tracks)
+
+    @staticmethod
+    async def get_albums(albums: Sequence[str], /) -> tuple[AlbumDetails, ...]:
+        """Fetch several albums in input order using one client."""
+        async with Catalogue() as catalogue:
+            return await catalogue.get_albums(albums)
+
+    @staticmethod
+    async def get_artists(artists: Sequence[str], /) -> tuple[ArtistDetails, ...]:
+        """Fetch several artists in input order using one client."""
+        async with Catalogue() as catalogue:
+            return await catalogue.get_artists(artists)
+
+    @staticmethod
     async def get_podcast(uri: str, /) -> PodcastDetails:
         """Read podcast metadata from a URL, URI, or bare show ID."""
         async with Catalogue() as catalogue:
@@ -439,6 +464,18 @@ class Public:
         """Read audiobook metadata from its Spotify show link, URI or ID."""
         async with Catalogue() as catalogue:
             return await catalogue.get_audiobook(uri)
+
+    @staticmethod
+    async def get_audiobook_chapters(
+        uri: str, /, *, limit: int = 50
+    ) -> AsyncGenerator[Sequence[AudiobookChapter], None]:
+        """Stream chapters from an audiobook available in the current market."""
+        async with (
+            Catalogue() as catalogue,
+            aclosing(catalogue.get_audiobook_chapters(uri, limit=limit)) as pages,
+        ):
+            async for page in pages:
+                yield page
 
     @staticmethod
     async def get_podcast_episode(uri: str, /) -> PodcastEpisodeDetails:

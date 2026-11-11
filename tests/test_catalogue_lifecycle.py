@@ -10,10 +10,28 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from spotapi import Catalogue, Public
+from spotapi.catalogue import _get_many
 from spotapi.datastruct import ObjectDict
 from spotapi.queries import Queries
 from spotapi.query import QueryClient, SharedQueryClient
 from spotapi.session import AuthSession
+
+
+async def test_multi_item_lookup_bounds_concurrency_and_preserves_order() -> None:
+    active = peak = 0
+
+    async def get_one(uri: str) -> str:
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        await asyncio.sleep(0)
+        active -= 1
+        return uri
+
+    ids = [f"id{index}" for index in range(21)]
+    assert await _get_many(ids, "track", get_one) == tuple(f"spotify:track:{id_}" for id_ in ids)
+    assert peak == 8
+    assert active == 0
 
 
 class Client(QueryClient):

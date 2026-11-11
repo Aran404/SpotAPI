@@ -6,6 +6,10 @@
 - Install the `spotapi` command for anonymous track search and JSON resource lookups.
 - Open a managed account session with `Private.from_cookies()`.
 - Follow, unfollow and check artists by ID, URI or URL through `account.library`.
+- Fetch multiple tracks, albums or artists through one catalogue client.
+- Move exact playlist occurrences by UID, including duplicate tracks.
+- Set or clear a custom JPEG playlist cover.
+- Stream typed audiobook chapter pages for available titles.
 
 ### Added
 

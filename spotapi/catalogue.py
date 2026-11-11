@@ -70,6 +70,7 @@ from .specialized.data_wrappers.artist_details import (
     ArtistReleaseGroups,
     ArtistTopTrack,
 )
+from .specialized.data_wrappers.catalogue import AudiobookChapter
 from .specialized.data_wrappers.credits import Credit, TrackCredits
 from .types import BaseClientError
 
@@ -107,6 +108,35 @@ __all__ = (
 )
 
 _ResultT = TypeVar("_ResultT")
+_ShowItemT = TypeVar("_ShowItemT", PodcastEpisodeDetails, AudiobookChapter)
+
+
+async def _get_many(
+    values: Sequence[str],
+    kind: ResourceInputKind,
+    get_one: Callable[[str], Awaitable[_ResultT]],
+) -> tuple[_ResultT, ...]:
+    """Resolve inputs before issuing bounded, ordered reads on one client."""
+    if isinstance(values, str):
+        raise TypeError("Pass a collection of Spotify resources")
+
+    uris = [parse_spotify_resource(value, kind).uri for value in values]
+    results: list[_ResultT] = []
+
+    for offset in range(0, len(uris), 8):
+        batch = await asyncio.gather(
+            *(get_one(uri) for uri in uris[offset : offset + 8]),
+            return_exceptions=True,
+        )
+
+        for item in batch:
+            if isinstance(item, BaseException):
+                raise item
+
+            results.append(item)
+
+    return tuple(results)
+
 
 SpotifyItem: TypeAlias = (
     TrackDetails
@@ -371,24 +401,26 @@ def _search_section(data: ObjectDict, names: tuple[str, ...]) -> ObjectDict:
     raise BaseClientError(f"searchDesktop: response contains no {'/'.join(names)} section")
 
 
-def _parse_podcast_episode_page(page: ObjectDict) -> list[PodcastEpisodeDetails]:
-    """Deserialize an episode page returned by ``queryPodcastEpisodes``."""
+def _parse_show_page(
+    page: ObjectDict, operation: Operations, model: type[_ShowItemT]
+) -> list[_ShowItemT]:
+    """Deserialize podcast episode or audiobook chapter occurrences."""
     items: object = page["items"] if "items" in page else page.get("_items")
 
     if not isinstance(items, list):
-        raise BaseClientError("queryPodcastEpisodes: missing episode items")
+        raise BaseClientError(f"{operation.value}: missing items")
 
-    episodes: list[PodcastEpisodeDetails] = []
+    results: list[_ShowItemT] = []
 
     for entry in cast(list[object], items):
         if not isinstance(entry, Mapping):
-            raise BaseClientError("queryPodcastEpisodes: invalid episode entry")
+            raise BaseClientError(f"{operation.value}: invalid entry")
 
         entry_data = cast(Mapping[str, object], entry)
         entity: object = entry_data.get("entity")
 
         if not isinstance(entity, Mapping):
-            raise BaseClientError("queryPodcastEpisodes: missing episode entity")
+            raise BaseClientError(f"{operation.value}: missing entity")
 
         entity_data = cast(Mapping[str, object], entity)
         payload: object = entity_data.get("data")
@@ -397,35 +429,35 @@ def _parse_podcast_episode_page(page: ObjectDict) -> list[PodcastEpisodeDetails]
             continue
 
         if not isinstance(payload, Mapping):
-            raise BaseClientError("queryPodcastEpisodes: invalid episode data")
+            raise BaseClientError(f"{operation.value}: invalid entity data")
 
         try:
-            episode = from_dict(
-                PodcastEpisodeDetails,
-                cast(Mapping[str, Any], payload),
-            )
+            item = from_dict(model, cast(Mapping[str, Any], payload))
         except (LookupError, TypeError, ValueError, AttributeError) as exc:
-            raise BaseClientError(f"queryPodcastEpisodes: failed to parse episode: {exc}") from exc
+            raise BaseClientError(f"{operation.value}: failed to parse entity: {exc}") from exc
 
-        if not episode.id or not episode.name or not episode.uri:
-            raise BaseClientError("queryPodcastEpisodes: incomplete episode data")
+        if not item.id or not item.name or not item.uri:
+            raise BaseClientError(f"{operation.value}: incomplete entity data")
 
-        episodes.append(episode)
+        results.append(item)
 
-    return episodes
+    return results
 
 
-async def _podcast_episode_pages(
+async def _show_pages(
     variables: dict[str, Any],
     queries: Queries,
-) -> AsyncGenerator[Sequence[PodcastEpisodeDetails], None]:
-    """Yield typed pages from the show's episode connection."""
+    operation: Operations,
+    connection: str,
+    model: type[_ShowItemT],
+) -> AsyncGenerator[Sequence[_ShowItemT], None]:
+    """Yield typed pages from a show's episode or chapter connection."""
     async for page in queries.paginate(
-        Operations.QUERY_PODCAST_EPISODES.value,
+        operation.value,
         variables,
-        extract_page=lambda response: _page(response, "podcastUnionV2", "episodesV2"),
+        extract_page=lambda response: _page(response, "podcastUnionV2", connection),
     ):
-        yield _parse_podcast_episode_page(page)
+        yield _parse_show_page(page, operation, model)
 
 
 class Catalogue:
@@ -1203,6 +1235,18 @@ class Catalogue:
 
         return track
 
+    async def get_tracks(self, tracks: Sequence[str], /) -> tuple[TrackDetails, ...]:
+        """Fetch track details in input order with up to eight concurrent reads."""
+        return await _get_many(tracks, "track", self.get_track)
+
+    async def get_albums(self, albums: Sequence[str], /) -> tuple[AlbumDetails, ...]:
+        """Fetch album details in input order with up to eight concurrent reads."""
+        return await _get_many(albums, "album", self.get_album)
+
+    async def get_artists(self, artists: Sequence[str], /) -> tuple[ArtistDetails, ...]:
+        """Fetch artist details in input order with up to eight concurrent reads."""
+        return await _get_many(artists, "artist", self.get_artist)
+
     async def get_podcast(self, uri: str, /) -> PodcastDetails:
         """Read podcast metadata from a URL, URI, or bare show ID."""
         show = await _show_details(uri, self.queries)
@@ -1255,7 +1299,30 @@ class Catalogue:
             "includeEpisodeContentRatingsV2": True,
         }
 
-        return _podcast_episode_pages(variables, self.queries)
+        return _show_pages(
+            variables,
+            self.queries,
+            Operations.QUERY_PODCAST_EPISODES,
+            "episodesV2",
+            PodcastEpisodeDetails,
+        )
+
+    def get_audiobook_chapters(
+        self, uri: str, /, *, limit: int = 50
+    ) -> AsyncGenerator[Sequence[AudiobookChapter], None]:
+        """Stream chapters in order, subject to Spotify's market availability."""
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("limit must be an integer between 1 and 100")
+
+        book = parse_spotify_resource(uri, "show")
+
+        return _show_pages(
+            {"uri": book.uri, "offset": 0, "limit": limit},
+            self.queries,
+            Operations.QUERY_BOOK_CHAPTERS,
+            "chaptersV2",
+            AudiobookChapter,
+        )
 
     async def iter_podcast_episodes(
         self,

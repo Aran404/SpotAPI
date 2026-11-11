@@ -401,6 +401,11 @@ class LoggerColour(_BaseLogger):
         context: Default extra fields merged into every record.
     """
 
+    __slots__ = (
+        "_stream",
+        "_colour",
+    )
+
     _separator: ClassVar[str] = " │ "
 
     def __init__(
@@ -490,6 +495,8 @@ class StandardLogger(_BaseLogger):
         context: Default extra fields merged into every record.
     """
 
+    __slots__ = ("_stream",)
+
     def __init__(
         self,
         name: str = "root",
@@ -536,6 +543,8 @@ class NoopLogger(_BaseLogger):
     Pass this when you want to silence SpotAPI's internal logging entirely.
     """
 
+    __slots__ = ()
+
     def _emit(self, record: LogRecord) -> None:
         """Write one prepared record through this logger's configured sink."""
         pass
@@ -555,6 +564,8 @@ class InbuiltLogger(_BaseLogger):
         name: Used when creating a default stdlib logger.
         context: Default extra fields merged into every record.
     """
+
+    __slots__ = ("_logger",)
 
     _STDLIB_LEVEL: ClassVar[dict[Level, int]] = {
         Level.DEBUG: logging.DEBUG,
@@ -614,6 +625,11 @@ class JsonLogger(_BaseLogger):
         indent: JSON indentation, or ``None`` for compact output.
     """
 
+    __slots__ = (
+        "_stream",
+        "_indent",
+    )
+
     def __init__(
         self,
         name: str = "root",
@@ -667,6 +683,8 @@ class MultiLogger(_BaseLogger):
             JsonLogger(min_level=Level.WARNING, stream=open("errors.jsonl", "a")),
         )
     """
+
+    __slots__ = ("_children",)
 
     def __init__(self, *loggers: _BaseLogger) -> None:
         """Configure the logger's explicit sinks, level and structured context."""

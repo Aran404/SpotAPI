@@ -421,6 +421,16 @@ class SharedQueryClient:
     authorization and discovery without serializing the subsequent requests.
     """
 
+    __slots__ = (
+        "_client",
+        "_factory",
+        "_lock",
+        "_loop",
+        "_borrowers",
+        "_drained",
+        "_close_task",
+    )
+
     def __init__(self, factory: Callable[[], Awaitable[QueryClient]] | None = None) -> None:
         """Lazily own one loop-local query client created by the optional factory."""
         self._client: QueryClient | None = None
@@ -510,6 +520,8 @@ class _PoolEntry:
 
 class _PoolRegistry(threading.local):
     """Pool state is isolated per thread *and* per running event loop."""
+
+    __slots__ = ("entries",)
 
     def __init__(self) -> None:
         """Create this thread's registry of event-loop-specific query owners."""

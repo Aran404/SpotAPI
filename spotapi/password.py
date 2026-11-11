@@ -13,6 +13,12 @@ _SITE_KEY = "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39"
 class PasswordReset:
     """Borrow an open AsyncClient; request an email, then reset with its link token."""
 
+    __slots__ = (
+        "http",
+        "solver",
+        "flow_id",
+    )
+
     def __init__(
         self,
         client: AsyncClient,

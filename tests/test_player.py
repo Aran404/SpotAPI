@@ -649,7 +649,7 @@ async def test_controller_keepalive_failure_disconnects_and_preserves_cause(
 
         failure = ConnectionError("connection lost")
         report = AsyncMock(side_effect=failure)
-        monkeypatch.setattr(controller, "report", report)
+        monkeypatch.setattr(type(controller), "report", report)
         controller.keep_alive_seconds = 0
 
         with pytest.raises(BaseClientError) as caught:
@@ -702,7 +702,7 @@ async def test_sleep_timer_pauses_and_connection_cleanup_cancels_replacement(
     monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
     player = Player(session)
     pause = AsyncMock()
-    monkeypatch.setattr(player, "pause", pause)
+    monkeypatch.setattr(Player, "pause", pause)
 
     async with player.connect():
         finished = asyncio.create_task(player.wait_for("sleep_timer_finished", timeout=1))

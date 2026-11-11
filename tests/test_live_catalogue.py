@@ -5,10 +5,30 @@ from contextlib import aclosing
 
 import pytest
 
-from spotapi import Public
+from spotapi import Catalogue, Public
 from spotapi.models import PlaylistTrack
 
 pytestmark = [pytest.mark.live]
+
+
+async def test_live_multi_item_lookups_preserve_input_order() -> None:
+    tracks = ("39MK3d3fonIP8Mz9oHCTBB", "33XUHrCbrAW6me9ewdCZip")
+    albums = ("4LH4d3cOWNNsVw41Gqt2kv", "2noRn2Aes5aoNVsU6iWThc")
+    artists = ("4tZwfgrHOc3mvqYlEYSvVi", "5K4W6rqBFWDnAN6FQUkS6x")
+
+    async with Catalogue() as catalogue:
+        assert tuple(track.id for track in await catalogue.get_tracks(tracks)) == tracks
+        assert tuple(album.id for album in await catalogue.get_albums(albums)) == albums
+        assert tuple(artist.id for artist in await catalogue.get_artists(artists)) == artists
+
+
+async def test_live_audiobook_chapters_stream_distinct_pages() -> None:
+    async with aclosing(Public.get_audiobook_chapters("1KYEMj26rQOkaYOSBSidB4", limit=2)) as pages:
+        first, second = await anext(pages), await anext(pages)
+
+    assert len(first) == len(second) == 2
+    assert all(chapter.id and chapter.uri and chapter.name for chapter in (*first, *second))
+    assert not {chapter.id for chapter in first} & {chapter.id for chapter in second}
 
 
 @pytest.mark.parametrize("query", ["The Daily", "Dune"])

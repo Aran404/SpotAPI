@@ -39,6 +39,37 @@ R = TypeVar("R")
 class PlayerStatus:
     """Register listeners, then use ``async with status.connect()``."""
 
+    __slots__ = (
+        "name",
+        "session",
+        "controller_id",
+        "observer_id",
+        "_controller",
+        "_controller_task",
+        "state",
+        "devices",
+        "playback",
+        "endpoints",
+        "connection_id",
+        "_events",
+        "_waiters",
+        "_acks",
+        "_ack_received",
+        "_handshake",
+        "_snapshot",
+        "_disconnected",
+        "_connecting",
+        "_closing",
+        "_closed",
+        "_scope_active",
+        "_ready",
+        "_stop",
+        "_shutdown_lock",
+        "_websocket",
+        "_runner",
+        "_error",
+    )
+
     def __init__(self, session: AuthSession | AsyncClient, *, name: str = "SpotAPI") -> None:
         """Borrow a session and prepare a scoped, non-rendering Connect controller."""
         if not name.strip():

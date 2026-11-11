@@ -36,6 +36,7 @@ _JsonValue: TypeAlias = (
 _Op: TypeAlias = dict[str, _JsonValue]
 
 _PLAYLIST_URL: Final[str] = "https://spclient.wg.spotify.com/playlist/v2/playlist"
+_COVER_UPLOAD_URL: Final[str] = "https://image-upload.spotify.com/v4/playlist"
 _ROOTLIST_URL: Final[str] = "https://spclient.wg.spotify.com/playlist/v2/user/{}/rootlist/changes"
 _PAGE_LIMIT: Final[int] = 100
 
@@ -284,6 +285,12 @@ class PlaylistHandler:
             else:
                 cleared.append("LIST_DESCRIPTION")
 
+        await self._set_playlist_attributes(playlist, values, cleared)
+
+    async def _set_playlist_attributes(
+        self, playlist: str, values: _Op, cleared: list[_JsonValue]
+    ) -> None:
+        """Apply a metadata change and require Spotify's resulting revision."""
         operation: _Op = {
             "kind": "UPDATE_LIST_ATTRIBUTES",
             "updateListAttributes": {"newAttributes": {"values": values, "noValue": cleared}},
@@ -300,6 +307,38 @@ class PlaylistHandler:
         )
         if not body.get("revision"):
             raise PlaylistError(_BAD_REVISION)
+
+    async def set_playlist_cover(self, playlist: str, jpeg: bytes | None) -> None:
+        """Upload a JPEG cover or clear it with None."""
+        uri = _as_uri("playlist", playlist)
+        values: _Op = {"formatAttributes": [], "pictureSize": []}
+        if jpeg is None:
+            await self._set_playlist_attributes(uri, values, ["LIST_PICTURE"])
+            return
+
+        if not jpeg.startswith(b"\xff\xd8\xff"):
+            raise ValueError("Provide JPEG image bytes or None")
+
+        upload = await self.session.client.post(
+            _COVER_UPLOAD_URL,
+            body=jpeg,
+            headers={**self.session.authorized_headers, "content-type": "image/jpeg"},
+            max_attempts=1,
+        )
+        token: object = upload.json.get("uploadToken") if upload.json is not None else None
+        if not isinstance(token, str) or not token:
+            raise PlaylistError("Spotify returned no playlist cover upload token")
+
+        playlist_id = quote(uri.rsplit(":", 1)[-1], safe="")
+        registered = await self._post(
+            f"{_PLAYLIST_URL}/{playlist_id}/register-image", {"uploadToken": token}
+        )
+        picture: object = registered.get("picture")
+        if not isinstance(picture, str) or not picture:
+            raise PlaylistError("Spotify returned no registered playlist picture")
+
+        values["picture"] = picture
+        await self._set_playlist_attributes(uri, values, [])
 
     async def get_playlist_metadata(self, playlist: str) -> PlaylistDetails:
         """Read canonical metadata directly; omit GraphQL-only presentation fields."""
@@ -478,6 +517,10 @@ class Playlist:
         """Change supplied metadata; an empty description clears it, and None leaves it alone."""
         await self.ph.edit_playlist(self.playlist_id, name=name, description=description)
 
+    async def set_cover(self, jpeg: bytes | None) -> None:
+        """Set a custom JPEG cover, or pass None to restore the default artwork."""
+        await self.ph.set_playlist_cover(self.playlist_id, jpeg)
+
     async def set_published(self, published: bool) -> None:
         """Show or hide this playlist on your profile without changing access permissions."""
         await self.ph.set_playlist_published(self.playlist_id, published)
@@ -576,6 +619,53 @@ class Playlist:
             raise PlaylistError(_BAD_RESPONSE)
         if result.get("__typename") != "RemoveItemsFromPlaylistPayload":
             raise PlaylistError(f"Spotify rejected playlist removal: {result.get('__typename')!r}")
+
+    async def move_occurrences(
+        self,
+        *entries: PlaylistEntry | str,
+        before: PlaylistEntry | str | None = None,
+        after: PlaylistEntry | str | None = None,
+    ) -> None:
+        """Move exact occurrences before or after an anchor, or to the end."""
+        if before is not None and after is not None:
+            raise ValueError("Specify either before or after")
+
+        uids = list(
+            dict.fromkeys(
+                entry.uid if isinstance(entry, PlaylistEntry) else entry for entry in entries
+            )
+        )
+        anchor = before if before is not None else after
+        anchor_uid = anchor.uid if isinstance(anchor, PlaylistEntry) else anchor
+        if any(not uid for uid in uids) or (anchor is not None and not anchor_uid):
+            raise ValueError("Each playlist occurrence must have a UID")
+
+        if anchor_uid in uids:
+            raise ValueError("The anchor cannot be one of the moved occurrences")
+
+        if not uids:
+            return
+
+        move_type = (
+            "BEFORE_UID"
+            if before is not None
+            else "AFTER_UID" if after is not None else "BOTTOM_OF_PLAYLIST"
+        )
+        response = await self.ph.qc.pathfinder_query(
+            {
+                "uids": uids,
+                "playlistUri": self.playlist_id,
+                "newPosition": {"moveType": move_type, "fromUid": anchor_uid},
+            },
+            "moveItemsInPlaylist",
+            max_attempts=1,
+        )
+
+        result = response.get("moveItemsInPlaylist")
+        if not isinstance(result, ObjectDict):
+            raise PlaylistError(_BAD_RESPONSE)
+        if result.get("__typename") != "MoveItemsInPlaylistPayload":
+            raise PlaylistError(f"Spotify rejected playlist move: {result.get('__typename')!r}")
 
     async def delete(self) -> None:
         """Remove this playlist from the user's library rootlist.

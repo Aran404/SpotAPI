@@ -2,11 +2,13 @@
 
 import asyncio
 import os
+from io import BytesIO
 
 import pytest
 
 from spotapi import AsyncClient, Library, LikedTracks, Playlist, PlaylistHandler
 from spotapi.datastruct import ObjectDict
+from spotapi.playlist import _PLAYLIST_URL
 
 pytestmark = [pytest.mark.live, pytest.mark.authenticated, pytest.mark.mutates]
 
@@ -56,10 +58,41 @@ async def test_live_playlist_metadata_and_exact_duplicate_removal() -> None:
             await wait_for_playlist_count(playlist, 2)
             entries = [entry async for entry in playlist.items()]
             assert len(entries) == 2 and entries[0].uid != entries[1].uid
+            await playlist.move_occurrences(entries[1], before=entries[0])
+            async with asyncio.timeout(15):
+                while [entry.uid async for entry in playlist.items()] != [
+                    entries[1].uid,
+                    entries[0].uid,
+                ]:
+                    await asyncio.sleep(1)
             await playlist.remove_occurrences(entries[1])
             await wait_for_playlist_count(playlist, 1)
             remaining = [entry async for entry in playlist.items()]
             assert len(remaining) == 1 and remaining[0].uid == entries[0].uid
+        finally:
+            await playlist.delete()
+
+
+async def test_live_playlist_cover_upload_and_clear() -> None:
+    image = pytest.importorskip("PIL.Image")
+    buffer = BytesIO()
+    image.new("RGB", (300, 300), "#246e83").save(buffer, "JPEG")
+
+    async with await AsyncClient.from_cookies(os.environ["SPOTIFY_COOKIE"]) as client:
+        playlist = await PlaylistHandler(client).create_playlist("SpotAPI temporary cover test")
+
+        async def cover() -> object:
+            url = f"{_PLAYLIST_URL}/{playlist.playlist_id.rsplit(':', 1)[-1]}"
+            response = await client.get(url, headers=playlist.ph._headers(), max_attempts=1)
+            assert response.json is not None
+            return response.json["attributes"].get("picture")
+
+        try:
+            await playlist.set_cover(buffer.getvalue())
+            picture = await cover()
+            assert isinstance(picture, str) and picture
+            await playlist.set_cover(None)
+            assert not await cover()
         finally:
             await playlist.delete()
 

@@ -45,6 +45,8 @@ class BlendInvitation:
 class Blends:
     """Create an invitation, then share its URL yourself."""
 
+    __slots__ = ("session",)
+
     def __init__(self, client: AsyncClient | AuthSession) -> None:
         """Borrow the caller's authenticated Spotify session."""
         self.session = client.session if isinstance(client, AsyncClient) else client

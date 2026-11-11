@@ -18,6 +18,13 @@ from .types import BaseClientError, HTTPError
 
 
 class AccountPage(HTMLParser):
+    __slots__ = (
+        "csrf",
+        "_reading",
+        "_script",
+        "data",
+    )
+
     def __init__(self, html: str) -> None:
         """Initialize the account page parser or its borrowed cookie/CSRF session."""
         super().__init__()
@@ -49,6 +56,14 @@ class AccountPage(HTMLParser):
 
 class AccountSession:
     """Borrow a client and retain only the account page's CSRF state."""
+
+    __slots__ = (
+        "client",
+        "page",
+        "locale",
+        "csrf",
+        "origin",
+    )
 
     def __init__(self, client: AsyncClient, page: str, *, locale: str = "en_US") -> None:
         """Initialize the account page parser or its borrowed cookie/CSRF session."""

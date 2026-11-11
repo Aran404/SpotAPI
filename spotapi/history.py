@@ -78,6 +78,8 @@ class RecentItem:
 class ListeningHistory:
     """Fetch recents, including played contexts and explicitly marked saved items."""
 
+    __slots__ = ("queries",)
+
     def __init__(self, client: AsyncClient | AuthSession) -> None:
         """Borrow an authenticated client for recent listening and saved activity."""
         session = client.session if isinstance(client, AsyncClient) else client

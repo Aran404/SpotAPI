@@ -19,6 +19,17 @@ PLAYBACK_URL = "https://spclient.wg.spotify.com"
 class RegisteredDevice:
     """Register your renderer with ``create()``, then close it or use its context."""
 
+    __slots__ = (
+        "session",
+        "id",
+        "keep_alive_seconds",
+        "supports_observing",
+        "_url",
+        "_sequence",
+        "_closed",
+        "_lock",
+    )
+
     def __init__(
         self, session: AuthSession, device_id: str, *, endpoint: str = PLAYBACK_URL
     ) -> None:

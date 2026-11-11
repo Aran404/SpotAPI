@@ -32,6 +32,8 @@ class NotificationPage:
 class Notifications:
     """Use ``get()``; pass its forward_cursor to read the following page."""
 
+    __slots__ = ("session",)
+
     def __init__(self, client: AsyncClient | AuthSession) -> None:
         """Borrow an authenticated client without acknowledging any notifications."""
         self.session = client.session if isinstance(client, AsyncClient) else client

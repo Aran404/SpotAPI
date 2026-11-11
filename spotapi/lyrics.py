@@ -119,6 +119,11 @@ class Lyrics:
 class LyricsClient:
     """Use ``await LyricsClient(client).get(track, image_url=cover)``."""
 
+    __slots__ = (
+        "session",
+        "_endpoints",
+    )
+
     def __init__(self, session: AuthSession | AsyncClient) -> None:
         """Borrow an authenticated client; resolve lyrics hosts lazily."""
         self.session = session.session if isinstance(session, AsyncClient) else session

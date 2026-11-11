@@ -66,6 +66,16 @@ def queue_entry(value: str | PlaybackTrack) -> dict[str, Any]:
 class Player(PlayerStatus):
     """Connect once, observe changes, and control a selected existing device."""
 
+    __slots__ = (
+        "target_device_id",
+        "source_device_id",
+        "_registered",
+        "_sleep_task",
+        "_sleep_deadline",
+        "library",
+        "history",
+    )
+
     def __init__(
         self,
         session: AuthSession | AsyncClient,

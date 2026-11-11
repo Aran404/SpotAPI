@@ -110,6 +110,21 @@ class AccountChallenge:
 class Account:
     """Use ``await Account(client).get_profile()`` with an authenticated client."""
 
+    __slots__ = (
+        "session",
+        "http",
+        "solver",
+        "profile",
+        "plan",
+        "client_nonce",
+        "library",
+        "liked_tracks",
+        "stats",
+        "profiles",
+        "notifications",
+        "blends",
+    )
+
     def __init__(
         self,
         client: AsyncClient | AuthSession,
@@ -275,6 +290,8 @@ class Account:
 
 class Private(Account):
     """Authenticated account operations with a managed cookie sign-in shortcut."""
+
+    __slots__ = ()
 
     @classmethod
     @asynccontextmanager

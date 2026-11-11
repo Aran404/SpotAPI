@@ -26,6 +26,7 @@ def _page_options(limit: int, offset: int) -> None:
 
 
 class _LibraryActions:
+    __slots__ = ("queries",)
 
     def __init__(self, client: AsyncClient | AuthSession) -> None:
         """Borrow the caller's session for library reads and explicit mutations."""
@@ -117,6 +118,8 @@ class _LibraryActions:
 class LikedTracks(_LibraryActions):
     """Check, save and paginate liked tracks using one borrowed client."""
 
+    __slots__ = ()
+
     @staticmethod
     def _uris(values: Sequence[str]) -> list[str]:
         """Normalize resource identifiers and reject a string used as a collection."""
@@ -153,6 +156,8 @@ class LikedTracks(_LibraryActions):
 
 class Library(_LibraryActions):
     """Browse saved items with ``get()`` or stream them with ``items()``."""
+
+    __slots__ = ()
 
     async def is_following_artists(self, *artists: str) -> tuple[bool, ...]:
         """Return follow flags for artist IDs, URIs, or URLs in input order."""

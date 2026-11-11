@@ -12,6 +12,7 @@ from .track import Duration
 
 __all__ = (
     "Audiobook",
+    "AudiobookChapter",
     "Author",
     "Episode",
     "Genre",
@@ -49,6 +50,18 @@ class Audiobook:
     def __repr__(self) -> str:
         """Return a concise diagnostic representation."""
         return f"<Audiobook name={self.name!r} uri={self.uri!r}>"
+
+
+@dataclass(slots=True)
+class AudiobookChapter:
+    """A chapter returned by an audiobook's chapter list."""
+
+    id: str
+    uri: str
+    name: str
+    description: str | None = None
+    duration: Duration | None = None
+    cover_art: CoverArt | None = None
 
 
 @dataclass(slots=True)
