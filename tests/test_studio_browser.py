@@ -14,11 +14,14 @@ from playwright.async_api import Error, Page, async_playwright
 from examples.studio.actions import manifest
 from examples.studio.desktop import page
 
+ARTIST = {"uri": "spotify:artist:artist", "profile": {"name": "Daft Punk"}}
+ALBUM = {"uri": "spotify:album:album", "name": "Discovery"}
 TRACK = {
     "name": "One More Time",
     "uri": "spotify:track:test",
     "id": "test",
-    "artists": {"items": [{"profile": {"name": "Daft Punk"}}]},
+    "artists": {"items": [ARTIST]},
+    "album_of_track": ALBUM,
 }
 
 
@@ -50,7 +53,24 @@ async def studio_page() -> AsyncGenerator[tuple[Page, list[str]], None]:
             elif action == "top":
                 data = {"tracks": [TRACK], "artists": []}
             elif action == "detail":
-                data = TRACK
+                match values.get("uri"):
+                    case "spotify:artist:artist":
+                        data = {
+                            **ARTIST,
+                            "discography": {"popular_releases_albums": {"items": [ALBUM]}},
+                        }
+                    case "spotify:album:album":
+                        data = {
+                            **ALBUM,
+                            "artists": {"items": [ARTIST]},
+                            "tracks_v2": {"items": [{"track": TRACK}]},
+                        }
+                    case _:
+                        data = {
+                            **TRACK,
+                            "artists": None,
+                            "first_artist": {"items": [ARTIST]},
+                        }
             elif action == "player":
                 data = {"state": None, "devices": [], "events": []}
             else:
@@ -101,6 +121,30 @@ async def test_lab_cancel_never_sends_an_account_mutation(
     assert "change_password" not in requests
 
 
+async def test_detail_links_follow_artist_and_album_with_local_back_navigation(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, requests = studio_page
+    dialog = view.locator("#detail")
+    await view.get_by_role("heading", name="One More Time", exact=True).click()
+    artist = dialog.get_by_role("button", name="Daft Punk", exact=True)
+    await artist.hover()
+    assert await artist.evaluate("el => getComputedStyle(el).textDecorationLine") == "underline"
+    await artist.press("Enter")
+    await dialog.get_by_role("heading", name="Daft Punk", exact=True).wait_for()
+    await dialog.get_by_role("button", name="Discovery", exact=True).click()
+    await dialog.get_by_role("heading", name="Discovery", exact=True).wait_for()
+    await dialog.get_by_role("heading", name="Tracks", exact=True).wait_for()
+
+    before = requests.count("detail")
+    await dialog.get_by_role("button", name="Back", exact=True).click()
+    await dialog.get_by_role("heading", name="Daft Punk", exact=True).wait_for()
+    await dialog.get_by_role("button", name="Back", exact=True).click()
+    await dialog.get_by_role("heading", name="One More Time", exact=True).wait_for()
+    assert await artist.evaluate("el => el === document.activeElement")
+    assert requests.count("detail") == before == 3
+
+
 async def test_compact_layout_has_no_horizontal_overflow(
     studio_page: tuple[Page, list[str]],
 ) -> None:
@@ -109,6 +153,28 @@ async def test_compact_layout_has_no_horizontal_overflow(
     assert await view.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     await view.get_by_role("button", name="Feature lab API", exact=True).click()
     assert await view.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+
+
+async def test_closing_details_discards_a_pending_related_view(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, _ = studio_page
+    await view.get_by_role("heading", name="One More Time", exact=True).click()
+    await view.locator("#detail").get_by_role("heading", name="One More Time").wait_for()
+    await view.evaluate("""() => {
+        const request = window.pywebview.api.request;
+        window.pywebview.api.request = (action, values) =>
+            action === 'detail' && values.uri === 'spotify:artist:artist'
+                ? new Promise(resolve => { window.resolveArtist = resolve; })
+                : request(action, values);
+        window.pendingArtist = inspect('spotify:artist:artist');
+    }""")
+    await view.get_by_role("button", name="Close details").click()
+    await view.evaluate("""async () => {
+        window.resolveArtist({ok: true, data: {name: 'Late artist'}});
+        await window.pendingArtist;
+    }""")
+    assert not await view.locator("#detail").evaluate("dialog => dialog.open")
 
 
 async def test_account_switch_discards_pending_details_and_player_responses(

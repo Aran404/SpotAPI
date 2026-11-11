@@ -293,12 +293,13 @@
         />
       </div>
     </footer>
-    <dialog id="detail">
+    <dialog id="detail" aria-labelledby="detail-label">
       <div class="dialog-head">
+        <button class="chip" id="detail-back" type="button" hidden>Back</button>
         <span class="eyebrow" id="detail-label">A CLOSER LOOK</span
         ><button class="icon close-dialog" aria-label="Close details">×</button>
       </div>
-      <div id="detail-body"></div>
+      <div id="detail-body" tabindex="-1"></div>
     </dialog>
     <dialog id="confirm">
       <form method="dialog">

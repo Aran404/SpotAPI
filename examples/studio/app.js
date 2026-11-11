@@ -2,6 +2,8 @@
 
 const $ = (selector) => document.querySelector(selector);
 const detailCache = new Map();
+const detailHistory = [];
+let detailRequest = 0;
 const state = {
   view: "discover",
   kind: "tracks",
@@ -135,15 +137,19 @@ function titleOf(value) {
     "Unavailable item"
   );
 }
+function artistEntries(value) {
+  const artists = value?.artists?.items || value?.artists;
+  if (Array.isArray(artists) && artists.length)
+    return artists;
+  return [...(value?.first_artist?.items || []), ...(value?.other_artists?.items || [])];
+}
 function artistsOf(value) {
   if (value == null || typeof value !== "object") return "";
   if (Array.isArray(value.errors)) return value.errors.join("; ");
-  const artists = value?.artists?.items || value?.artists || [];
-  if (Array.isArray(artists) && artists.length)
-    return artists
-      .map((artist) => artist.profile?.name || artist.name)
-      .filter(Boolean)
-      .join(", ");
+  const names = artistEntries(value)
+    .map((artist) => artist.profile?.name || artist.name)
+    .filter(Boolean);
+  if (names.length) return names.join(", ");
   return (
     value?.artist ||
     value?.artist_name ||
@@ -153,6 +159,34 @@ function artistsOf(value) {
     value?.kind ||
     "Spotify"
   );
+}
+function resourceLink(name, uri) {
+  return typeof uri === "string" && uri.startsWith("spotify:")
+    ? button(name, "resource-link", () => inspect(uri))
+    : document.createTextNode(name);
+}
+function playerTitle(selector, name, uri) {
+  const title = $(selector);
+  if (title.dataset.uri === (uri || "") && title.textContent === name) return;
+  title.dataset.uri = uri || "";
+  title.replaceChildren(resourceLink(name, uri));
+}
+function artistLine(item, tag = "p") {
+  const line = element(tag, "");
+  const artists = artistEntries(item).filter((artist) => artist.profile?.name || artist.name);
+  artists.forEach((artist, index) => {
+    if (index) line.append(", ");
+    line.append(resourceLink(artist.profile?.name || artist.name, artist.uri));
+  });
+  if (!artists.length) line.textContent = artistsOf(item);
+  return line;
+}
+function albumLine(item) {
+  const album = item.album_of_track || item.album;
+  if (!album?.name) return null;
+  const line = element("p", "album-link");
+  line.append("Album · ", resourceLink(album.name, album.uri));
+  return line;
 }
 function trackOf(value) {
   return value?.track || value?.item || value;
@@ -174,18 +208,19 @@ function renderCards(items) {
   }
   for (const item of items) {
     const card = element("div", "music-card");
-    card.tabIndex = 0;
-    card.setAttribute("role", "button");
-    card.addEventListener("click", () => inspect(item.uri));
-    card.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && event.target === card) inspect(item.uri);
+    card.addEventListener("click", (event) => {
+      if (!event.target.closest("button")) inspect(item.uri);
     });
+    const title = element("h3", "");
+    title.append(resourceLink(titleOf(item), item.uri));
     card.append(
       picture(item, `cover${state.kind === "artists" ? " artist" : ""}`),
-      element("h3", "", titleOf(item)),
-      element("p", "", artistsOf(item)),
-      element("div", "card-tag", item.uri?.split(":")[1] || "Spotify"),
+      title,
+      artistLine(item),
     );
+    const album = albumLine(item);
+    if (album) card.append(album);
+    card.append(element("div", "card-tag", item.uri?.split(":")[1] || "Spotify"));
     const play = button("", "card-play", (event) => {
       event.stopPropagation();
       command("play", { uri: item.uri });
@@ -218,11 +253,9 @@ function renderRows(items, target = $("#view")) {
       element("span", "rank", String(index + 1).padStart(2, "0")),
       picture(item, "row-art"),
     );
-    copy.append(
-      element("strong", "", titleOf(item)),
-      element("small", "", artistsOf(item)),
-    );
-    copy.addEventListener("click", () => item.uri && inspect(item.uri));
+    const title = element("strong", "");
+    title.append(resourceLink(titleOf(item), item.uri));
+    copy.append(title, artistLine(item, "small"));
     row.append(copy);
     const duration =
       item.duration?.total_milliseconds ??
@@ -240,7 +273,8 @@ function renderRows(items, target = $("#view")) {
       );
       queue.append(icons("plus"));
       queue.setAttribute("aria-label", `Queue ${titleOf(item)}`);
-      actions.append(play, queue);
+      actions.append(play);
+      if (/^spotify:(track|episode):/.test(item.uri)) actions.append(queue);
       row.append(actions);
     }
     target.append(row);
@@ -474,10 +508,15 @@ function renderEvents(events = []) {
 
 async function inspect(uri, action = "detail") {
   if (!uri) return;
-  const data = await api(action, { uri });
-  if (data == null) return;
-  const target = $("#detail-body");
-  target.replaceChildren();
+  const request = ++detailRequest;
+  const cached = action === "detail" ? detailCache.get(uri) : null;
+  const data = cached ?? (await api(action, { uri }));
+  if (request !== detailRequest || data == null) return;
+  if (action === "radio" && data.uri) {
+    await inspect(data.uri, "playlist");
+    return;
+  }
+  const target = document.createDocumentFragment();
   if (action === "detail") {
     detailCache.set(uri, data);
     if (detailCache.size > 20)
@@ -490,15 +529,18 @@ async function inspect(uri, action = "detail") {
   copy.append(
     element("span", "eyebrow", uri.split(":")[1] || "SPOTIFY"),
     element("h2", "", titleOf(item)),
-    element("p", "", artistsOf(item)),
+    artistLine(item),
   );
+  const album = albumLine(item);
+  if (album) copy.append(album);
   hero.append(copy);
   target.append(hero);
   const controls = element("div", "detail-actions");
   controls.append(
     button("Play on Spotify", "primary", () => command("play", { uri })),
-    button("Add to queue", "chip", () => command("queue_add", { uri })),
   );
+  if (/^spotify:(track|episode):/.test(uri))
+    controls.append(button("Add to queue", "chip", () => command("queue_add", { uri })));
   if (uri.includes(":track:"))
     controls.append(
       button("Song credits", "chip", () => inspect(uri, "credits")),
@@ -519,10 +561,6 @@ async function inspect(uri, action = "detail") {
       button("Releases", "chip", () => inspect(uri, "releases")),
     );
   target.append(controls);
-  if (action === "radio" && data.uri) {
-    await inspect(data.uri, "playlist");
-    return;
-  }
   if (Array.isArray(data) || data.items) {
     const list = element("div", "list-view");
     renderRows(Array.isArray(data) ? data : data.items, list);
@@ -533,19 +571,60 @@ async function inspect(uri, action = "detail") {
       const row = element("div", "track-row");
       const copy = element("div", "row-copy");
       copy.append(
-        element("strong", "", person.name),
+        resourceLink(person.name, person.uri),
         element("small", "", person.role),
       );
       row.append(copy);
       target.append(row);
     }
   } else {
-    const info = element("div", "info-grid");
-    renderInfo(item, info);
-    target.append(info);
+    if (!renderOverview(item, target)) {
+      const info = element("div", "info-grid");
+      renderInfo(item, info);
+      target.append(info);
+    }
   }
   addRaw(target, data);
-  openDetail();
+  showDetail(target);
+}
+
+function renderOverview(item, target) {
+  const bio = item.profile?.biography?.text;
+  const tracks = item.tracks_v2?.items || item.discography?.top_tracks?.items;
+  const popular = item.discography?.popular_releases_albums?.items;
+  const releases = popular?.length
+    ? popular
+    : item.discography?.albums?.items?.flatMap((group) => group.releases?.items || []);
+  if (bio) target.append(element("p", "detail-bio", bio));
+  for (const [label, items] of [["Tracks", tracks], ["Releases", releases]]) {
+    if (!items?.length) continue;
+    const list = element("div", "list-view");
+    renderRows(items, list);
+    target.append(element("h3", "", label), list);
+  }
+  return Boolean(bio || tracks?.length || releases?.length);
+}
+
+function showDetail(content, lyricsUri = null, lyricsSynced = false) {
+  const dialog = $("#detail"),
+    body = $("#detail-body");
+  if (dialog.open && body.childNodes.length) {
+    detailHistory.push({
+      nodes: [...body.childNodes],
+      scroll: dialog.scrollTop,
+      focus: body.contains(document.activeElement) ? document.activeElement : null,
+      lyricsUri: state.lyricsUri,
+      lyricsSynced: state.lyricsSynced,
+    });
+    if (detailHistory.length > 12) detailHistory.shift();
+  }
+  state.lyricsUri = lyricsUri;
+  state.lyricsSynced = lyricsSynced;
+  body.replaceChildren(content);
+  $("#detail-back").hidden = !detailHistory.length;
+  if (!dialog.open) dialog.showModal();
+  body.focus({ preventScroll: true });
+  dialog.scrollTop = 0;
 }
 
 function addRaw(target, data) {
@@ -554,17 +633,12 @@ function addRaw(target, data) {
   detail.append(summary, element("pre", "", JSON.stringify(data, null, 2)));
   target.append(detail);
 }
-function openDetail() {
-  if (!$("#detail").open) $("#detail").showModal();
-}
-
 async function showLyrics(uri) {
+  const request = ++detailRequest;
   const data = await api("lyrics", { uri });
-  if (!data) return;
-  state.lyricsUri = uri;
-  state.lyricsSynced = data.sync_type === "LINE_SYNCED";
-  const target = $("#detail-body");
-  target.replaceChildren(
+  if (request !== detailRequest || !data) return;
+  const target = document.createDocumentFragment();
+  target.append(
     element(
       "span",
       "eyebrow",
@@ -582,7 +656,7 @@ async function showLyrics(uri) {
     lines.append(text);
   }
   target.append(lines);
-  openDetail();
+  showDetail(target, uri, data.sync_type === "LINE_SYNCED");
 }
 
 function renderLab() {
@@ -663,8 +737,8 @@ function renderLab() {
       run.disabled = false;
       run.textContent = "Try it with SpotAPI";
       if (result != null) {
-        const target = $("#detail-body");
-        target.replaceChildren(element("h2", "", action.title));
+        const target = document.createDocumentFragment();
+        target.append(element("h2", "", action.title));
         if (Array.isArray(result)) {
           const list = element("div", "");
           renderRows(result, list);
@@ -675,7 +749,7 @@ function renderLab() {
           target.append(info);
         } else target.append(element("p", "", result));
         addRaw(target, result);
-        openDetail();
+        showDetail(target);
       }
       if (action.id === "logout_everywhere" && result != null) {
         await bootstrap();
@@ -737,11 +811,11 @@ function updatePlayer(data) {
   const track = data.state?.track,
     name = track?.name || track?.metadata?.title || "No active track",
     artist = artistsOf(track);
-  $("#now-name").textContent = name;
+  playerTitle("#now-name", name, track?.uri);
   $("#now-artist").textContent = track
     ? artist
     : "Open a song on an existing Spotify device";
-  $("#bar-title").textContent = name;
+  playerTitle("#bar-title", name, track?.uri);
   $("#bar-artist").textContent = track ? artist : "Choose a device in Spotify";
   const coverKey = (track?.uri || "") + (imageUrl(track) || "");
   if (coverKey !== state.coverKey) {
@@ -855,9 +929,8 @@ function resetSession() {
   state.session++;
   state.request++;
   detailCache.clear();
+  clearDetailNavigation();
   state.results = null;
-  state.lyricsUri = null;
-  state.lyricsSynced = false;
   $("#detail").close();
   $("#detail-body").replaceChildren();
   $("#view").replaceChildren();
@@ -988,7 +1061,33 @@ $("#like-current").addEventListener("click", () => {
   const uri = state.player?.state?.track?.uri;
   if (uri) command("saved_add", { uris: uri });
 });
-$(".close-dialog").addEventListener("click", () => $("#detail").close());
+function clearDetailNavigation() {
+  detailRequest++;
+  detailHistory.length = 0;
+  $("#detail-back").hidden = true;
+  state.lyricsUri = null;
+  state.lyricsSynced = false;
+}
+$(".close-dialog").addEventListener("click", () => {
+  clearDetailNavigation();
+  $("#detail").close();
+});
+$("#detail").addEventListener("cancel", clearDetailNavigation);
+$("#detail").addEventListener("close", () => {
+  if (!$("#detail").open) clearDetailNavigation();
+});
+$("#detail-back").addEventListener("click", () => {
+  const previous = detailHistory.pop();
+  if (!previous) return;
+  detailRequest++;
+  const body = $("#detail-body");
+  body.replaceChildren(...previous.nodes);
+  state.lyricsUri = previous.lyricsUri;
+  state.lyricsSynced = previous.lyricsSynced;
+  $("#detail-back").hidden = !detailHistory.length;
+  (previous.focus || body).focus({ preventScroll: true });
+  $("#detail").scrollTop = previous.scroll;
+});
 document.addEventListener("keydown", (event) => {
   if (
     event.key === "/" &&

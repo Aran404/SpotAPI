@@ -502,6 +502,26 @@ main {
   text-overflow: ellipsis;
   overflow: hidden;
 }
+.music-card .album-link {
+  margin-top: 4px;
+}
+.resource-link {
+  max-width: 100%;
+  padding: 0;
+  text-align: inherit;
+  vertical-align: bottom;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.resource-link:hover,
+.resource-link:focus-visible {
+  color: var(--teal);
+  text-decoration: underline;
+}
+.resource-link:active {
+  transform: none;
+}
 .card-tag {
   font:
     7px Consolas,
@@ -1016,6 +1036,13 @@ dialog::backdrop {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
+  gap: 12px;
+}
+#detail-label {
+  flex: 1;
+}
+#detail-body:focus {
+  outline: none;
 }
 .close-dialog {
   font-size: 25px;
@@ -1042,6 +1069,10 @@ dialog::backdrop {
   font-size: 12px;
   color: #b59ac6;
   line-height: 1.7;
+}
+.detail-bio {
+  color: var(--muted);
+  line-height: 1.6;
 }
 .detail-actions {
   display: flex;

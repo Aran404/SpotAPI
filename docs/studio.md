@@ -37,6 +37,8 @@ like a password and keep the file out of version control.
 
 - **Discover:** ten search categories, direct Spotify links, typed details, credits,
   radio, recommendations, related artists and releases. Press `/` to focus search.
+  Open an artist or album by selecting its name. Use **Back** in the detail view
+  to retrace your path without losing the original search.
 - **Your collection:** library items, liked songs, affinity rankings, recents and
   notifications. Reading notifications does not acknowledge them.
 - **Player:** an existing device's queue, play/pause, skip, seek, volume, transfer,
