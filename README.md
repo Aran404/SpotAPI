@@ -35,6 +35,23 @@ To try an unreleased checkout, run `python -m pip install -e .` from its root.
 
 `spotapi get SPOTIFY_URL` prints details as JSON. Both commands work anonymously.
 
+The CLI can also look up song credits, list playlist occurrences, manage liked
+tracks, and control an existing Spotify player:
+
+```bash
+spotapi search "Daft Punk" --type artist --json
+spotapi credits 0DiWol3AO6WpXZgp0goxAV
+spotapi playlist items PLAYLIST_ID --limit 10
+spotapi library list
+spotapi player status
+```
+
+Library and player commands, playlist edits, and `playlist items --private`
+use `SPOTIFY_COOKIE` from your environment. See [sign-in setup](docs/studio.md#sign-in).
+Run `spotapi playlist --help`, `spotapi library --help`, or `spotapi player --help`
+for the available actions. Playlist `remove` and `move` take occurrence IDs
+from `playlist items`, so duplicate tracks can be edited individually.
+
 ```python
 import asyncio
 from spotapi import Public
