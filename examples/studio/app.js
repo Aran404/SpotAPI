@@ -545,7 +545,7 @@ async function inspect(uri, action = "detail") {
     controls.append(
       button("Song credits", "chip", () => inspect(uri, "credits")),
       button("Start a radio rabbit hole", "chip", () => inspect(uri, "radio")),
-      button("Lyrics · Premium", "chip", () => showLyrics(uri)),
+      button("Lyrics", "chip", () => showLyrics(uri)),
     );
   if (uri.includes(":playlist:"))
     controls.append(
@@ -645,18 +645,23 @@ async function showLyrics(uri) {
       `${data.provider || "Lyrics"} · ${data.sync_type}`,
     ),
   );
+  const synced = data.sync_type === "LINE_SYNCED";
   const lines = element("div", "lyrics-lines");
   for (const line of data.lines || []) {
-    const text = element("p", "", line.words);
-    text.dataset.time = line.start_time_ms;
-    text.tabIndex = 0;
-    text.addEventListener("click", () =>
-      command("seek", { position_ms: String(line.start_time_ms) }),
-    );
-    lines.append(text);
+    const row = element("p", "");
+    if (synced) {
+      row.dataset.time = line.start_time_ms;
+      row.append(button(line.words, "lyric-line", () =>
+        command("seek", { uri, position_ms: String(line.start_time_ms) }),
+      ));
+    } else {
+      row.textContent = line.words;
+    }
+    lines.append(row);
   }
   target.append(lines);
-  showDetail(target, uri, data.sync_type === "LINE_SYNCED");
+  showDetail(target, uri, synced);
+  highlightLyrics();
 }
 
 function renderLab() {
@@ -906,13 +911,10 @@ function updatePlayer(data) {
 }
 
 function highlightLyrics() {
-  if (
-    !state.lyricsSynced ||
-    state.lyricsUri !== state.player?.state?.track?.uri
-  )
-    return;
+  if (!state.lyricsSynced) return;
+  const matches = state.lyricsUri === state.player?.state?.track?.uri;
   const lines = [...document.querySelectorAll(".lyrics-lines p")];
-  const position = state.player.state.position || 0;
+  const position = matches ? state.player.state.position || 0 : -1;
   const active = lines.reduce(
     (latest, line) =>
       Number(line.dataset.time) <= position
@@ -920,9 +922,10 @@ function highlightLyrics() {
         : latest,
     -1,
   );
-  lines.forEach((line) =>
-    line.classList.toggle("current", Number(line.dataset.time) === active),
-  );
+  lines.forEach((line) => {
+    line.querySelector("button").disabled = !matches;
+    line.classList.toggle("current", Number(line.dataset.time) === active);
+  });
 }
 
 function resetSession() {
@@ -1087,6 +1090,7 @@ $("#detail-back").addEventListener("click", () => {
   $("#detail-back").hidden = !detailHistory.length;
   (previous.focus || body).focus({ preventScroll: true });
   $("#detail").scrollTop = previous.scroll;
+  highlightLyrics();
 });
 document.addEventListener("keydown", (event) => {
   if (

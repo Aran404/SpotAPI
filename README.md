@@ -54,8 +54,9 @@ from a public playlist. `Public` cleans up its connections for you.
 
 ## Studio
 
-A small music workbench built on the same library: discovery, credits, your
-collection, a live queue, lyrics and an interactive feature lab.
+Explore a track's credits, follow links into artists and albums, or expand the
+typed data behind each view. Studio can also show public lyrics and seek to a
+timed line on a connected Spotify player.
 
 ![SpotAPI Studio: the listening desk](examples/studio/preview.png)
 

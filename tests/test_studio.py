@@ -11,9 +11,21 @@ import pytest
 
 from examples.studio.actions import ACTIONS
 from examples.studio.desktop import Bridge, _authenticate, page
+from examples.studio.lyrics import parse_lyrics
 from examples.studio.service import Studio, first_page, serialize
 from spotapi import AsyncClient, Catalogue, Player
 from spotapi.models import AccountChallenge
+
+
+def test_public_lyrics_distinguish_timed_lines_from_plain_text() -> None:
+    synced = parse_lyrics({"syncedLyrics": "[00:05.1][00:01.030] A line\n[ar:Artist]"})
+    assert synced is not None and synced.sync_type == "LINE_SYNCED"
+    assert [line.start_time_ms for line in synced.lines] == [1030, 5100]
+
+    plain = parse_lyrics({"plainLyrics": "First line\nSecond line"})
+    assert plain is not None and plain.sync_type == "UNSYNCED"
+    assert [line.words for line in plain.lines] == ["First line", "Second line"]
+    assert parse_lyrics({"instrumental": True}) is None
 
 
 async def test_studio_opens_catalogue_once_and_closes_it(monkeypatch: pytest.MonkeyPatch) -> None:

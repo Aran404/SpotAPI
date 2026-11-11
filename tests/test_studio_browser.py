@@ -73,6 +73,12 @@ async def studio_page() -> AsyncGenerator[tuple[Page, list[str]], None]:
                         }
             elif action == "player":
                 data = {"state": None, "devices": [], "events": []}
+            elif action == "lyrics":
+                data = {
+                    "provider": "LRCLIB",
+                    "sync_type": "LINE_SYNCED",
+                    "lines": [{"start_time_ms": 4000, "words": "A timed line"}],
+                }
             else:
                 data = {"completed": True}
             return {"ok": True, "data": data}
@@ -153,6 +159,34 @@ async def test_compact_layout_has_no_horizontal_overflow(
     assert await view.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     await view.get_by_role("button", name="Feature lab API", exact=True).click()
     assert await view.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+
+
+async def test_timed_lyrics_only_seek_the_matching_track(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, requests = studio_page
+    await view.get_by_role("heading", name="One More Time", exact=True).click()
+    dialog = view.locator("#detail")
+    await dialog.get_by_role("button", name="Lyrics", exact=True).click()
+    line = dialog.get_by_role("button", name="A timed line")
+    await line.wait_for()
+    assert await line.is_disabled()
+    await view.evaluate("""() => {
+        const request = window.pywebview.api.request;
+        window.pywebview.api.request = (action, values) => {
+            if (action === 'seek') window.lastSeek = values;
+            return request(action, values);
+        };
+        updatePlayer({state: {track: {uri: 'spotify:track:test'}, position: 4000}});
+    }""")
+    await line.press("Enter")
+    await view.wait_for_function("Boolean(window.lastSeek)")
+    assert await view.evaluate("window.lastSeek") == {
+        "uri": "spotify:track:test",
+        "position_ms": "4000",
+        "confirmed": "true",
+    }
+    assert "seek" in requests
 
 
 async def test_closing_details_discards_a_pending_related_view(

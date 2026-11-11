@@ -1098,6 +1098,14 @@ dialog::backdrop {
 .lyrics-lines p.current {
   color: #f2d7e9;
 }
+.lyric-line {
+  padding: 0;
+  text-align: left;
+}
+.lyric-line:disabled {
+  cursor: default;
+  opacity: 1;
+}
 details {
   margin-top: 20px;
 }

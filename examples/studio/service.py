@@ -21,10 +21,11 @@ from spotapi import (
     Playlist,
     PlaylistHandler,
 )
-from spotapi.models import PlaybackTrack, PlayerState, TimeRange
+from spotapi.models import Lyrics, PlaybackTrack, PlayerState, TimeRange
 from spotapi.types import HTTPError, SpotAPIError
 
 from .actions import ACTIONS, manifest
+from .lyrics import get_public_lyrics
 
 T = TypeVar("T")
 _ACTIONS = {action.id: action for action in ACTIONS}
@@ -91,6 +92,7 @@ class Studio:
         self.player: Player | None = None
         self.events: deque[dict[str, Any]] = deque(maxlen=80)
         self._queue_metadata: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        self._lyrics_cache: OrderedDict[str, Lyrics] = OrderedDict()
         self._player_task: asyncio.Task[None] | None = None
         self._lock = asyncio.Lock()
         self._closed = False
@@ -265,6 +267,8 @@ class Studio:
 
     async def _execute(self, action: str, values: Mapping[str, str]) -> object:
         """Route named features by responsibility; never invoke arbitrary client attributes."""
+        if action == "lyrics":
+            return await self._lyrics(values.get("uri", ""))
         operation = _ACTIONS.get(action)
         group = operation.group if operation else ""
         if group == "Catalogue" or action in {"bootstrap", "search", "detail", "profile"}:
@@ -481,13 +485,35 @@ class Studio:
             }[action](*_words(values["uris"]))
         raise ValueError("Unknown playlist operation")
 
+    async def _lyrics(self, uri: str) -> Lyrics:
+        """Try the public provider first and reuse matches within Studio."""
+        resource = self.catalogue.parse_url(uri, kind="track")
+        if cached := self._lyrics_cache.get(resource.uri):
+            self._lyrics_cache.move_to_end(resource.uri)
+            return cached
+
+        track = await self.catalogue.get_track(resource.uri)
+        try:
+            public = await get_public_lyrics(track)
+        except ValueError:
+            if self.client is None:
+                raise
+            public = None
+
+        if public is not None:
+            self._lyrics_cache[resource.uri] = public
+            if len(self._lyrics_cache) > 24:
+                self._lyrics_cache.popitem(last=False)
+            return public
+
+        if self.client is not None:
+            return await LyricsClient(self.client).get(resource.uri)
+        raise ValueError("No public lyrics are available for this recording.")
+
     async def _player_action(self, action: str, values: Mapping[str, str]) -> object:
         """Read or control the selected existing player; never render audio locally."""
         assert self.client is not None
         uri = values.get("uri", "")
-        if action == "lyrics":
-            return await LyricsClient(self.client).get(uri)
-
         if action == "refresh_player" and self.player is not None and not self.player.is_ready:
             await self._stop_player()
         player = await self._connect_player()
@@ -509,6 +535,10 @@ class Studio:
         if action == "play":
             return await player.play(uri)
         if action == "seek":
+            if uri and (
+                player.state is None or player.state.track is None or player.state.track.uri != uri
+            ):
+                raise ValueError("Play this track before seeking from its lyrics.")
             return await player.seek(int(values["position_ms"]))
         if action == "volume":
             return await player.volume(int(values["percent"]))

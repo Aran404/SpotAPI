@@ -7,10 +7,13 @@ PyPI as `spotapi==1.2.8`.
 
 Typed async catalogue access, the `spotapi search` and `spotapi get` commands,
 managed cookie sessions through `Private`, playlist occurrence editing,
-existing-player controls and events, entitled lyrics, and optional Studio and
+existing-player controls and events, and optional Studio and
 terminal examples. The core keeps one runtime dependency. See the
 [changelog](../CHANGELOG.md) and [migration guide](../MIGRATION.md) for the
 public API and compatibility changes.
+
+Studio includes linked track, artist, and album views, typed response inspectors,
+and public lyrics via LRCLIB. A connected player can seek from synchronized lines.
 
 Release cleanup fixed mutation error payloads being mistaken for success,
 incorrect event subscriptions, missing-ACK confirmation, account-switch response
@@ -26,9 +29,8 @@ current state before retrying. Mutations are not silently replayed.
 
 ## Verification
 
-- Python 3.11, 3.12 and 3.13: **291 offline tests passed** on each. On Python
-  3.12, the offline suite covered 74% of the package with branch coverage enabled.
-  Browser checks ran against isolated local fixtures.
+- Offline tests run on Python 3.11, 3.12 and 3.13. Browser checks run against
+  isolated local fixtures.
 - The full opt-in live suite exercises
   authenticated account, library, lyrics and Studio reads; temporary-playlist
   metadata/UID editing and pin/unpin; and track save/remove with original unsaved

@@ -10,6 +10,7 @@
 - Move exact playlist occurrences by UID, including duplicate tracks.
 - Set or clear a custom JPEG playlist cover.
 - Stream typed audiobook chapter pages for available titles.
+- Browse Studio lyrics through LRCLIB and seek from timed lines on the matching track.
 
 ### Added
 

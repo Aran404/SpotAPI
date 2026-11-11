@@ -42,12 +42,19 @@ like a password and keep the file out of version control.
 - **Your collection:** library items, liked songs, affinity rankings, recents and
   notifications. Reading notifications does not acknowledge them.
 - **Player:** an existing device's queue, play/pause, skip, seek, volume, transfer,
-  shuffle/repeat when permitted, and Premium lyrics. No audio renderer is bundled.
+  shuffle/repeat when permitted, and lyrics. No audio renderer is bundled.
+
 - **Feature lab:** explicit forms for account reads/edits, playlist and folder
   mutations, exact occurrence removal, saves, pins, follows, Blend invitations,
   notification acknowledgement, queue replacement and player timers/signals.
 - **Live events:** bounded summaries from real `listen` decorators, not a raw
   websocket dump. Rich typed responses remain available in expandable inspectors.
+
+**Lyrics** looks for a matching recording on [LRCLIB](https://lrclib.net/) without
+a Spotify login. The lookup sends the title, artist, album, and duration to
+LRCLIB. If there's no public match, a connected Spotify account can use its
+available Spotify lyrics. Select a timed line to seek when that recording is
+playing on your connected device.
 
 The page only receives the named `request` and `login` bridge methods. It cannot
 invoke arbitrary Python attributes. Remote login pages receive no Python bridge.

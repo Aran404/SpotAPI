@@ -90,7 +90,7 @@ ACTIONS = (
     Action("blend_join", "Join a Blend", "Social", ("invitation",), True),
     Action("notifications_seen", "Acknowledge notifications", "Social", ("cursor",), True),
     Action("notifications_unread", "Check unread badge", "Social"),
-    Action("lyrics", "Synchronized lyrics · Premium", "Player", ("uri",)),
+    Action("lyrics", "Lyrics", "Player", ("uri",), authenticated=False),
     Action("play", "Play a Spotify link", "Player", ("uri",), True),
     Action("seek", "Seek in milliseconds", "Player", ("position_ms",), True),
     Action("volume", "Set volume · 0–100", "Player", ("percent",), True),
