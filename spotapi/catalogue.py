@@ -1,4 +1,4 @@
-"""Reusable, context-managed access to Spotify’s public catalogue."""
+"""Reusable, context-managed access to Spotify's public catalogue."""
 
 from __future__ import annotations
 

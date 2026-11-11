@@ -57,10 +57,13 @@ from a public playlist. `Public` cleans up its connections for you.
 From the checkout, run either example with the same install:
 
 ```bash
+python -m examples.discover # I recommend trying this one!
 python -m examples.credit_trail
 python -m examples.mix_map
 ```
 
+[Discover](examples/discover.py) uses a minimalistic Terminal User Interface (TUI) 
+to navigate the public search functionality of Spotify, no log in necessary. 
 [Credit trail](examples/credit_trail.py) connects **One More Time**, **Harder,
 Better, Faster, Stronger**, and **Starboy** through shared contributor IDs. It
 shows where the same person is credited as a producer, writer, or lyricist.
