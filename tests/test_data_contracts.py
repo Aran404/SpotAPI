@@ -5,16 +5,80 @@ from __future__ import annotations
 import json
 import os
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 
 from spotapi.datastruct import ObjectDict
+from spotapi.models.catalogue import Track, from_dict
+from spotapi.models.catalogue.common import SquareCoverImage
 from spotapi.operations import Operations
 from spotapi.queries import Queries
 from spotapi.session import QueryCache
-from spotapi.specialized.data_wrappers import Track, from_dict
 from spotapi.utils import timed_cache
+
+
+@pytest.mark.parametrize("wrapped", [False, True])
+def test_decoder_reads_graphql_metadata_without_rewriting_keys(wrapped: bool) -> None:
+    payload = {"__typename": "SquareCoverImage"}
+    data = ObjectDict(payload) if wrapped else payload
+
+    assert from_dict(SquareCoverImage, data)._typename == "SquareCoverImage"
+    assert data == payload
+
+
+@dataclass
+class _Metadata:
+    _typename: str
+
+
+def test_search_preflight_and_decoder_accept_the_same_metadata_alias() -> None:
+    page = ObjectDict({"items": [{"data": {"__typename": "Track"}}]})
+
+    assert Queries.parse_items(page, _Metadata, Operations.SEARCH_TRACKS) == [_Metadata("Track")]
+
+
+@dataclass
+class _Collections:
+    pair: tuple[int, str]
+    labels: set[str]
+    numbers: frozenset[int]
+    counts: dict[str, int]
+    choice: int | str | None
+
+
+def test_decoder_preserves_declared_collection_and_union_types() -> None:
+    value = from_dict(
+        _Collections,
+        {
+            "pair": [1, "one"],
+            "labels": ["a", "a"],
+            "numbers": [1, 2],
+            "counts": {"a": 2},
+            "choice": None,
+        },
+    )
+    assert value == _Collections((1, "one"), {"a"}, frozenset({1, 2}), {"a": 2}, None)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "error"),
+    [("pair", [1], ValueError), ("numbers", [True], TypeError), ("choice", [], TypeError)],
+)
+def test_decoder_reports_invalid_nested_collection_values(
+    field: str, value: object, error: type[Exception]
+) -> None:
+    payload: dict[str, object] = {
+        "pair": [1, "one"],
+        "labels": [],
+        "numbers": [],
+        "counts": {},
+        "choice": None,
+        field: value,
+    }
+    with pytest.raises(error, match=field):
+        from_dict(_Collections, payload)
 
 
 def test_object_dict_preserves_colliding_keys_through_mutations() -> None:
@@ -129,3 +193,26 @@ async def test_async_cache_bounds_ttl_and_failure_recovery() -> None:
     await cached(1)
 
     assert calls == 7
+
+
+def test_palette_roles_share_color_contract_without_changing_export_shape() -> None:
+    from dataclasses import asdict
+
+    from spotapi._decoding import from_dict
+    from spotapi.models.catalogue.common import RGBA, ContrastPalette, ExtractedColorSet
+
+    color = {"alpha": 255, "blue": 3, "green": 2, "red": 1}
+    body = {
+        "encoreBaseSetTextColor": color,
+        "highContrast": {"textBase": color},
+        "higherContrast": {"backgroundBase": color},
+        "minContrast": {"textSubdued": color},
+    }
+    result = from_dict(ExtractedColorSet, body)
+
+    assert isinstance(result.encore_base_set_text_color, RGBA)
+    for palette in (result.high_contrast, result.higher_contrast, result.min_contrast):
+        assert isinstance(palette, ContrastPalette)
+    assert asdict(result)["high_contrast"]["text_base"] == color
+    assert result.high_contrast is not None
+    assert result.high_contrast.background_base is None

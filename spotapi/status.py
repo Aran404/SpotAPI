@@ -13,16 +13,19 @@ from collections.abc import AsyncGenerator, Callable, Coroutine, Mapping
 from contextlib import asynccontextmanager
 from importlib.metadata import PackageNotFoundError, version
 from typing import Any, Literal, ParamSpec, Self, TypeVar, overload
-from urllib.parse import quote, urlencode
+from urllib.parse import urlencode
 
 import wreq
 
+from spotapi.models.playback import Device, PlaybackUpdate, PlayerState
+
+from ._parsing import integer, mapping, records
+from ._protocol.routes import CONNECT_OBSERVER
 from .client import AsyncClient
 from .connect import ConnectEndpoints
 from .connection import WebSocketClient
 from .datastruct import EventDispatcher
 from .devices import RegisteredDevice
-from .playback import Device, PlaybackUpdate, PlayerState, integer, mapping, records
 from .session import AuthSession
 from .types import BaseClientError, HTTPError
 
@@ -37,9 +40,29 @@ R = TypeVar("R")
 
 
 class PlayerStatus:
-    """Register listeners, then use ``async with status.connect()``."""
+    """Observe Spotify Connect state and dispatch asynchronous event callbacks.
+
+    Register listeners before entering ``async with status.connect()``.
+    ``start()`` instead supervises reconnection until ``close()``. Each scope
+    owns its socket, controller registration and callback tasks; the supplied
+    authentication session remains the caller's responsibility.
+
+    Args:
+        session: Authorized client or session to borrow.
+        name: Nonempty name for the control-only registration.
+
+    Attributes:
+        state: Latest player snapshot, or ``None`` before one arrives.
+        devices: Devices advertised by the latest cluster update.
+        playback: Latest renderer state-machine update, when available.
+
+    Note:
+        Callbacks run in independent tasks. They must not block the event loop;
+        pending callback work is bounded and excess callbacks may be dropped.
+    """
 
     __slots__ = (
+        "http",
         "name",
         "session",
         "controller_id",
@@ -77,6 +100,7 @@ class PlayerStatus:
 
         self.name = name
         self.session = session.session if isinstance(session, AsyncClient) else session
+        self.http = self.session.client
         self.controller_id = secrets.token_hex(20)
         self.observer_id = "hobs_" + self.controller_id[:32]
         self._controller: RegisteredDevice | None = None
@@ -237,7 +261,12 @@ class PlayerStatus:
         return self._closed
 
     async def wait_until_ready(self) -> None:
-        """Wait for a usable dealer snapshot or propagate connection failure."""
+        """Wait for readiness, including across managed reconnection attempts.
+
+        This wait has no timeout and does not observe the task running
+        ``start()``. Bound it with ``asyncio.timeout`` or race that task when
+        startup failure must interrupt the wait.
+        """
         await self._ready.wait()
 
     async def close(self) -> None:
@@ -329,7 +358,25 @@ class PlayerStatus:
 
     @asynccontextmanager
     async def connect(self, *, timeout: float = 15) -> AsyncGenerator[Self, None]:
-        """Scope the dealer connection and release observers and waiters on exit."""
+        """Open one dealer connection and wait for its initial playback snapshot.
+
+        Args:
+            timeout: Positive, finite wait in seconds for each handshake and
+                initial-snapshot phase. HTTP calls retain their own timeouts.
+
+        Yields:
+            This observer after readiness. Register event listeners before entry.
+
+        Raises:
+            RuntimeError: A connection scope or startup attempt is already active.
+            ValueError: The timeout is not positive and finite.
+            TimeoutError: A handshake or snapshot does not arrive in time.
+
+        Note:
+            Exit closes the socket and owned registrations, callbacks and timers.
+            The supplied authentication session remains borrowed. For automatic
+            reconnection, use ``start()`` instead of reopening this scope manually.
+        """
         if isinstance(timeout, bool) or not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("timeout must be positive and finite")
 
@@ -436,7 +483,7 @@ class PlayerStatus:
 
     def _create_websocket(self) -> WebSocketClient:
         """Create dealer callbacks for the current connection attempt."""
-        websocket = WebSocketClient(http_client=self.session.client.protocols.http)
+        websocket = WebSocketClient(http_client=self.http.transport)
 
         websocket.start_pinging(interval=30)
 
@@ -542,12 +589,10 @@ class PlayerStatus:
         ):
             raise RuntimeError("Status is not connected")
 
-        response = await self.session.client.put(
-            self.endpoints.spclient
-            + "/connect-state/v1/devices/"
-            + quote(self.observer_id, safe=""),
+        response = await self.http.put(
+            CONNECT_OBSERVER.url(base=self.endpoints.spclient, device=self.observer_id),
+            authorized=True,
             headers={
-                **self.session.authorized_headers,
                 "x-spotify-connection-id": self.connection_id,
             },
             json={
@@ -576,16 +621,13 @@ class PlayerStatus:
             return
 
         try:
-            response = await self.session.client.protocols.http.delete(
-                self.endpoints.spclient
-                + "/connect-state/v1/devices/"
-                + quote(self.observer_id, safe=""),
-                headers=self.session.authorized_headers,
+            await self.http.delete(
+                CONNECT_OBSERVER.url(base=self.endpoints.spclient, device=self.observer_id),
+                expected_statuses=(404,),
+                authorized=True,
                 max_attempts=1,
             )
 
-            if not response.ok and response.status_code.as_int() != 404:
-                raise BaseClientError("Could not remove Connect observer")
         finally:
             controller, self._controller = self._controller, None
 

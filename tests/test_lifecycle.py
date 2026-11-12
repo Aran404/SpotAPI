@@ -3,12 +3,24 @@
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
 from spotapi import query
 from spotapi.datastruct import EventDispatcher, Pool
 from spotapi.query import SharedQueryClient
+
+
+def test_query_registry_keeps_each_threads_entries_separate() -> None:
+    registry = query._PoolRegistry()
+    original = registry.entries
+
+    with ThreadPoolExecutor(max_workers=1) as worker:
+        other = worker.submit(lambda: registry.entries).result(timeout=2)
+
+    assert other is not original
+    assert registry.entries is original
 
 
 async def test_concurrent_queries_share_one_initialization(

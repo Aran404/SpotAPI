@@ -12,6 +12,7 @@ from contextlib import aclosing
 from dataclasses import asdict, is_dataclass
 
 from .account import Private
+from .library import LikedTracks
 from .models import PlaylistEntry
 from .operations import SEARCH_DESKTOP_SECTIONS, SearchKind
 from .player import Player
@@ -93,19 +94,81 @@ def _json(value: object) -> None:
     print(json.dumps(value, indent=2, default=encode))
 
 
+async def _search(args: argparse.Namespace) -> None:
+    kind: SearchKind = args.type
+    results = await Public.search(args.query, types=kind, limit=args.limit)
+    hits = results[kind]
+    if args.json:
+        _json(hits)
+        return
+
+    for hit in hits:
+        print(f"{hit.name}\t{hit.uri}")
+    if not hits:
+        print(f"No {kind}s found.", file=sys.stderr)
+
+
+async def _run_library(liked: LikedTracks, args: argparse.Namespace) -> None:
+    action: str = args.action
+    if action == "list":
+        _json(await liked.get(limit=args.limit))
+    elif action == "contains":
+        flags = await liked.contains(args.tracks)
+        _json(
+            [
+                {"track": track, "liked": flag}
+                for track, flag in zip(args.tracks, flags, strict=True)
+            ]
+        )
+    elif action == "add":
+        await liked.add(args.tracks)
+    else:
+        await liked.remove(args.tracks)
+
+
+async def _run_playlist(playlist: Playlist, args: argparse.Namespace) -> None:
+    action: str = args.action
+    if action == "items":
+        items: list[PlaylistEntry] = []
+        async with aclosing(playlist.items(limit=args.limit)) as entries:
+            async for entry in entries:
+                items.append(entry)
+                if len(items) == args.limit:
+                    break
+        _json(items)
+    elif action == "add":
+        await playlist.add_tracks(*args.tracks)
+    elif action == "remove":
+        await playlist.remove_occurrences(*args.uids)
+    else:
+        await playlist.move_occurrences(*args.uids, before=args.before, after=args.after)
+
+
+async def _run_player(player: Player, args: argparse.Namespace) -> None:
+    action: str = args.action
+    if action == "status":
+        _json({"state": player.state, "devices": player.devices})
+    elif action == "play":
+        await player.play(args.resource)
+    elif action == "seek":
+        await player.seek(args.milliseconds)
+    elif action == "volume":
+        await player.volume(args.percent)
+    elif action == "queue":
+        await player.add_to_queue(args.track)
+    else:
+        await {
+            "pause": player.pause,
+            "resume": player.resume,
+            "next": player.next,
+            "previous": player.previous,
+        }[action]()
+
+
 async def _run(args: argparse.Namespace) -> None:
     command: str = args.command
     if command == "search":
-        kind: SearchKind = args.type
-        results = await Public.search(args.query, types=kind, limit=args.limit)
-        hits = results[kind]
-        if args.json:
-            _json(hits)
-        else:
-            for hit in hits:
-                print(f"{hit.name}\t{hit.uri}")
-            if not hits:
-                print(f"No {kind}s found.", file=sys.stderr)
+        await _search(args)
         return
     if command == "get":
         _json(await Public.get(args.resource))
@@ -113,9 +176,7 @@ async def _run(args: argparse.Namespace) -> None:
     if command == "credits":
         _json(await Public.get_track_credits(args.track))
         return
-
-    action: str = args.action
-    if command == "playlist" and action == "items" and not args.private:
+    if command == "playlist" and args.action == "items" and not args.private:
         async with aclosing(Public.get_playlist_items(args.playlist, limit=args.limit)) as pages:
             _json((await anext(pages, ()))[: args.limit])
         return
@@ -126,56 +187,12 @@ async def _run(args: argparse.Namespace) -> None:
 
     async with Private.from_cookies(cookie) as account:
         if command == "library":
-            liked = account.liked_tracks
-            if action == "list":
-                _json(await liked.get(limit=args.limit))
-            elif action == "contains":
-                flags = await liked.contains(args.tracks)
-                _json(
-                    [
-                        {"track": track, "liked": flag}
-                        for track, flag in zip(args.tracks, flags, strict=True)
-                    ]
-                )
-            elif action == "add":
-                await liked.add(args.tracks)
-            else:
-                await liked.remove(args.tracks)
+            await _run_library(account.liked_tracks, args)
         elif command == "playlist":
-            playlist = Playlist(account.session, args.playlist)
-            if action == "items":
-                items: list[PlaylistEntry] = []
-                async with aclosing(playlist.items(limit=args.limit)) as entries:
-                    async for entry in entries:
-                        items.append(entry)
-                        if len(items) == args.limit:
-                            break
-                _json(items)
-            elif action == "add":
-                await playlist.add_tracks(*args.tracks)
-            elif action == "remove":
-                await playlist.remove_occurrences(*args.uids)
-            else:
-                await playlist.move_occurrences(*args.uids, before=args.before, after=args.after)
+            await _run_playlist(Playlist(account.session, args.playlist), args)
         else:
             async with Player(account.session).connect() as player:
-                if action == "status":
-                    _json({"state": player.state, "devices": player.devices})
-                elif action == "play":
-                    await player.play(args.resource)
-                elif action == "seek":
-                    await player.seek(args.milliseconds)
-                elif action == "volume":
-                    await player.volume(args.percent)
-                elif action == "queue":
-                    await player.add_to_queue(args.track)
-                else:
-                    await {
-                        "pause": player.pause,
-                        "resume": player.resume,
-                        "next": player.next,
-                        "previous": player.previous,
-                    }[action]()
+                await _run_player(player, args)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

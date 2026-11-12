@@ -1,7 +1,7 @@
 """Unit tests for the public search-result model conveniences."""
 
-from spotapi.specialized.data_wrappers import Album, Artist
-from spotapi.specialized.data_wrappers.artist import ArtistProfile
+from spotapi.models.catalogue import Album, Artist
+from spotapi.models.catalogue.artist import ArtistProfile
 
 
 def test_artist_search_result_exposes_identity_and_display_name() -> None:

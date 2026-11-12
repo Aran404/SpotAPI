@@ -7,12 +7,14 @@ from contextlib import aclosing
 from typing import Any
 from uuid import uuid4
 
-from .catalogue import parse_spotify_resource
+from spotapi.models.library import LibraryItem, LibraryPage, SavedTrack
+
+from ._parsing import mapping, records
 from .client import AsyncClient
 from .datastruct import ObjectDict
-from .library_models import LibraryItem, LibraryPage, SavedTrack
-from .playback import mapping, records
+from .operations import Operations
 from .query import QueryClient
+from .resources import parse_spotify_resource
 from .session import AuthSession
 from .types import BaseClientError
 
@@ -42,8 +44,7 @@ class _LibraryActions:
             batch = uris[offset : offset + 50]
             response = await self.queries.pathfinder_query(
                 {"uris": batch},
-                "areEntitiesInLibrary",
-                max_attempts=1,
+                Operations.ARE_ENTITIES_IN_LIBRARY,
             )
 
             found = records(response.get("lookup"))
@@ -63,11 +64,11 @@ class _LibraryActions:
 
     async def add(self, tracks: Sequence[str]) -> None:
         """Save supplied resources to the library; mutations are never replayed."""
-        await self._change("addToLibrary", tracks)
+        await self._change(Operations.ADD_TO_LIBRARY, tracks)
 
     async def remove(self, tracks: Sequence[str]) -> None:
         """Unsave supplied resources; mutations are never replayed."""
-        await self._change("removeFromLibrary", tracks)
+        await self._change(Operations.REMOVE_FROM_LIBRARY, tracks)
 
     async def _change(self, operation: str, tracks: Sequence[str]) -> None:
         """Normalize resources and send library mutations in bounded batches."""
@@ -76,13 +77,13 @@ class _LibraryActions:
         for offset in range(0, len(uris), 50):
             variables: dict[str, Any] = {"libraryItemUris": uris[offset : offset + 50]}
 
-            if operation == "addToLibrary":
+            if operation == Operations.ADD_TO_LIBRARY:
                 variables["interactionId"] = str(uuid4())
 
             response = await self.queries.pathfinder_query(variables, operation, max_attempts=1)
             key, typename = (
                 ("addLibraryItems", "AddLibraryItemsResponse")
-                if operation == "addToLibrary"
+                if operation == Operations.ADD_TO_LIBRARY
                 else ("removeLibraryItems", "RemoveLibraryItemsResponse")
             )
             result = mapping(response.get(key))
@@ -116,7 +117,16 @@ class _LibraryActions:
 
 
 class LikedTracks(_LibraryActions):
-    """Check, save and paginate liked tracks using one borrowed client."""
+    """Check, save and paginate liked tracks using one borrowed client.
+
+    ``get()`` returns one page; ``pages()`` lazily reads subsequent pages.
+    Saved entries preserve unavailable tracks with ``track=None``. ``contains``
+    returns flags in input order. ``add`` and ``remove`` send batches of at most
+    50 tracks without automatically replaying failed mutations.
+
+    Args:
+        client: Authorized client or session; its lifetime stays with the caller.
+    """
 
     __slots__ = ()
 
@@ -139,7 +149,7 @@ class LikedTracks(_LibraryActions):
         """Fetch a bounded page of saved items without changing the library."""
         _page_options(limit, offset)
         response = await self.queries.pathfinder_query(
-            {"limit": limit, "offset": offset}, "fetchLibraryTracks", max_attempts=1
+            {"limit": limit, "offset": offset}, Operations.FETCH_LIBRARY_TRACKS
         )
         return tuple(SavedTrack.from_dict(row) for row in records(self._page(response)["items"]))
 
@@ -155,7 +165,16 @@ class LikedTracks(_LibraryActions):
 
 
 class Library(_LibraryActions):
-    """Browse saved items with ``get()`` or stream them with ``items()``."""
+    """Browse saved resources, folders and artist follows through one session.
+
+    ``get()`` returns a page including available filter and sort IDs. Pass those
+    server-provided IDs to subsequent reads; ``pages()`` streams pages and
+    ``items()`` flattens them. Saves and follow changes can partially apply
+    across batches; inspect current state after a failure before retrying.
+
+    Args:
+        client: Authorized client or session to borrow without closing it.
+    """
 
     __slots__ = ()
 
@@ -219,7 +238,7 @@ class Library(_LibraryActions):
     ) -> LibraryPage:
         """Fetch a bounded page of saved items without changing the library."""
         variables = self._variables(limit, offset, filters, order, query, folder)
-        response = await self.queries.pathfinder_query(variables, "libraryV3", max_attempts=1)
+        response = await self.queries.pathfinder_query(variables, Operations.LIBRARY_V3)
         return LibraryPage.from_dict(self._page(response))
 
     async def pages(
@@ -247,11 +266,11 @@ class Library(_LibraryActions):
 
     async def pin(self, value: str) -> None:
         """Pin a supported resource in the user's library."""
-        await self._pin("pinLibraryItem", value)
+        await self._pin(Operations.PIN_LIBRARY_ITEM, value)
 
     async def unpin(self, value: str) -> None:
         """Unpin a library resource without removing it."""
-        await self._pin("unpinLibraryItem", value)
+        await self._pin(Operations.UNPIN_LIBRARY_ITEM, value)
 
     async def _pin(self, operation: str, value: str) -> None:
         """Send one native pin or unpin mutation for a normalized resource."""
@@ -261,7 +280,11 @@ class Library(_LibraryActions):
         response = await self.queries.pathfinder_query(
             {"pinnableItemUri": resource.uri}, operation, max_attempts=1
         )
-        key = "pinItemInLibrary" if operation == "pinLibraryItem" else "unpinItemInLibrary"
+        key = (
+            "pinItemInLibrary"
+            if operation == Operations.PIN_LIBRARY_ITEM
+            else "unpinItemInLibrary"
+        )
         if mapping(response.get(key)).get("pinResult") != "SUCCESSFUL":
             raise BaseClientError(
                 "Spotify did not confirm the pin change; reconcile library state before retrying"

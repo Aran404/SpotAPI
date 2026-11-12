@@ -51,6 +51,7 @@ demo = [
 ]
 dev = [
     "black>=24.0",
+    "coverage>=7.6",
     "pyright>=1.1",
     "python-dotenv>=1.0",
     "ruff>=0.4",
@@ -94,9 +95,19 @@ target-version = "py311"
 line-length = 99
 target-version = ["py311"]
 
+[tool.coverage.run]
+branch = true
+source = ["spotapi"]
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+precision = 1
+
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "TID"]
-ignore  = ["E501", "B008"]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "TID", "RUF022", "RUF100"]
+ignore  = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["spotapi"]

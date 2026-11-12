@@ -4,8 +4,6 @@ This repository is in no way affiliated with, authorized, maintained, sponsored 
 
 Please note the following:
 
-## Legal Notice
-
 ### **Affiliation Disclaimer**
 The project is intended for educational purposes only. The APIs, services, trademarks, and other intellectual property mentioned in this repository are the property of their respective owners, with no claim of ownership or affiliation by this project.
 

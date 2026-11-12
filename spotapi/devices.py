@@ -6,25 +6,27 @@ import asyncio
 import secrets
 from collections.abc import Mapping
 from typing import Any, Self
-from urllib.parse import quote
 from uuid import uuid4
 
-from .playback import integer
+from ._parsing import integer
+from ._protocol.routes import DEVICE, DEVICE_REGISTER, DEVICE_STATE, SPCLIENT
 from .session import AuthSession
 from .types import BaseClientError
 
-PLAYBACK_URL = "https://spclient.wg.spotify.com"
+PLAYBACK_URL = SPCLIENT
 
 
 class RegisteredDevice:
     """Register your renderer with ``create()``, then close it or use its context."""
 
     __slots__ = (
+        "http",
         "session",
         "id",
         "keep_alive_seconds",
         "supports_observing",
         "_url",
+        "_state_url",
         "_sequence",
         "_closed",
         "_lock",
@@ -35,11 +37,13 @@ class RegisteredDevice:
     ) -> None:
         """Describe an owned playback registration without making a request."""
         self.session = session
+        self.http = self.session.client
         self.id = device_id
         self.keep_alive_seconds = 0
         self.supports_observing = False
 
-        self._url = endpoint + "/track-playback/v1/devices/" + quote(device_id, safe="")
+        self._url = DEVICE.url(base=endpoint, device=device_id)
+        self._state_url = DEVICE_STATE.url(base=endpoint, device=device_id)
         self._sequence = 1
         self._closed = False
         self._lock = asyncio.Lock()
@@ -84,9 +88,9 @@ class RegisteredDevice:
         }
 
         try:
-            response = await session.client.post(
-                endpoint + "/track-playback/v1/devices",
-                headers=session.authorized_headers,
+            response = await registration.http.post(
+                DEVICE_REGISTER.url(base=endpoint),
+                authorized=True,
                 json=payload,
                 max_attempts=1,
             )
@@ -150,9 +154,9 @@ class RegisteredDevice:
                 "debug_source": debug_source,
             }
 
-            await self.session.client.put(
-                self._url + "/state",
-                headers=self.session.authorized_headers,
+            await self.http.put(
+                self._state_url,
+                authorized=True,
                 json=payload,
                 max_attempts=1,
             )
@@ -168,9 +172,10 @@ class RegisteredDevice:
             if type(sequence) is not int or sequence < 0:
                 raise ValueError("seq_num must be a non-negative integer")
 
-            response = await self.session.client.protocols.http.delete(
+            await self.http.delete(
                 self._url,
-                headers=self.session.authorized_headers,
+                expected_statuses=(404,),
+                authorized=True,
                 max_attempts=1,
                 json={
                     "seq_num": sequence,
@@ -183,10 +188,5 @@ class RegisteredDevice:
                     "debug_source": "deregister",
                 },
             )
-
-            if not response.ok and response.status_code.as_int() != 404:
-                raise BaseClientError(
-                    f"Could not remove playback device: HTTP {response.status_code.as_int()}"
-                )
 
             self._closed = True

@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Sequence
-from dataclasses import dataclass
-from urllib.parse import quote
 
-from .catalogue import parse_spotify_resource
+from ._parsing import integer, mapping, records
+from ._protocol.protobuf import ProtoMessage
+from ._protocol.routes import PROFILE, PROFILE_SECTION
 from .client import AsyncClient
 from .connection import Response
-from .playback import integer, mapping, records
-from .protobuf import ProtoMessage
+from .models.catalogue import PublicProfile, from_dict
+from .models.catalogue.entities import ProfilePlaylist
+from .models.profiles import ProfilePlaylists
+from .operations import Operations
 from .query import QueryClient
+from .resources import parse_spotify_resource
 from .session import AuthSession
-from .specialized.data_wrappers import PublicProfile, from_dict
-from .specialized.data_wrappers.catalogue import ProfilePlaylist
 from .types import BaseClientError
 
 
@@ -46,18 +47,19 @@ def _profile(message: ProtoMessage) -> PublicProfile:
     )
 
 
-@dataclass(frozen=True, slots=True)
-class ProfilePlaylists:
-    items: tuple[ProfilePlaylist, ...]
-    total: int
-    offset: int
-    limit: int
-
-
 class Profiles:
-    """Read profile views; opt into the smaller binary format with protobuf=True."""
+    """Read profile views and manage user follows with a borrowed client.
+
+    Args:
+        client: An authorized client or authentication session owned by the caller.
+        protobuf: Request Spotify's binary profile representation instead of JSON.
+
+    Follower/following previews can be capped by Spotify. Playlist pages have
+    explicit pagination; follow mutations make one attempt per batch.
+    """
 
     __slots__ = (
+        "http",
         "session",
         "queries",
         "protobuf",
@@ -66,26 +68,36 @@ class Profiles:
     def __init__(self, client: AsyncClient | AuthSession, *, protobuf: bool = False) -> None:
         """Borrow a client and optionally request the verified protobuf representation."""
         self.session = client.session if isinstance(client, AsyncClient) else client
+        self.http = self.session.client
         self.queries = QueryClient(self.session)
         self.protobuf = protobuf
 
     async def _get(self, user: str, suffix: str = "", **query: str | int) -> Response:
         """Read a normalized public-profile endpoint with the chosen representation."""
         resource = parse_spotify_resource(user, "user")
-        return await self.session.client.get(
-            "https://spclient.wg.spotify.com/user-profile-view/v3/profile/"
-            + quote(resource.id, safe="")
-            + suffix,
+        endpoint = (
+            PROFILE.url(user=resource.id)
+            if not suffix
+            else PROFILE_SECTION.url(user=resource.id, section=suffix.removeprefix("/"))
+        )
+        return await self.http.get(
+            endpoint,
+            authorized=True,
             headers={
-                **self.session.authorized_headers,
                 "accept": "application/x-protobuf" if self.protobuf else "application/json",
             },
             query={"market": "from_token", **{key: str(value) for key, value in query.items()}},
-            max_attempts=1,
         )
 
     async def get(self, user: str, *, playlist_limit: int = 10) -> PublicProfile:
-        """Fetch a profile and its first public playlists."""
+        """Read a user's profile and an initial public-playlist preview.
+
+        Args:
+            user: Spotify user ID, URI or URL.
+            playlist_limit: Preview page size, from 1 to 200.
+
+        Use get_playlists or playlist_pages to retrieve subsequent playlists.
+        """
         self._limit(playlist_limit)
         response = await self._get(
             user, playlist_limit=playlist_limit, artist_limit=10, episode_limit=10
@@ -100,7 +112,16 @@ class Profiles:
     async def get_playlists(
         self, user: str, *, limit: int = 50, offset: int = 0
     ) -> ProfilePlaylists:
-        """Read one bounded page of a user's public playlists."""
+        """Read one page of a user's public playlists.
+
+        Args:
+            user: Spotify user ID, URI or URL.
+            limit: Requested page size, from 1 to 200.
+            offset: Nonnegative index of the first requested playlist.
+
+        Returns:
+            Playlist previews, the reported total and the requested page bounds.
+        """
         self._limit(limit)
         if type(offset) is not int or offset < 0:
             raise ValueError("offset must be a non-negative integer")
@@ -121,7 +142,15 @@ class Profiles:
     async def playlist_pages(
         self, user: str, *, limit: int = 50
     ) -> AsyncGenerator[ProfilePlaylists, None]:
-        """Stream public-playlist pages lazily until the returned total is reached."""
+        """Lazily read a user's public playlists in server order.
+
+        Args:
+            user: Spotify user ID, URI or URL.
+            limit: Requested page size, from 1 to 200.
+
+        Requests begin when iteration advances. An empty page or the reported
+        total ends the stream; concurrent account changes can alter pagination.
+        """
         offset = 0
         while True:
             page = await self.get_playlists(user, limit=limit, offset=offset)
@@ -159,7 +188,7 @@ class Profiles:
         for offset in range(0, len(uris), 50):
             batch = uris[offset : offset + 50]
             response = await self.queries.pathfinder_query(
-                {"uris": batch}, "isFollowingUsers", max_attempts=1
+                {"uris": batch}, Operations.IS_FOLLOWING_USERS
             )
             rows = records(response.get("users"))
             if len(rows) != len(batch) or any(
@@ -170,12 +199,21 @@ class Profiles:
         return tuple(flags)
 
     async def follow(self, *users: str) -> None:
-        """Follow the supplied users; this can notify other Spotify users."""
-        await self._follow("followUsers", users)
+        """Follow users identified by Spotify IDs, URIs or URLs.
+
+        Duplicate users are collapsed. Changes are sent in batches of at most 50
+        and can notify users. Earlier batches may succeed before a later failure;
+        reconcile followed state before retrying. Mutations are never replayed.
+        """
+        await self._follow(Operations.FOLLOW_USERS, users)
 
     async def unfollow(self, *users: str) -> None:
-        """Unfollow the supplied Spotify users."""
-        await self._follow("unfollowUsers", users)
+        """Unfollow users identified by Spotify IDs, URIs or URLs.
+
+        Duplicate users are collapsed. Each batch of at most 50 makes one attempt.
+        A later failure does not undo changes accepted in earlier batches.
+        """
+        await self._follow(Operations.UNFOLLOW_USERS, users)
 
     async def _follow(self, operation: str, users: Sequence[str]) -> None:
         """Validate each result; partial changes may apply and are never replayed."""
@@ -186,7 +224,11 @@ class Profiles:
                 {"usernames": batch}, operation, max_attempts=1
             )
             rows = records(mapping(response.get(operation)).get("responses"))
-            expected = "FollowUserResult" if operation == "followUsers" else "UnfollowUserResult"
+            expected = (
+                "FollowUserResult"
+                if operation == Operations.FOLLOW_USERS
+                else "UnfollowUserResult"
+            )
             if (
                 len(rows) != len(batch)
                 or any(

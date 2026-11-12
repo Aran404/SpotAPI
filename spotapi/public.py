@@ -6,7 +6,11 @@ from collections.abc import AsyncGenerator, Iterable, Sequence
 from contextlib import aclosing
 from typing import Literal, TypeVar, overload
 
-from .catalogue import (
+from spotapi.models.discovery import Canvas, RecommendedTrack
+
+from .catalogue import Catalogue, SpotifyItem
+from .datastruct import ObjectDict
+from .models import (
     Album,
     AlbumDetails,
     AlbumTrack,
@@ -17,11 +21,8 @@ from .catalogue import (
     ArtistTopTrack,
     Audiobook,
     Author,
-    Catalogue,
     Episode,
     Genre,
-    InclusionParameters,
-    Operations,
     Playlist,
     PlaylistDetails,
     PlaylistEntry,
@@ -30,21 +31,21 @@ from .catalogue import (
     PodcastDetails,
     PodcastEpisodeDetails,
     PublicProfile,
-    ResourceInputKind,
-    SearchInputKind,
     SearchResults,
-    SpotifyItem,
-    SpotifyResource,
     Track,
     TrackCredits,
     TrackDetails,
     User,
-    parse_spotify_resource,
 )
-from .datastruct import ObjectDict
-from .discovery import Canvas, RecommendedTrack
-from .operations import DEFAULT_SEARCH_TYPES
-from .specialized.data_wrappers.catalogue import AudiobookChapter
+from .models.catalogue.entities import AudiobookChapter
+from .operations import (
+    DEFAULT_SEARCH_TYPES,
+    Operations,
+    ResourceInputKind,
+    SearchInputKind,
+    SearchOptions,
+)
+from .resources import SpotifyResource, parse_spotify_resource
 
 __all__ = (
     "Public",
@@ -56,7 +57,20 @@ _ResultT = TypeVar("_ResultT")
 
 
 class Public:
-    """Use one catalogue operation without managing a client yourself."""
+    """Read public Spotify data without an API key or an explicit client.
+
+    Await single-result methods directly. Iterate page methods with
+    ``async for``; their ``limit`` controls page size, not the total result
+    count. Each call owns an anonymous catalogue and closes it before returning
+    or when its stream finishes. Use ``contextlib.aclosing`` when stopping a
+    stream early. Reuse :class:`Catalogue` for several related operations.
+
+    Example::
+
+        hits = await Public.search("Daft Punk", types="track", limit=5)
+        for track in hits.tracks:
+            print(track.name, track.uri)
+    """
 
     __slots__ = ()
 
@@ -100,13 +114,31 @@ class Public:
         /,
         *,
         types: SearchInputKind | Iterable[SearchInputKind] = DEFAULT_SEARCH_TYPES,
-        parameters: InclusionParameters | None = None,
+        options: SearchOptions | None = None,
         limit: int | None = None,
         language: str | None = None,
     ) -> SearchResults:
-        """Search selected categories in one request."""
+        """Search public categories and close the session before returning.
+
+        Args:
+            query: Nonempty search text.
+            types: Category or categories; defaults to tracks, artists, albums,
+                playlists and podcasts. Singular and plural names are accepted.
+            options: Advanced Spotify inclusion options.
+            limit: Maximum results per category, from 1 to 100. Overrides
+                ``options.limit``; defaults to 20 without options.
+            language: Optional language or locale, such as ``fr-CA``.
+
+        Returns:
+            Typed hits grouped by category, with empty tuples for categories
+            that were not requested or returned no usable results.
+
+        Raises:
+            ValueError: Search text, categories, limit or language are invalid.
+            SpotAPIError: Authentication, transport or response parsing fails.
+        """
         async with Catalogue(language=language) as catalogue:
-            return await catalogue.search(query, types=types, parameters=parameters, limit=limit)
+            return await catalogue.search(query, types=types, options=options, limit=limit)
 
     @staticmethod
     async def search_typed(
@@ -115,14 +147,12 @@ class Public:
         query: str,
         /,
         *,
-        parameters: InclusionParameters | None = None,
+        options: SearchOptions | None = None,
     ) -> AsyncGenerator[Sequence[_ResultT], None]:
         """Stream typed result pages for a single persisted search operation."""
         async with (
             Catalogue() as catalogue,
-            aclosing(
-                catalogue.search_typed(typ, operation, query, parameters=parameters)
-            ) as pages,
+            aclosing(catalogue.search_typed(typ, operation, query, options=options)) as pages,
         ):
             async for page in pages:
                 yield page
@@ -131,7 +161,19 @@ class Public:
     async def search_tracks(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Track], None]:
-        """Stream typed pages of matching tracks."""
+        """Stream typed pages of matching tracks.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available tracks in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_tracks(query, limit=limit)) as pages,
@@ -143,7 +185,19 @@ class Public:
     async def search_albums(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Album], None]:
-        """Stream typed pages of matching albums."""
+        """Stream typed pages of matching albums.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available albums in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_albums(query, limit=limit)) as pages,
@@ -155,7 +209,19 @@ class Public:
     async def search_artists(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Artist], None]:
-        """Stream typed pages of matching artists."""
+        """Stream typed pages of matching artists.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available artists in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_artists(query, limit=limit)) as pages,
@@ -167,7 +233,19 @@ class Public:
     async def search_playlists(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Playlist], None]:
-        """Stream typed pages of matching playlists."""
+        """Stream typed pages of matching playlists.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available playlists in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_playlists(query, limit=limit)) as pages,
@@ -179,7 +257,19 @@ class Public:
     async def search_podcasts(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Podcast], None]:
-        """Stream typed pages of matching podcasts."""
+        """Stream typed pages of matching podcasts.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available podcasts in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_podcasts(query, limit=limit)) as pages,
@@ -191,7 +281,19 @@ class Public:
     async def search_episodes(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Episode], None]:
-        """Stream typed pages of matching episodes."""
+        """Stream typed pages of matching episodes.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available episodes in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_episodes(query, limit=limit)) as pages,
@@ -203,7 +305,19 @@ class Public:
     async def search_audiobooks(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Audiobook], None]:
-        """Stream typed pages of matching audiobooks."""
+        """Stream typed pages of matching audiobooks.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available audiobooks in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_audiobooks(query, limit=limit)) as pages,
@@ -215,7 +329,19 @@ class Public:
     async def search_users(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[User], None]:
-        """Stream typed pages of matching users."""
+        """Stream typed pages of matching users.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available users in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_users(query, limit=limit)) as pages,
@@ -227,7 +353,19 @@ class Public:
     async def search_authors(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Author], None]:
-        """Stream typed pages of matching authors."""
+        """Stream typed pages of matching authors.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available authors in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_authors(query, limit=limit)) as pages,
@@ -239,7 +377,19 @@ class Public:
     async def search_genres(
         query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Genre], None]:
-        """Stream typed pages of matching genres."""
+        """Stream typed pages of matching genres.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available genres in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         async with (
             Catalogue() as catalogue,
             aclosing(catalogue.search_genres(query, limit=limit)) as pages,

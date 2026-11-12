@@ -52,7 +52,6 @@ def session() -> Mock:
     client.put = AsyncMock(return_value=response(packet(2)["payloads"][0]["cluster"]))
     client.post = AsyncMock(return_value=response({"initial_seq_num": 1, "ack_id": "fixture"}))
     client.delete = AsyncMock(return_value=response())
-    client.protocols.http.delete = AsyncMock(return_value=response())
 
     return Mock(
         spec=AuthSession,
@@ -168,13 +167,9 @@ async def test_connection_subscribes_and_cleans_only_its_observer(
         assert options["max_attempts"] == 1
         assert options["json"]["device"]["device_info"]["capabilities"]["can_be_player"] is False
 
-    assert session.client.protocols.http.delete.await_count == 2
+    assert session.client.delete.await_count == 2
 
-    assert (
-        session.client.protocols.http.delete.await_args_list[0]
-        .args[0]
-        .endswith(status.observer_id)
-    )
+    assert session.client.delete.await_args_list[0].args[0].endswith(status.observer_id)
     assert Socket.instances[-1].closed
     session.client.close.assert_not_called()
 
@@ -239,7 +234,7 @@ async def test_owned_device_registration_reporting_and_removal(
 
         assert session.client.put.call_args.kwargs["json"]["seq_num"] == first + 1
 
-    delete = session.client.protocols.http.delete.call_args
+    delete = session.client.delete.call_args
 
     assert delete.args[0].endswith("/track-playback/v1/devices/" + id)
     assert delete.kwargs["json"]["seq_num"] == first + 2
@@ -301,7 +296,7 @@ async def test_cancellation_preserved_when_observer_cleanup_fails(
 ) -> None:
     monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
 
-    session.client.protocols.http.delete.side_effect = ValueError("cleanup failed")
+    session.client.delete.side_effect = ValueError("cleanup failed")
 
     with pytest.raises(asyncio.CancelledError) as raised:
         async with PlayerStatus(session).connect():
@@ -331,7 +326,7 @@ async def test_cookie_client_owns_token_renewal(monkeypatch: pytest.MonkeyPatch)
     assert refresh is not None and refresh.done()
 
     with pytest.raises(RuntimeError, match="not open"):
-        _ = client.protocols
+        _ = client.transport
 
 
 async def test_listeners_stop_before_observer_is_removed(
@@ -360,7 +355,7 @@ async def test_listeners_stop_before_observer_is_removed(
 
         return response()
 
-    session.client.protocols.http.delete.side_effect = remove
+    session.client.delete.side_effect = remove
 
     async with player.connect():
         await started.wait()
@@ -378,7 +373,7 @@ async def test_external_device_and_hobs_are_removed_by_their_exact_ids(
         await player.deregister_device("full-device-id", observer_id="hobs_short-id", seq_num=7)
 
         observer = session.client.delete.await_args_list[0]
-        device = session.client.protocols.http.delete.await_args_list[-1]
+        device = session.client.delete.await_args_list[-1]
 
         assert observer.args[0].endswith("/connect-state/v1/devices/hobs_short-id")
         assert device.args[0].endswith("/track-playback/v1/devices/full-device-id")
@@ -501,7 +496,7 @@ async def test_managed_listener_can_close_from_ready_callback(
     await asyncio.wait_for(completed.wait(), 1)
 
     assert status.is_closed and not status.is_ready
-    assert session.client.protocols.http.delete.await_count == 2
+    assert session.client.delete.await_count == 2
     assert Socket.instances[-1].closed
 
 
@@ -542,7 +537,7 @@ async def test_managed_listener_reconnects_and_can_stop_from_reconnect_callback(
 
     assert connections == 2
     assert status.is_closed
-    assert session.client.protocols.http.delete.await_count == 4
+    assert session.client.delete.await_count == 4
 
 
 async def test_close_cancels_pending_event_waiters(session: Mock) -> None:
@@ -724,7 +719,7 @@ async def test_sleep_timer_pauses_and_connection_cleanup_cancels_replacement(
 def test_position_accounts_for_snapshot_age_and_stops_when_paused(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("spotapi.playback.time.monotonic", lambda: 100.0)
+    monkeypatch.setattr("spotapi.models.playback.time.monotonic", lambda: 100.0)
     cluster: dict[str, Any] = {
         "timestamp": "3000",
         "server_timestamp_ms": "5000",
@@ -741,7 +736,7 @@ def test_position_accounts_for_snapshot_age_and_stops_when_paused(
 
     assert state.position_ms == 14500
 
-    monkeypatch.setattr("spotapi.playback.time.monotonic", lambda: state.received_at + 2)
+    monkeypatch.setattr("spotapi.models.playback.time.monotonic", lambda: state.received_at + 2)
 
     assert state.position_ms == 17500
 

@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import secrets
-from collections.abc import AsyncGenerator, Mapping
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Self
 
-from .account_session import AccountPage, AccountSession
+from ._parsing import mapping, records, string_sequence
+from .account_session import AccountSession
 from .blend import Blends
 from .captcha import CaptchaChallenge, CaptchaSolver, captcha_token
 from .client import AsyncClient
 from .library import Library, LikedTracks
+from .models.account import AccountChallenge, AccountPlan, AccountProfile, ProfileValidationError
 from .notifications import Notifications
-from .playback import mapping, records
 from .profiles import Profiles
 from .session import AuthSession
 from .stats import ListeningStats
@@ -24,91 +24,29 @@ from .types import BaseClientError, HTTPError
 _SITE_KEY = "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39"
 
 
-@dataclass(frozen=True, slots=True)
-class ProfileValidationError:
-    field: str
-    errors: tuple[str, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class AccountProfile:
-    username: str
-    email: str = field(repr=False)
-    gender: str
-    birthdate: date | None = field(repr=False)
-    country: str
-    third_party_email: bool = False
-    editable_fields: tuple[str, ...] = ()
-    available_countries: tuple[str, ...] = ()
-    available_genders: tuple[str, ...] = ()
-    password_required_for_email_change: bool = False
-
-    @classmethod
-    def from_dict(cls, body: Mapping[str, Any]) -> AccountProfile:
-        """Parse profile settings and editable options; redact personal fields from repr."""
-        value = mapping(body.get("profile"))
-        options = mapping(body.get("options"))
-        if not isinstance(value.get("username"), str) or not isinstance(value.get("email"), str):
-            raise BaseClientError("Spotify returned no account profile")
-
-        birthday = value.get("birthdate")
-        try:
-            birthdate = date.fromisoformat(birthday) if birthday else None
-        except (ValueError, TypeError) as error:
-            raise BaseClientError("Spotify returned an invalid birthdate") from error
-
-        return cls(
-            username=value["username"],
-            email=value["email"],
-            gender=str(value.get("gender", "")),
-            birthdate=birthdate,
-            country=str(value.get("country", "")),
-            third_party_email=value.get("third_party_email") is True,
-            editable_fields=tuple(options.get("editable_fields", ())),
-            available_countries=tuple(options.get("available_countries", ())),
-            available_genders=tuple(options.get("available_genders", ())),
-            password_required_for_email_change=options.get("is_password_required_on_email_change")
-            is True,
-        )
-
-
-@dataclass(frozen=True, slots=True)
-class AccountPlan:
-    name: str
-    description: str
-    sub_description: str
-    is_premium: bool | None
-
-    @classmethod
-    def from_page(cls, page: AccountPage) -> AccountPlan:
-        """Read the subscription card from the current account overview page."""
-        props = mapping(mapping(page.data.get("props")).get("pageProps"))
-        widgets = mapping(props.get("dynamicWidgets"))
-        plans = records(widgets.get("PlanCard"))
-        plan = mapping(plans[0].get("props")) if plans else mapping(None)
-        name = plan.get("planName")
-        if not isinstance(name, str) or not name:
-            raise BaseClientError("Spotify returned no subscription plan card")
-
-        lowered = name.casefold()
-        premium = True if "premium" in lowered else False if "free" in lowered else None
-        return cls(
-            name,
-            str(plan.get("description", "")),
-            str(plan.get("subDescription", "")),
-            premium,
-        )
-
-
-@dataclass(frozen=True, slots=True)
-class AccountChallenge:
-    url: str
-    session_id: str = field(repr=False)
-    server_nonce: str = field(repr=False)
-
-
 class Account:
-    """Use ``await Account(client).get_profile()`` with an authenticated client."""
+    """Read account settings and compose authenticated music and social helpers.
+
+    Construction makes no requests. The supplied client or session stays owned
+    by the caller; this object never closes it. Use :class:`Private` for a
+    managed cookie sign-in scope. Changes are explicit method calls, and batches
+    may partially apply before an error is reported.
+
+    Args:
+        client: Authorized client or session shared by every helper.
+        locale: Account-page locale, such as ``en_US``.
+        solver: Optional asynchronous CAPTCHA solver for profile changes.
+
+    Attributes:
+        profile: Most recently fetched account settings, or ``None``.
+        plan: Most recently fetched subscription card, or ``None``.
+        library: Saved resources and artist follows.
+        liked_tracks: Track saves and paginated liked songs.
+        stats: Spotify affinity rankings.
+        profiles: Public profiles and explicit user follows.
+        notifications: Notification reads and explicit acknowledgement.
+        blends: Blend invitations and explicit joins.
+    """
 
     __slots__ = (
         "session",
@@ -183,7 +121,10 @@ class Account:
         if not isinstance(body.get("validation_errors"), list):
             raise BaseClientError("Spotify returned no profile validation result")
         return tuple(
-            ProfileValidationError(str(row.get("field", "")), tuple(row.get("errors", ())))
+            ProfileValidationError(
+                str(row.get("field", "")),
+                string_sequence(row.get("errors", ()), "validation errors"),
+            )
             for row in records(body["validation_errors"])
         )
 
@@ -198,9 +139,32 @@ class Account:
         password: str | None = None,
         token: str | None = None,
     ) -> AccountProfile | AccountChallenge:
-        """Merge supplied changes into a fresh profile; return a profile or browser challenge.
+        """Merge supplied changes into freshly fetched account settings.
 
-        Supply a fresh CAPTCHA token or configure a solver. Omitted fields remain unchanged."""
+        Args:
+            email: New email address, if editable for this account.
+            gender: Value from the profile's ``available_genders``.
+            birthdate: New calendar birthdate.
+            country: Code from the profile's ``available_countries``.
+            third_party_email: Value for Spotify's third-party-email preference.
+            password: Current password when Spotify requires it for an email change.
+            token: Fresh CAPTCHA response; an injected solver is used if omitted.
+
+        Returns:
+            Updated settings, or a browser challenge that the caller must complete.
+            Returning a challenge does not mean the requested changes were saved.
+
+        Raises:
+            ValueError: No changes were supplied, a field is not editable, an
+                option is invalid, or a required password or CAPTCHA token is empty.
+            CaptchaRequired: No CAPTCHA token or solver was supplied.
+            BaseClientError: Spotify returned invalid account settings.
+            HTTPError: Spotify rejected the request.
+
+        Note:
+            Omitted fields remain unchanged. The mutation is sent once; after an
+            ambiguous failure, read the current profile before deciding to retry.
+        """
         changes = {
             key: value
             for key, value in {
@@ -289,7 +253,12 @@ class Account:
 
 
 class Private(Account):
-    """Authenticated account operations with a managed cookie sign-in shortcut."""
+    """Use account operations inside a managed cookie-authenticated scope.
+
+    Enter ``Private.from_cookies(cookie)`` with ``async with``. It authorizes
+    the session and closes its transports and token refresh task on exit.
+    Inherited account helpers all share that session.
+    """
 
     __slots__ = ()
 

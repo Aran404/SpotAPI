@@ -8,26 +8,26 @@ import secrets
 import time
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal
-from urllib.parse import quote
 
-from .catalogue import SpotifyResource, parse_spotify_resource
+from spotapi.models.history import RecentItem
+from spotapi.models.playback import Device, PlaybackTrack, PlayerState
+
+from ._protocol.routes import CONNECT_OBSERVER, CONNECT_ROUTES
 from .client import AsyncClient
 from .command_state import command_applied
 from .connection import Response
 from .devices import RegisteredDevice
-from .history import ListeningHistory, RecentItem
+from .history import ListeningHistory
 from .library import LikedTracks
-from .playback import Device, PlaybackTrack, PlayerState
+from .resources import SpotifyResource, parse_spotify_resource
 from .session import AuthSession
 from .status import PlayerStatus
 
 
-def encode_device_id(value: str) -> str:
-    """Validate and quote a full playback device ID; reject observer IDs."""
+def _validate_device_id(value: str) -> None:
+    """Require a full playback device ID; HOBS identifiers are observers."""
     if not value or value.startswith("hobs_"):
         raise ValueError("Use a full playback device ID, not a HOBS observer ID")
-
-    return quote(value, safe="")
 
 
 def queue_resource(value: str) -> SpotifyResource:
@@ -64,7 +64,20 @@ def queue_entry(value: str | PlaybackTrack) -> dict[str, Any]:
 
 
 class Player(PlayerStatus):
-    """Connect once, observe changes, and control a selected existing device."""
+    """Observe and control an existing Spotify device using a borrowed session.
+
+    Enter ``player.connect()`` before sending commands, or run ``start()`` for
+    managed reconnection. Property reads use local snapshots. Commands are sent
+    once; an ambiguous failure requires checking fresh state before retrying.
+    This client controls playback and does not decode or render audio.
+
+    Args:
+        session: Authorized client or session; its lifetime stays with the caller.
+        device: Target playback device or full device ID. Defaults to the active
+            device in the current snapshot.
+        source: Optional source device ID for Connect routing.
+        name: Name advertised by this instance's control-only registration.
+    """
 
     __slots__ = (
         "target_device_id",
@@ -92,7 +105,7 @@ class Player(PlayerStatus):
 
         for value in (self.target_device_id, self.source_device_id):
             if value is not None:
-                encode_device_id(value)
+                _validate_device_id(value)
 
         self._registered: dict[str, RegisteredDevice] = {}
         self._sleep_task: asyncio.Task[None] | None = None
@@ -104,7 +117,7 @@ class Player(PlayerStatus):
         """Select a target device locally; transfer playback explicitly when needed."""
         value = device.id if isinstance(device, Device) else device
 
-        encode_device_id(value)
+        _validate_device_id(value)
 
         self.target_device_id = value
 
@@ -126,12 +139,36 @@ class Player(PlayerStatus):
         if destination is None:
             raise ValueError("No active player; select an existing playback device")
 
-        return f"{self.endpoints.spclient}/connect-state/v1/{operation}/from/{encode_device_id(source)}/to/{encode_device_id(destination)}"
+        _validate_device_id(source)
+        _validate_device_id(destination)
+        return CONNECT_ROUTES[operation].url(
+            base=self.endpoints.spclient, source=source, target=destination
+        )
 
     async def command(
         self, endpoint: str, *, wait: bool = True, timeout: float = 10, **arguments: Any
     ) -> None:
-        """Send once; complete on a dealer ACK or fresh state proving a known command."""
+        """Send one native Connect command to the selected device.
+
+        Args:
+            endpoint: Native command name, such as ``pause`` or ``seek_to``.
+            wait: Wait for a matching dealer ACK or a fresh snapshot proving a
+                supported command's result. False returns after HTTP acceptance.
+            timeout: Positive, finite acknowledgement wait in seconds. This does
+                not include the HTTP request's own timeout.
+            **arguments: Native command fields; ordinary callers should prefer
+                typed methods such as ``seek`` and ``set_queue``.
+
+        Raises:
+            RuntimeError: This player is not connected and ready.
+            ValueError: The command, timeout or target device is invalid.
+            TypeError: ``wait`` is not a boolean.
+            TimeoutError: Neither acknowledgement nor state proof arrives in time.
+
+        Note:
+            Commands are never replayed automatically. An ACK can precede media
+            loading; observe playback events before depending on a loaded track.
+        """
         if not endpoint:
             raise ValueError("A command endpoint is required")
 
@@ -152,9 +189,9 @@ class Player(PlayerStatus):
         }
 
         previous = self._selected_state()
-        response = await self.session.client.post(
+        response = await self.http.post(
             self._route("player/command"),
-            headers=self.session.authorized_headers,
+            authorized=True,
             json={"command": command},
             max_attempts=1,
         )
@@ -319,9 +356,9 @@ class Player(PlayerStatus):
         if type(percent) is not int or not 0 <= percent <= 100:
             raise ValueError("Volume must be an integer between 0 and 100")
 
-        await self.session.client.put(
+        await self.http.put(
             self._route("connect/volume"),
-            headers=self.session.authorized_headers,
+            authorized=True,
             json={"volume": round(percent * 65535 / 100)},
             max_attempts=1,
         )
@@ -336,9 +373,9 @@ class Player(PlayerStatus):
         paused = self.state.is_paused if self.state is not None else True
         restore = "resume" if (not paused if play is None else play) else "pause"
 
-        await self.session.client.post(
+        await self.http.post(
             self._route("connect/transfer", target),
-            headers=self.session.authorized_headers,
+            authorized=True,
             json={
                 "transfer_options": {"restore_paused": restore},
                 "command_id": secrets.token_hex(16),
@@ -603,7 +640,7 @@ class Player(PlayerStatus):
         if self.endpoints is None:
             raise RuntimeError("Player is not connected")
 
-        encode_device_id(device_id)
+        _validate_device_id(device_id)
         registration = self._registered.get(device_id)
 
         if registration is None:
@@ -618,11 +655,9 @@ class Player(PlayerStatus):
             if not observer_id.startswith("hobs_"):
                 raise ValueError("observer_id must be a HOBS ID")
 
-            await self.session.client.delete(
-                self.endpoints.spclient
-                + "/connect-state/v1/devices/"
-                + quote(observer_id, safe=""),
-                headers=self.session.authorized_headers,
+            await self.http.delete(
+                CONNECT_OBSERVER.url(base=self.endpoints.spclient, device=observer_id),
+                authorized=True,
                 max_attempts=1,
             )
 

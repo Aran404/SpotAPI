@@ -13,6 +13,9 @@ python -m black --check .
 The root Pyright configuration checks the library, examples and tests in
 strict mode. Tests may inspect private members to verify lifecycle behavior.
 Format with `python -m black .`; Ruff checks imports and code quality.
+For branch coverage, use `python -m coverage run -m pytest -m "not live"`
+and `python -m coverage report`. Offline CI publishes the XML report for each
+Python version; inspect the baseline before setting a coverage threshold.
 
 Tests run offline by default. For read-only Spotify contract checks:
 

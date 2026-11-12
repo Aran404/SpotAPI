@@ -83,8 +83,16 @@ async def test_live_playlist_cover_upload_and_clear() -> None:
 
         async def cover() -> object:
             url = f"{_PLAYLIST_URL}/{playlist.playlist_id.rsplit(':', 1)[-1]}"
-            response = await client.get(url, headers=playlist.ph._headers(), max_attempts=1)
-            assert response.json is not None
+            response = await client.get(
+                url,
+                authorized=True,
+                headers={"accept": "application/json"},
+                max_attempts=1,
+            )
+            assert response.json is not None, (
+                "Playlist metadata was not a JSON object; "
+                f"content-type={response.headers.get('content-type')!r}"
+            )
             return response.json["attributes"].get("picture")
 
         try:

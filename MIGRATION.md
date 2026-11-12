@@ -6,8 +6,19 @@ with `python -m pip install "spotapi<2"`. SpotAPI 2 is a breaking upgrade.
 
 | Old | New | Reason |
 |---|---|---|
+| `InclusionParameters(..., includePreReleases=True)` and `parameters=` | `SearchOptions(..., include_pre_releases=True)` and `options=` | Immutable Python options with explicit conversion to Spotify's wire variables |
+| Empty `SEARCH_RAW_OPERATIONS` mapping | `SEARCH_DESKTOP_SECTIONS` | Every supported search category uses the consolidated desktop operation |
+| `client.protocols.http` / `client.protocols.ws` | `client.transport` / `client.websocket` | Direct transport access without an intermediate tuple |
+| Manually merged session credential headers | `client.get(url, authorized=True)` | Centralized credential construction, destination checks and safe renewal |
+| Directly constructed `AuthSession(client)` is detached | It attaches to its client; one session per client | Consistent refresh and shutdown ownership |
+| `max_attempts=1` can still replay after a 401 | It forbids renewal replay too | One attempt means one attempt for mutations |
+| Non-success statuses always raise | `expected_statuses=(404,)` | Explicit endpoint-specific status handling without using the raw transport |
+| `spotapi.playback`, `discovery`, `library_models` and models in feature modules | `spotapi.models` or its domain submodules | Result types are independent of feature clients |
+| Separate artwork color/contrast-role classes | `RGBA` and `ContrastPalette` in `models.catalogue.common` | Identical value contracts share one implementation; nested field names stay unchanged |
+| Public-looking `spotapi.protobuf`, `bundle_parsing`, `specialized.totp` helpers | Internal `spotapi._protocol` modules | Wire implementation details are not application-facing API |
+| `Profile.accountId`, `avatarBackgroundColor`, `socialHandle` | `account_id`, `avatar_background_color`, `social_handle` | Python names at the model boundary; wire keys remain unchanged |
 | `QueryWrapper` / `spotapi.v2.query_wrapper` | `Queries` / `spotapi.queries` | Name the persisted-query responsibility directly |
-| Deep `specialized.data_wrappers` application imports | `from spotapi.models import ...` (old imports still work) | Discoverable public model namespace |
+| Deep `specialized.data_wrappers` application imports | `from spotapi.models import ...` | Discoverable public model namespace |
 | Extended searches return raw dictionaries through separate operations | Typed Audiobook/Episode/User/Author/Genre results from one `searchDesktop` request | Working anonymous search with stable return types |
 | `Public.get(playlist_url)` returns raw data | `PlaylistDetails`; use `Queries` for raw operations | Metadata is typed; track occurrence pagination is explicit |
 | `Public.get_podcast()` returns raw metadata | `PodcastDetails`; audiobooks use `get_audiobook()` | Respect Spotify's distinct podcast/audiobook entity types |
@@ -77,3 +88,10 @@ Queue edits preserve occurrence UIDs and use the last observed revision.
 Library and history access are also reusable as `LikedTracks(client)` and
 `ListeningHistory(client)`. Recents represent dated grouped contexts and saved
 actions; they do not provide exact per-play timestamps.
+
+Managed authorization accepts HTTPS Spotify hosts and disables redirects. Custom
+headers must be a string mapping; replacing `Authorization` or `client-token`
+(case-insensitively) is rejected. Use the raw `client.transport` only when an
+integration deliberately needs to own its authentication/status policy. The
+feature helpers' `http` attribute is the validated `AsyncClient`, not the raw
+transport. See [request policy](docs/transport.md).

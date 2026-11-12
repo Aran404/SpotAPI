@@ -2,7 +2,7 @@
 
 import pytest
 
-from spotapi.protobuf import ProtoMessage, encode_field
+from spotapi._protocol.protobuf import ProtoMessage, encode_field
 from spotapi.types import BaseClientError
 
 

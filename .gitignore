@@ -175,3 +175,14 @@ sessions.json
 /docs/independent-review.md
 /docs/release-audit.md
 /benchmarks/*.json
+
+# Local credentials and tool artifacts
+.env.*
+!.env.example
+.ruff_cache/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Session-specific audit notes (keep contributor guides and regression tests)
+/docs/code-quality-review.md

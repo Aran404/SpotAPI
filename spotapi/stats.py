@@ -2,26 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Literal, TypeAlias
+from typing import Any
 
+from spotapi.models.library import track_from_data
+
+from ._parsing import integer, mapping, records
 from .client import AsyncClient
-from .library_models import track_from_data
-from .playback import integer, mapping, records
+from .models.catalogue import Artist, Track, from_dict
+from .models.stats import TimeRange, TopContent
+from .operations import Operations
 from .query import QueryClient
 from .session import AuthSession
-from .specialized.data_wrappers import Artist, Track, from_dict
 from .types import BaseClientError
-
-TimeRange: TypeAlias = Literal["short_term", "medium_term", "long_term"]
-
-
-@dataclass(frozen=True, slots=True)
-class TopContent:
-    artists: tuple[Artist, ...]
-    tracks: tuple[Track, ...]
-    total_artists: int
-    total_tracks: int
 
 
 class ListeningStats:
@@ -43,7 +35,20 @@ class ListeningStats:
         artists: bool = True,
         tracks: bool = True,
     ) -> TopContent:
-        """Fetch top artists and tracks together for a chosen affinity range."""
+        """Read Spotify's affinity rankings for the current account.
+
+        Args:
+            time_range: short_term, medium_term or long_term ranking window.
+            limit: Requested size of each ranking page, from 1 to 50.
+            offset: Nonnegative index of the first requested entry.
+            artists: Include artist rankings.
+            tracks: Include track rankings; at least one ranking must be enabled.
+
+        Returns:
+            Both requested rankings and their reported totals in one response.
+
+        These are affinity rankings, not measured listening counts.
+        """
         if time_range not in {"short_term", "medium_term", "long_term"}:
             raise ValueError("Choose short_term, medium_term or long_term")
         if type(limit) is not int or not 1 <= limit <= 50:
@@ -65,7 +70,7 @@ class ListeningStats:
             "includeTopTracks": tracks,
             "topTracksInput": affinity,
         }
-        response = await self.queries.pathfinder_query(variables, "userTopContent", max_attempts=1)
+        response = await self.queries.pathfinder_query(variables, Operations.USER_TOP_CONTENT)
         profile = mapping(mapping(response.get("me")).get("profile"))
         artist_page = mapping(profile.get("topArtists"))
         track_page = mapping(profile.get("topTracks"))

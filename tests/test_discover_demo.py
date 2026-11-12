@@ -1,7 +1,8 @@
 """The optional demo should cover the catalogue without needing network access."""
 
 import asyncio
-from unittest.mock import Mock
+from io import StringIO
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -9,7 +10,11 @@ pytest.importorskip("textual")
 pytest.importorskip("textual_image")
 pytest.importorskip("httpx")
 
-from examples import discover
+# The image renderer probes the real terminal during import. Headless tests
+# must not read terminal replies through pytest's captured stdin.
+with patch("sys.__stdout__", StringIO()):
+    from examples import discover
+
 from spotapi.models import Track
 
 
@@ -37,7 +42,7 @@ async def test_ten_tabs_render_and_finish_their_feeds(monkeypatch: pytest.Monkey
 
 def test_playlist_rows_show_optional_bpm_and_keys() -> None:
     from spotapi.models import PlaylistTrack
-    from spotapi.specialized.data_wrappers import from_dict
+    from spotapi.models.catalogue import from_dict
 
     track = from_dict(
         PlaylistTrack,

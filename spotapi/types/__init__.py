@@ -26,12 +26,9 @@ from .logger import (
 DefaultLogger: LoggerProtocol = InbuiltLogger(logging.getLogger("spotapi"))
 
 __all__ = (
-    "SpotAPIError",
     "BaseClientError",
-    "HTTPError",
-    "PlaylistError",
-    "WebsocketError",
     "DefaultLogger",
+    "HTTPError",
     "InbuiltLogger",
     "JsonLogger",
     "Level",
@@ -40,5 +37,8 @@ __all__ = (
     "LoggerProtocol",
     "MultiLogger",
     "NoopLogger",
+    "PlaylistError",
+    "SpotAPIError",
     "StandardLogger",
+    "WebsocketError",
 )

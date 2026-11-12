@@ -175,3 +175,4 @@ async def test_fresh_playlist_metadata_bypasses_delayed_graphql_state() -> None:
     assert data.name == "Fresh name" and data.total_count == 0
     assert data.description == "" and data.revision_id == "fresh-revision"
     assert get.call_args.args[0].endswith("/playlist/v2/playlist/playlist-id")
+    assert get.call_args.kwargs["headers"]["accept"] == "application/json"

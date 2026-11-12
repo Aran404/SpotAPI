@@ -4,4 +4,4 @@ from .event_handler import EventDispatcher
 from .object_dict import ObjectDict
 from .pool import Pool
 
-__all__ = ("ObjectDict", "Pool", "EventDispatcher")
+__all__ = ("EventDispatcher", "ObjectDict", "Pool")

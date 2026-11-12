@@ -22,11 +22,13 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any, ClassVar, Self, cast
 
+from ._protocol.routes import PATHFINDER
 from .client import AsyncClient
 from .connection import Response
 from .datastruct import ObjectDict
+from .models.catalogue import Profile
+from .operations import READ_OPERATIONS, Operations
 from .session import AuthSession, normalize_language
-from .specialized.data_wrappers import Profile
 from .types import BaseClientError
 
 __all__ = (
@@ -35,42 +37,6 @@ __all__ = (
     "get_at_depth",
     "paginate",
     "query_client_pool",
-)
-
-# Only operations whose read semantics are known locally opt into POST retries.
-# Unknown persisted operations may mutate state even though their URL says query.
-_READ_OPERATIONS = frozenset(
-    {
-        "searchDesktop",
-        "searchAudiobooks",
-        "searchEpisodes",
-        "searchAuthors",
-        "searchGenres",
-        "searchUsers",
-        "profileAttributes",
-        "userTopContent",
-        "fetchLibraryTracks",
-        "libraryV3",
-        "areEntitiesInLibrary",
-        "isFollowingUsers",
-        "recents",
-        "fetchPlaylistContents",
-        "fetchPlaylistMetadata",
-        "queryShowMetadataV2",
-        "getPodcastOrBookName",
-        "getEpisodeOrChapter",
-        "getTrack",
-        "getAlbum",
-        "queryArtistOverview",
-        "queryPodcastEpisodes",
-        "queryAlbumTracks",
-        "queryTrackCreditsGroupedModal",
-        "queryArtistDiscographyAll",
-        "queryArtistDiscographyAlbums",
-        "queryArtistDiscographySingles",
-        "queryArtistDiscographyCompilations",
-        "queryArtistRelated",
-    }
 )
 
 
@@ -187,7 +153,7 @@ class QueryClient:
         session: Authorized session used to sign every request.
     """
 
-    __slots__ = ("_profile", "_owns_session", "session")
+    __slots__ = ("http", "_profile", "_owns_session", "session")
 
     _QUERY_VERSION: ClassVar[int] = 1
     # Used only if bundle discovery does not supply this persisted query.
@@ -205,7 +171,7 @@ class QueryClient:
         # Community-reported value; live endpoint validity is not verified.
         "getEpisodeOrChapter": "9697538fe993af785c10725a40bb9265a20b998ccd2383bd6f586e01303824e9",
     }
-    _QUERY_URL: ClassVar[str] = "https://api-partner.spotify.com/pathfinder/v2/query"
+    _QUERY_URL: ClassVar[str] = PATHFINDER
     _FALLBACK_TOTAL: ClassVar[int] = _DEFAULT_PAGE_CAP
 
     def __init__(self, session: AuthSession, *, owns_session: bool = False) -> None:
@@ -216,6 +182,7 @@ class QueryClient:
                 already be authorized; ``create()`` takes care of that.
         """
         self.session = session
+        self.http = self.session.client
         self._owns_session = owns_session
         self._profile: Profile | None = None
 
@@ -301,15 +268,15 @@ class QueryClient:
             },
         }
         headers = {
-            **self.session.authorized_headers,
             "accept": "application/json",
             "content-type": "application/json;charset=UTF-8",
         }
 
-        response: Response = await self.session.client.post(
+        response: Response = await self.http.post(
             self._QUERY_URL,
+            authorized=True,
             max_attempts=max_attempts,
-            retry_safe=operation_name in _READ_OPERATIONS,
+            retry_safe=operation_name in READ_OPERATIONS,
             json=payload,
             headers=headers,
         )
@@ -397,7 +364,7 @@ class QueryClient:
             BaseClientError: The endpoint returned no profile.
         """
         if self._profile is None:
-            response = await self.pathfinder_query({}, "profileAttributes")
+            response = await self.pathfinder_query({}, Operations.PROFILE_ATTRIBUTES)
 
             me = response.get("me")
 
@@ -520,8 +487,6 @@ class _PoolEntry:
 
 class _PoolRegistry(threading.local):
     """Pool state is isolated per thread *and* per running event loop."""
-
-    __slots__ = ("entries",)
 
     def __init__(self) -> None:
         """Create this thread's registry of event-loop-specific query owners."""

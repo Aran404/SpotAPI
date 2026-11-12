@@ -18,11 +18,11 @@ from spotapi import (
     Notifications,
     Profiles,
 )
+from spotapi._protocol.protobuf import encode_field
 from spotapi.connection import Response
 from spotapi.datastruct import ObjectDict
-from spotapi.discovery import recommended_tracks
 from spotapi.models import BlendInvitation
-from spotapi.protobuf import encode_field
+from spotapi.models.discovery import recommended_tracks
 from spotapi.query import QueryClient
 from spotapi.session import AuthSession
 from spotapi.types import BaseClientError

@@ -52,7 +52,7 @@ async def test_library_batches_without_losing_input_order() -> None:
 
     assert flags == (True,) * 50 + (False,)
     assert [len(call.args[0]["uris"]) for call in query.await_args_list] == [50, 1]
-    assert all(call.kwargs["max_attempts"] == 1 for call in query.await_args_list)
+    assert all(call.kwargs.get("max_attempts") is None for call in query.await_args_list)
 
 
 @pytest.mark.parametrize("lookup", [[], [{"data": {"saved": "false"}}]])
@@ -164,5 +164,4 @@ async def test_history_unwraps_list_and_ignores_unavailable_entities() -> None:
     query.assert_awaited_once_with(
         {"uris": ["spotify:list:recents:page"], "limit": 2, "offset": 4},
         "recents",
-        max_attempts=1,
     )

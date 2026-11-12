@@ -3,12 +3,23 @@
 from __future__ import annotations
 
 from spotapi.operations import (
+    READ_OPERATIONS,
     SEARCH_DESKTOP_SECTIONS,
-    SEARCH_RAW_OPERATIONS,
     SEARCH_RESULT_FIELDS,
+    Operations,
+    SearchOptions,
     normalize_resource_kind,
     normalize_search_kind,
 )
+
+
+def test_retry_permission_is_explicit_and_excludes_mutations() -> None:
+    assert Operations.QUERY_BOOK_CHAPTERS in READ_OPERATIONS
+    assert Operations.SEARCH_DESKTOP in READ_OPERATIONS
+    assert Operations.ADD_TO_PLAYLIST not in READ_OPERATIONS
+    assert Operations.ADD_TO_LIBRARY not in READ_OPERATIONS
+    assert Operations.FOLLOW_USERS not in READ_OPERATIONS
+    assert "unknownOperation" not in READ_OPERATIONS
 
 
 def test_resource_kind_aliases_are_canonicalized() -> None:
@@ -25,10 +36,26 @@ def test_search_kind_aliases_are_canonicalized() -> None:
 
 
 def test_every_search_category_has_operation_and_result_field() -> None:
-    categories = set(SEARCH_DESKTOP_SECTIONS) | set(SEARCH_RAW_OPERATIONS)
+    assert set(SEARCH_DESKTOP_SECTIONS) == set(SEARCH_RESULT_FIELDS)
 
-    assert categories == set(SEARCH_RESULT_FIELDS)
-    assert set(SEARCH_DESKTOP_SECTIONS).isdisjoint(SEARCH_RAW_OPERATIONS)
+
+def test_search_options_keep_python_names_separate_from_wire_keys() -> None:
+    options = SearchOptions(limit=12, include_audiobooks=True, include_pre_releases=True)
+    variables = options.to_variables()
+
+    assert variables == {
+        "limit": 12,
+        "numberOfTopResults": 20,
+        "includeAudiobooks": True,
+        "includeArtistHasConcertsField": False,
+        "includePreReleases": True,
+        "includeAlbumPreReleases": False,
+        "includeAuthors": False,
+        "includeEpisodeContentRatingsV2": False,
+    }
+    variables["limit"] = 1
+    assert options.limit == 12
+    assert options.to_variables()["limit"] == 12
 
 
 def test_unknown_resource_and_search_kinds_are_rejected() -> None:

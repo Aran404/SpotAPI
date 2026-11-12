@@ -193,5 +193,4 @@ class ObjectDict(dict[str, Any]):
             raise AttributeError(message, name=name, obj=self) from None
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         return f"{type(self).__name__}({super().__repr__()})"

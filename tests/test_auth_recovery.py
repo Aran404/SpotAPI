@@ -42,21 +42,25 @@ async def test_only_authenticated_reads_can_refresh_and_replay(
     session = Mock(
         spec=AuthSession,
         token=AccessToken("client", "old", 0, "old-client"),
-        authorized_headers={"authorization": "Bearer new", "client-token": "new-client"},
+        authorized_headers={"authorization": "Bearer old", "client-token": "old-client"},
     )
+
+    async def renew(*, previous_token: str | None = None) -> AccessToken:
+        assert previous_token == "old"
+        session.authorized_headers = {"authorization": "Bearer new", "client-token": "new-client"}
+        return AccessToken("client", "new", 0, "new-client")
+
+    session.refresh = AsyncMock(side_effect=renew)
 
     async with AsyncClient() as client:
         client._session = session
-        headers = {
-            "Authorization": "Bearer old",
-            "Client-Token": "old-client",
-            "accept": "application/json",
-        }
+        headers = {"ACCEPT": "application/json"}
         if expected_calls == 1:
             with pytest.raises(HTTPError):
                 await client.request(
                     method,
                     "https://spclient.wg.spotify.com/example",
+                    authorized=True,
                     headers=headers,
                     retry_safe=retry_safe,
                 )
@@ -64,6 +68,7 @@ async def test_only_authenticated_reads_can_refresh_and_replay(
             await client.request(
                 method,
                 "https://spclient.wg.spotify.com/example",
+                authorized=True,
                 headers=headers,
                 retry_safe=retry_safe,
             )

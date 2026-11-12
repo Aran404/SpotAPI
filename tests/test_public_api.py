@@ -12,7 +12,7 @@ import pytest
 from spotapi import catalogue as public_module
 from spotapi.catalogue import Catalogue
 from spotapi.datastruct import ObjectDict
-from spotapi.operations import InclusionParameters, Operations
+from spotapi.operations import Operations, SearchOptions
 from spotapi.public import Public, SearchResults, SpotifyResource
 from spotapi.queries import Queries
 
@@ -317,21 +317,21 @@ def test_search_honours_inclusion_parameters_without_mutating_them(
 
     monkeypatch.setattr(public_module, "Queries", Mock(return_value=fake))
 
-    parameters = InclusionParameters(limit=40, includePreReleases=True)
+    parameters = SearchOptions(limit=40, include_pre_releases=True)
 
     async def scenario() -> None:
         await Public.search(
             "fantasy",
             types=("audiobook", "author", "episode"),
-            parameters=parameters,
+            options=parameters,
         )
 
     asyncio.run(scenario())
 
     assert parameters.limit == 40
-    assert parameters.includeAudiobooks is False
-    assert parameters.includeAuthors is False
-    assert parameters.includeEpisodeContentRatingsV2 is False
+    assert parameters.include_audiobooks is False
+    assert parameters.include_authors is False
+    assert parameters.include_episode_content_ratings_v2 is False
     assert len(fake.calls) == 1
     operation, variables = fake.calls[0]
 

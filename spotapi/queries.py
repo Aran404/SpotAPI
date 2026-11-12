@@ -7,45 +7,25 @@ Spotify-specific variables and response parsing belong in ``Catalogue``.
 from __future__ import annotations
 
 import logging
-from collections.abc import AsyncGenerator, Callable, Mapping, Sequence
+from collections.abc import AsyncGenerator, Callable, Iterator, Mapping, Sequence
 from contextlib import asynccontextmanager
-from dataclasses import MISSING, asdict, fields, is_dataclass
 from typing import Any, Final, TypeVar, cast, overload
 
 import wreq
 
+from ._decoding import from_dict, required_fields
 from .connection import Response
 from .connection.types import Methods
 from .datastruct import ObjectDict, Pool
-from .operations import InclusionParameters, Operations
+from .operations import Operations, SearchOptions
 from .query import QueryClient, SharedQueryClient, paginate, query_client_pool
-from .specialized.data_wrappers import from_dict
 from .types import BaseClientError
 
 __all__ = ("Queries",)
 
 _ResultT = TypeVar("_ResultT")
 _LOG = logging.getLogger(__name__)
-_DEFAULT_PARAMETERS: Final = asdict(InclusionParameters())
-
-
-def _camel_case(name: str) -> str:
-    """Convert ``snake_case`` to ``camelCase``."""
-    head, *rest = name.split("_")
-
-    return head + "".join(part.title() for part in rest)
-
-
-def _required_fields(typ: type | None) -> dict[str, str]:
-    """Map each required dataclass field to its camelCase API alias."""
-    if typ is None or not is_dataclass(typ):
-        return {}
-
-    return {
-        item.name: _camel_case(item.name)
-        for item in fields(typ)
-        if item.init and item.default is MISSING and item.default_factory is MISSING
-    }
+_DEFAULT_SEARCH_VARIABLES: Final = SearchOptions().to_variables()
 
 
 def _has_field(data: Mapping[str, Any], name: str, alias: str) -> bool:
@@ -54,7 +34,17 @@ def _has_field(data: Mapping[str, Any], name: str, alias: str) -> bool:
 
 
 class Queries:
-    """Execute persisted queries and decode their results."""
+    """Execute persisted queries and optionally decode their results.
+
+    Prefer :class:`Catalogue` for typed Spotify operations. This lower-level
+    interface accepts native operation names and variables. ``Queries.open()``
+    owns a private scope; an injected pool remains owned by the caller. Without
+    either, requests use an implicit per-event-loop owner that applications with
+    custom loop lifetimes must close explicitly.
+
+    Args:
+        pool: Shared query owner or generic pool to borrow.
+    """
 
     __slots__ = ("_pool",)
 
@@ -63,7 +53,6 @@ class Queries:
         self._pool = pool
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         pool = "custom" if self._pool is not None else "shared"
 
         return f"<Queries pool={pool}>"
@@ -109,7 +98,7 @@ class Queries:
         if "uri" not in payload and isinstance(nested, Mapping):
             payload = cast(Mapping[str, Any], nested)
 
-        required = _required_fields(typ)
+        required = required_fields(typ)
 
         def missing(obj: Mapping[str, Any]) -> list[str]:
             """List required model fields absent under both accepted key spellings."""
@@ -166,9 +155,7 @@ class Queries:
     async def get_json(self, url: str, *, query: dict[str, str] | None = None) -> ObjectDict:
         """Read a JSON object using the catalogue session."""
         async with self._get_pool().acquire() as client:
-            response = await client.session.client.get(
-                url, query=query or {}, headers=client.session.authorized_headers
-            )
+            response = await client.http.get(url, query=query or {}, authorized=True)
 
         if response.json is None:
             raise BaseClientError("Catalogue endpoint returned no JSON object")
@@ -184,19 +171,43 @@ class Queries:
         json: Mapping[str, Any] | None = None,
         body: bytes | None = None,
         headers: Mapping[str, str] | None = None,
+        retry_safe: bool = False,
     ) -> Response:
-        """Use the same authorized transport for an endpoint outside Pathfinder."""
+        """Call a Spotify endpoint outside Pathfinder using the shared session.
+
+        Args:
+            method: HTTP method.
+            url: Absolute HTTPS Spotify endpoint; redirects are disabled.
+            query: Query parameters, kept separate from the URL path.
+            json: Optional JSON request object.
+            body: Optional binary request body; use instead of json.
+            headers: Representation headers; managed credentials cannot be replaced.
+            retry_safe: Permit transport retries and one safe 401 renewal replay.
+                Defaults to false even for GET; opt in only for known reads.
+
+        Returns:
+            A validated successful response. Failures raise HTTPError.
+
+        This method borrows the query owner's client. It does not create or
+        close a separate transport, and single-attempt mutations remain the
+        default for endpoints whose semantics are unknown.
+        """
         async with self._get_pool().acquire() as client:
-            options: wreq.Request = {
-                "headers": {**client.session.authorized_headers, **(headers or {})}
-            }
+            options: wreq.Request = {"headers": dict(headers or {})}
             if query is not None:
                 options["query"] = dict(query)
             if json is not None:
                 options["json"] = json
             if body is not None:
                 options["body"] = body
-            return await client.session.client.request(method, url, max_attempts=1, **options)
+            return await client.http.request(
+                method,
+                url,
+                authorized=True,
+                max_attempts=None if retry_safe else 1,
+                retry_safe=retry_safe,
+                **options,
+            )
 
     async def paginate(
         self,
@@ -229,14 +240,14 @@ class Queries:
         operation: Operations,
         *,
         obey_total_count: bool = True,
-        parameters: InclusionParameters | None = None,
+        options: SearchOptions | None = None,
         extract_page: Callable[[ObjectDict], ObjectDict] | None = None,
     ) -> AsyncGenerator[ObjectDict, None]:
         """Yield raw search pages."""
         variables: dict[str, Any] = {
             "searchTerm": query,
             "offset": 0,
-            **(_DEFAULT_PARAMETERS if parameters is None else asdict(parameters)),
+            **(_DEFAULT_SEARCH_VARIABLES if options is None else options.to_variables()),
             "isPrefix": None,
             "sectionFilters": ["GENERIC"],
         }
@@ -258,34 +269,10 @@ class Queries:
         skip_invalid: bool = False,
     ) -> list[_ResultT]:
         """Deserialize a search section into instances of ``typ``."""
-        # Read the original Spotify key first. ``_items`` is only the
-        # attribute-access spelling used by ObjectDict for the key ``items``.
-        # Keep the leading-underscore fallback for callers holding older
-        # pre-normalized page objects.
-        items: object = page["items"] if "items" in page else page.get("_items")
-
-        if not isinstance(items, list):
-            raise BaseClientError(f"{operation.value}: missing search items")
-
-        required = _required_fields(typ)
+        required = required_fields(typ)
         results: list[_ResultT] = []
 
-        for item in cast(list[object], items):
-            if not isinstance(item, ObjectDict):
-                if skip_invalid:
-                    continue
-
-                raise BaseClientError(f"{operation.value}: invalid search item")
-
-            # Spotify includes placeholder entries for removed resources.
-            if item.get("data", object()) is None or any(
-                isinstance(value, ObjectDict) and value.get("data", object()) is None
-                for value in item.values()
-            ):
-                continue
-
-            payload = Queries.extract_data(item)
-
+        for payload in Queries._search_payloads(page, operation, skip_invalid=skip_invalid):
             if any(not _has_field(payload, name, alias) for name, alias in required.items()):
                 # Search may return lightweight previews that cannot satisfy
                 # the requested model. They are not malformed page envelopes.
@@ -317,29 +304,34 @@ class Queries:
         skip_invalid: bool = False,
     ) -> list[ObjectDict]:
         """Extract raw entity payloads from a search section."""
-        items: object = page["items"] if "items" in page else page.get("_items")
+        return list(Queries._search_payloads(page, operation, skip_invalid=skip_invalid))
 
+    @staticmethod
+    def _search_payloads(
+        page: ObjectDict,
+        operation: Operations,
+        *,
+        skip_invalid: bool,
+    ) -> Iterator[ObjectDict]:
+        # Preserve original JSON keys; accept legacy pre-escaped pages as a fallback.
+        items: object = page["items"] if "items" in page else page.get("_items")
         if not isinstance(items, list):
             raise BaseClientError(f"{operation.value}: missing search items")
-
-        results: list[ObjectDict] = []
 
         for item in cast(list[object], items):
             if not isinstance(item, ObjectDict):
                 if skip_invalid:
                     continue
-
                 raise BaseClientError(f"{operation.value}: invalid search item")
 
+            # Removed resources appear as null payloads, including inside wrappers.
             if item.get("data", object()) is None or any(
                 isinstance(value, ObjectDict) and value.get("data", object()) is None
                 for value in item.values()
             ):
                 continue
 
-            results.append(Queries.extract_data(item))
-
-        return results
+            yield Queries.extract_data(item)
 
     async def typed_search(
         self,
@@ -348,7 +340,7 @@ class Queries:
         query: str,
         /,
         *,
-        parameters: InclusionParameters | None = None,
+        options: SearchOptions | None = None,
         extract_page: Callable[[ObjectDict], ObjectDict] | None = None,
         skip_invalid: bool = False,
     ) -> AsyncGenerator[Sequence[_ResultT], None]:
@@ -356,7 +348,7 @@ class Queries:
         async for page in self.search(
             query,
             operation=operation,
-            parameters=parameters,
+            options=options,
             extract_page=extract_page,
         ):
             yield self.parse_items(page, typ, operation, skip_invalid=skip_invalid)

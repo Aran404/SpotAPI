@@ -6,7 +6,8 @@ import asyncio
 import logging
 from collections.abc import Mapping
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, NamedTuple, Self, Unpack
+from typing import TYPE_CHECKING, Any, Self, Unpack, cast
+from urllib.parse import urlsplit
 
 import wreq
 
@@ -34,13 +35,6 @@ else:
     _AsyncClientOptions = Any
 
 __all__ = ("AsyncClient",)
-
-
-class _RawClients(NamedTuple):
-    """The HTTP and WebSocket transports owned by an open client."""
-
-    http: HTTPClient
-    ws: WebSocketClient
 
 
 async def _close_transports(
@@ -80,7 +74,7 @@ class AsyncClient:
 
     Use :meth:`new` or ``async with`` to open the client, and :meth:`close`
     to release its transports. HTTP request methods require an open client
-    and return validated successful responses.
+    and validate responses unless a non-success status is explicitly expected.
     """
 
     __slots__ = ("_http", "_ws", "_proxy", "_close_task", "_session")
@@ -98,23 +92,32 @@ class AsyncClient:
         self._close_task: asyncio.Task[None] | None = None
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         return f"<AsyncClient open={self._http is not None} proxy={self._proxy is not None}>"
 
     @property
-    def protocols(self) -> _RawClients:
-        """Return the underlying HTTP and WebSocket transports.
+    def transport(self) -> HTTPClient:
+        """The open HTTP transport, returning responses without status validation.
 
-        Returns:
-            A named tuple containing the open transports.
+        Use this for protocols that interpret non-success statuses themselves.
+        Prefer :meth:`request` for ordinary validated HTTP requests.
 
         Raises:
             RuntimeError: If the client is not open.
         """
-        if self._http is None or self._ws is None:
-            raise RuntimeError("Client is not open")
+        if self._http is None:
+            raise RuntimeError("Client is not open; use AsyncClient.new() or async with")
+        return self._http
 
-        return _RawClients(self._http, self._ws)
+    @property
+    def websocket(self) -> WebSocketClient:
+        """The open WebSocket transport; call its ``connect()`` to attach a socket.
+
+        Raises:
+            RuntimeError: If the client is not open.
+        """
+        if self._ws is None:
+            raise RuntimeError("Client is not open; use AsyncClient.new() or async with")
+        return self._ws
 
     @classmethod
     async def new(cls, *, proxy: str | None = None, **kwargs: Unpack[_AsyncClientOptions]) -> Self:
@@ -142,7 +145,20 @@ class AsyncClient:
         language: str = "en",
         **kwargs: Unpack[_AsyncClientOptions],
     ) -> Self:
-        """Create a managed cookie-authenticated client with optional transport settings."""
+        """Open and authorize a client that owns token renewal and transports.
+
+        Args:
+            cookies: Cookie-header text or exported browser-cookie records.
+            proxy: Optional transport proxy URL.
+            language: Language tag used for Spotify requests.
+            **kwargs: HTTP transport configuration, including retry settings.
+
+        Returns:
+            An open authenticated client. Close it with await client.close().
+
+        Initialization failure closes the client before propagating the error.
+        Use it with account/player helpers without constructing another session.
+        """
         from .session import AuthSession, normalize_language
 
         language = normalize_language(language)
@@ -153,11 +169,10 @@ class AsyncClient:
         client = await cls.new(proxy=proxy, **kwargs)
 
         try:
-            session = await AuthSession.from_cookies(cookies, client=client, language=language)
+            await AuthSession.from_cookies(cookies, client=client, language=language)
         except BaseException:
             await client.close()
             raise
-        client._session = session
 
         return client
 
@@ -165,9 +180,20 @@ class AsyncClient:
     def session(self) -> AuthSession:
         """Return the managed authentication session; require authorization first."""
         if self._session is None:
-            raise RuntimeError("Use AsyncClient.from_cookies() for an authorized client")
+            raise RuntimeError(
+                "Client has no authentication session; use from_cookies() or AuthSession(client)"
+            )
 
         return self._session
+
+    @session.setter
+    def session(self, session: AuthSession) -> None:
+        """Attach this client's authentication owner; reject conflicting sessions."""
+        if session.client is not self:
+            raise ValueError("The authentication session belongs to another client")
+        if self._session is not None and self._session is not session:
+            raise RuntimeError("This client already has an authentication session")
+        self._session = session
 
     async def __aenter__(self) -> Self:
         """Open the transports and return this client."""
@@ -253,153 +279,300 @@ class AsyncClient:
 
         self._http, self._ws = http, websocket
 
-    def _require_http(self) -> HTTPClient:
-        """Return the open HTTP transport or raise ``RuntimeError``."""
-        if self._http is None:
-            raise RuntimeError("Client is not open; use AsyncClient.new() or async with")
-
-        return self._http
-
     async def request(
         self,
         method: Methods,
         url: str,
         *,
+        authorized: bool = False,
+        expected_statuses: tuple[int, ...] = (),
         max_attempts: int | None = None,
         retry_safe: bool | None = None,
         **kwargs: Unpack[wreq.Request],
     ) -> Response:
-        """Send a validated request.
+        """Send a request with optional managed Spotify authorization.
 
         Args:
             method: HTTP method.
-            url: Request URL.
-            max_attempts: Retry limit; use ``1`` for operations that must not be replayed.
-                An explicit larger value permits replay.
-            retry_safe: Enable retries for a known read-only operation such as
-                a catalogue POST. Defaults to safe HTTP methods only.
-            **kwargs: Options forwarded to ``wreq``.
+            url: Absolute request URL. Managed credentials require an HTTPS
+                Spotify host without embedded user credentials.
+            authorized: Add the session's current headers and renew once after
+                a 401 for a replay-safe request. Requires an attached session.
+            expected_statuses: Additional statuses that the caller handles, such
+                as 404 when removing an already absent device.
+            max_attempts: Total transport attempts. Setting this to 1 also
+                disables automatic credential-renewal replay.
+            retry_safe: Permit replay of a known read-only operation, including
+                catalogue POSTs. Defaults to safe HTTP methods.
+            **kwargs: Native transport options. Managed requests disable redirects
+                to prevent forwarding credentials. Header names are merged without
+                case distinctions; managed credential headers cannot be replaced.
 
         Returns:
-            The validated HTTP response.
+            A successful response, or an explicitly expected status.
 
         Raises:
-            RuntimeError: If this client is not open.
-            ValueError: If ``max_attempts`` is less than one.
-            HTTPError: If the response is unsuccessful or JSON is invalid.
+            RuntimeError: The client is closed or authorization is unavailable.
+            ValueError: Credentials target an invalid host or are overridden.
+            HTTPError: The request fails or returns an invalid JSON object.
         """
-        session = self._session
-        provided = kwargs.get("headers")
-        headers: Mapping[str, str] = provided if isinstance(provided, Mapping) else {}
-        token = session.token.access_token if session is not None else None
-        authorized = (
-            token is not None
-            and headers.get("authorization", headers.get("Authorization")) == f"Bearer {token}"
-        )
-        safe = retry_safe is True or (retry_safe is None and method in {"GET", "HEAD", "OPTIONS"})
+        if type(authorized) is not bool:
+            raise TypeError("authorized must be a boolean")
+        if any(
+            type(status) is not int or not 100 <= status <= 599 for status in expected_statuses
+        ):
+            raise ValueError("expected_statuses must contain HTTP status integers")
 
-        response = await self._require_http().request(
+        session = self.session if authorized else None
+        token: str | None = None
+        extra_headers: dict[str, str] = {}
+        if session is not None:
+            _require_spotify_url(url)
+            token = session.token.access_token
+            extra_headers = _extra_headers(kwargs.get("headers"))
+            kwargs["headers"] = {**session.authorized_headers, **extra_headers}
+            # Custom client-token headers must not follow a redirect to another origin.
+            kwargs["redirect"] = wreq.redirect.Policy.none()
+
+        response = await self.transport.request(
             method, url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
         )
-
-        if response.status_code.as_int() == 401 and authorized and safe and session is not None:
+        status = response.status_code.as_int()
+        safe = retry_safe is True or (
+            retry_safe is None and method in {"GET", "HEAD", "OPTIONS", "TRACE"}
+        )
+        if (
+            status == 401
+            and status not in expected_statuses
+            and session is not None
+            and safe
+            and max_attempts != 1
+        ):
             await session.refresh(previous_token=token)
-            renewed = session.authorized_headers
-            kwargs["headers"] = {
-                **{
-                    key: value
-                    for key, value in headers.items()
-                    if key.casefold() not in {"authorization", "client-token"}
-                },
-                "authorization": renewed["authorization"],
-                "client-token": renewed["client-token"],
-            }
-            response = await self._require_http().request(
+            kwargs["headers"] = {**session.authorized_headers, **extra_headers}
+            response = await self.transport.request(
                 method, url, max_attempts=1, retry_safe=retry_safe, **kwargs
             )
 
-        return _validate(response)
+        return _validate(response, method=method, expected_statuses=expected_statuses)
 
     async def get(
         self,
         url: str,
         *,
+        authorized: bool = False,
+        expected_statuses: tuple[int, ...] = (),
         max_attempts: int | None = None,
         retry_safe: bool | None = None,
         **kwargs: Unpack[wreq.Request],
     ) -> Response:
-        """Send a GET request with an optional per-request retry limit."""
+        """Send a GET request and validate the response.
+
+        Args:
+            url: Absolute request URL.
+            authorized: Attach managed Spotify credentials; redirects are disabled.
+            expected_statuses: Additional statuses handled by the caller.
+            max_attempts: Transport attempt limit; 1 also disables auth replay.
+            retry_safe: Override method-based replay safety for this operation.
+            **kwargs: Native request options, including query, headers and body.
+
+        Returns:
+            The validated response, or an explicitly expected status.
+
+        See request() for authorization, replay rules and raised errors.
+        """
         return await self.request(
-            "GET", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+            "GET",
+            url,
+            authorized=authorized,
+            expected_statuses=expected_statuses,
+            max_attempts=max_attempts,
+            retry_safe=retry_safe,
+            **kwargs,
         )
 
     async def post(
         self,
         url: str,
         *,
+        authorized: bool = False,
+        expected_statuses: tuple[int, ...] = (),
         max_attempts: int | None = None,
         retry_safe: bool | None = None,
         **kwargs: Unpack[wreq.Request],
     ) -> Response:
-        """Send a POST request with an optional per-request retry limit."""
+        """Send a POST request and validate the response.
+
+        Args:
+            url: Absolute request URL.
+            authorized: Attach managed Spotify credentials; redirects are disabled.
+            expected_statuses: Additional statuses handled by the caller.
+            max_attempts: Transport attempt limit; 1 also disables auth replay.
+            retry_safe: Override method-based replay safety for this operation.
+            **kwargs: Native request options, including query, headers and body.
+
+        Returns:
+            The validated response, or an explicitly expected status.
+
+        See request() for authorization, replay rules and raised errors.
+        """
         return await self.request(
-            "POST", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+            "POST",
+            url,
+            authorized=authorized,
+            expected_statuses=expected_statuses,
+            max_attempts=max_attempts,
+            retry_safe=retry_safe,
+            **kwargs,
         )
 
     async def put(
         self,
         url: str,
         *,
+        authorized: bool = False,
+        expected_statuses: tuple[int, ...] = (),
         max_attempts: int | None = None,
         retry_safe: bool | None = None,
         **kwargs: Unpack[wreq.Request],
     ) -> Response:
-        """Send a PUT request with an optional per-request retry limit."""
+        """Send a PUT request and validate the response.
+
+        Args:
+            url: Absolute request URL.
+            authorized: Attach managed Spotify credentials; redirects are disabled.
+            expected_statuses: Additional statuses handled by the caller.
+            max_attempts: Transport attempt limit; 1 also disables auth replay.
+            retry_safe: Override method-based replay safety for this operation.
+            **kwargs: Native request options, including query, headers and body.
+
+        Returns:
+            The validated response, or an explicitly expected status.
+
+        See request() for authorization, replay rules and raised errors.
+        """
         return await self.request(
-            "PUT", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+            "PUT",
+            url,
+            authorized=authorized,
+            expected_statuses=expected_statuses,
+            max_attempts=max_attempts,
+            retry_safe=retry_safe,
+            **kwargs,
         )
 
     async def delete(
         self,
         url: str,
         *,
+        authorized: bool = False,
+        expected_statuses: tuple[int, ...] = (),
         max_attempts: int | None = None,
         retry_safe: bool | None = None,
         **kwargs: Unpack[wreq.Request],
     ) -> Response:
-        """Send a DELETE request with an optional per-request retry limit."""
+        """Send a DELETE request and validate the response.
+
+        Args:
+            url: Absolute request URL.
+            authorized: Attach managed Spotify credentials; redirects are disabled.
+            expected_statuses: Additional statuses handled by the caller.
+            max_attempts: Transport attempt limit; 1 also disables auth replay.
+            retry_safe: Override method-based replay safety for this operation.
+            **kwargs: Native request options, including query, headers and body.
+
+        Returns:
+            The validated response, or an explicitly expected status.
+
+        See request() for authorization, replay rules and raised errors.
+        """
         return await self.request(
-            "DELETE", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+            "DELETE",
+            url,
+            authorized=authorized,
+            expected_statuses=expected_statuses,
+            max_attempts=max_attempts,
+            retry_safe=retry_safe,
+            **kwargs,
         )
 
     async def head(
         self,
         url: str,
         *,
+        authorized: bool = False,
+        expected_statuses: tuple[int, ...] = (),
         max_attempts: int | None = None,
         retry_safe: bool | None = None,
         **kwargs: Unpack[wreq.Request],
     ) -> Response:
-        """Send a HEAD request with an optional per-request retry limit."""
+        """Send a HEAD request and validate the response.
+
+        Args:
+            url: Absolute request URL.
+            authorized: Attach managed Spotify credentials; redirects are disabled.
+            expected_statuses: Additional statuses handled by the caller.
+            max_attempts: Transport attempt limit; 1 also disables auth replay.
+            retry_safe: Override method-based replay safety for this operation.
+            **kwargs: Native request options, including query, headers and body.
+
+        Returns:
+            The validated response, or an explicitly expected status.
+
+        See request() for authorization, replay rules and raised errors.
+        """
         return await self.request(
-            "HEAD", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+            "HEAD",
+            url,
+            authorized=authorized,
+            expected_statuses=expected_statuses,
+            max_attempts=max_attempts,
+            retry_safe=retry_safe,
+            **kwargs,
         )
 
     async def patch(
         self,
         url: str,
         *,
+        authorized: bool = False,
+        expected_statuses: tuple[int, ...] = (),
         max_attempts: int | None = None,
         retry_safe: bool | None = None,
         **kwargs: Unpack[wreq.Request],
     ) -> Response:
-        """Send a PATCH request with an optional per-request retry limit."""
+        """Send a PATCH request and validate the response.
+
+        Args:
+            url: Absolute request URL.
+            authorized: Attach managed Spotify credentials; redirects are disabled.
+            expected_statuses: Additional statuses handled by the caller.
+            max_attempts: Transport attempt limit; 1 also disables auth replay.
+            retry_safe: Override method-based replay safety for this operation.
+            **kwargs: Native request options, including query, headers and body.
+
+        Returns:
+            The validated response, or an explicitly expected status.
+
+        See request() for authorization, replay rules and raised errors.
+        """
         return await self.request(
-            "PATCH", url, max_attempts=max_attempts, retry_safe=retry_safe, **kwargs
+            "PATCH",
+            url,
+            authorized=authorized,
+            expected_statuses=expected_statuses,
+            max_attempts=max_attempts,
+            retry_safe=retry_safe,
+            **kwargs,
         )
 
 
-def _validate(response: Response) -> Response:
+def _validate(
+    response: Response,
+    *,
+    method: Methods | None = None,
+    expected_statuses: tuple[int, ...] = (),
+) -> Response:
     """Validate and return the original response.
 
     Args:
@@ -412,6 +585,9 @@ def _validate(response: Response) -> Response:
         HTTPError: If the status is unsuccessful, or a JSON response
             has no parsed object payload.
     """
+    status = response.status_code.as_int()
+    if status in expected_statuses and not response.ok:
+        return response
     if not response.ok:
         raise HTTPError(
             f"Request returned non-ok status code: {response.status_code.as_int()}",
@@ -421,9 +597,41 @@ def _validate(response: Response) -> Response:
 
     content_type = response.headers.get("content-type")
 
-    if content_type and "json" in content_type and response.json is None:
+    body_allowed = method != "HEAD" and status not in {204, 205}
+    if (
+        body_allowed
+        and content_type
+        and "json" in content_type.casefold()
+        and response.json is None
+    ):
         raise HTTPError(
             "Expected a JSON payload but received an empty or invalid body", response=response
         )
 
     return response
+
+
+def _require_spotify_url(url: str) -> None:
+    parsed = urlsplit(url)
+    host = (parsed.hostname or "").casefold().rstrip(".")
+    if (
+        parsed.scheme != "https"
+        or not (host == "spotify.com" or host.endswith(".spotify.com"))
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
+        raise ValueError("Managed authorization requires an HTTPS Spotify endpoint")
+
+
+def _extra_headers(provided: object) -> dict[str, str]:
+    if provided is not None and not isinstance(provided, Mapping):
+        raise TypeError("Authorized request headers must be a string mapping")
+    extra: dict[str, str] = {}
+    if isinstance(provided, Mapping):
+        for key, value in cast(Mapping[object, object], provided).items():
+            if not isinstance(key, str) or not isinstance(value, str):
+                raise TypeError("Authorized request headers must contain strings")
+            extra[key.casefold()] = value
+    if extra.keys() & {"authorization", "client-token"}:
+        raise ValueError("Managed authorization headers cannot be overridden")
+    return extra

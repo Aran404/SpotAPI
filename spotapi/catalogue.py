@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncGenerator, Awaitable, Callable, Iterable, Mapping, Sequence
 from contextlib import aclosing
-from dataclasses import asdict, dataclass, replace
+from dataclasses import replace
 from functools import partial
 from typing import (
     Any,
@@ -16,31 +16,16 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import quote, unquote, urlsplit
+from urllib.parse import quote
 
+from spotapi.models.discovery import Canvas, RecommendedTrack, recommended_tracks
+
+from ._parsing import records
+from ._protocol.protobuf import ProtoMessage, encode_field
+from ._protocol.routes import CANVASES, RECOMMENDATIONS
 from .client import AsyncClient
 from .datastruct import ObjectDict
-from .discovery import Canvas, RecommendedTrack, recommended_tracks
-from .operations import (
-    DEFAULT_SEARCH_TYPES,
-    SEARCH_DESKTOP_SECTIONS,
-    SEARCH_OPERATION_SECTIONS,
-    SEARCH_RESULT_FIELDS,
-    InclusionParameters,
-    Operations,
-    ResourceInputKind,
-    ResourceKind,
-    SearchInputKind,
-    SearchKind,
-    normalize_resource_kind,
-    normalize_search_kind,
-)
-from .playback import records
-from .protobuf import ProtoMessage, encode_field
-from .queries import Queries
-from .query import QueryClient, SharedQueryClient
-from .session import AuthSession, normalize_language
-from .specialized.data_wrappers import (
+from .models.catalogue import (
     Album,
     AlbumDetails,
     Artist,
@@ -62,49 +47,66 @@ from .specialized.data_wrappers import (
     User,
     from_dict,
 )
-from .specialized.data_wrappers.album_details import AlbumTrack
-from .specialized.data_wrappers.artist_details import (
+from .models.catalogue.album_details import AlbumTrack
+from .models.catalogue.artist_details import (
     ArtistRelatedArtist,
     ArtistRelatedArtists,
     ArtistRelease,
     ArtistReleaseGroups,
     ArtistTopTrack,
 )
-from .specialized.data_wrappers.catalogue import AudiobookChapter
-from .specialized.data_wrappers.credits import Credit, TrackCredits
+from .models.catalogue.credits import Credit, TrackCredits
+from .models.catalogue.entities import AudiobookChapter
+from .models.search import SearchResults
+from .operations import (
+    DEFAULT_SEARCH_TYPES,
+    SEARCH_DESKTOP_SECTIONS,
+    SEARCH_OPERATION_SECTIONS,
+    Operations,
+    ResourceInputKind,
+    ResourceKind,
+    SearchInputKind,
+    SearchKind,
+    SearchOptions,
+    normalize_search_kind,
+)
+from .queries import Queries
+from .query import QueryClient, SharedQueryClient
+from .resources import SpotifyResource, parse_spotify_resource
+from .session import AuthSession, normalize_language
 from .types import BaseClientError
 
 __all__ = (
-    "Audiobook",
-    "Author",
-    "Episode",
-    "Genre",
-    "User",
-    "PublicProfile",
-    "PlaylistDetails",
-    "PlaylistEntry",
-    "PlaylistTrack",
-    "PodcastDetails",
     "Album",
     "AlbumDetails",
     "Artist",
     "ArtistDetails",
-    "InclusionParameters",
+    "Audiobook",
+    "Author",
+    "Catalogue",
+    "Episode",
+    "Genre",
     "Operations",
     "Playlist",
+    "PlaylistDetails",
+    "PlaylistEntry",
+    "PlaylistTrack",
     "Podcast",
+    "PodcastDetails",
     "PodcastEpisodeDetails",
-    "Catalogue",
+    "PublicProfile",
     "Queries",
     "ResourceInputKind",
     "ResourceKind",
     "SearchInputKind",
     "SearchKind",
+    "SearchOptions",
     "SearchResults",
     "SpotifyItem",
     "SpotifyResource",
     "Track",
     "TrackDetails",
+    "User",
 )
 
 _ResultT = TypeVar("_ResultT")
@@ -149,79 +151,6 @@ SpotifyItem: TypeAlias = (
     | Audiobook
     | ObjectDict
 )
-SearchEntity: TypeAlias = (
-    Track | Album | Artist | Playlist | Podcast | Audiobook | Episode | User | Author | Genre
-)
-
-
-@dataclass(slots=True, frozen=True)
-class SpotifyResource:
-    """A normalized Spotify resource parsed from a URL, URI, or typed ID."""
-
-    kind: ResourceKind
-    id: str
-    uri: str
-    url: str
-
-
-@dataclass(slots=True, frozen=True)
-class SearchResults:
-    """Typed search hits grouped by category."""
-
-    query: str
-    requested_types: tuple[SearchKind, ...]
-    tracks: tuple[Track, ...] = ()
-    albums: tuple[Album, ...] = ()
-    artists: tuple[Artist, ...] = ()
-    playlists: tuple[Playlist, ...] = ()
-    podcasts: tuple[Podcast, ...] = ()
-    audiobooks: tuple[Audiobook, ...] = ()
-    episodes: tuple[Episode, ...] = ()
-    authors: tuple[Author, ...] = ()
-    genres: tuple[Genre, ...] = ()
-    users: tuple[User, ...] = ()
-
-    def __getitem__(self, kind: str) -> tuple[SearchEntity, ...]:
-        """Return results by singular, plural, or legacy entity name."""
-        normalized = normalize_search_kind(kind)
-        field_name = SEARCH_RESULT_FIELDS[normalized]
-
-        return cast(tuple[SearchEntity, ...], getattr(self, field_name))
-
-    def __bool__(self) -> bool:
-        """Return whether at least one category contains a result."""
-        return any(
-            (
-                self.tracks,
-                self.albums,
-                self.artists,
-                self.playlists,
-                self.podcasts,
-                self.audiobooks,
-                self.episodes,
-                self.authors,
-                self.genres,
-                self.users,
-            )
-        )
-
-    def __len__(self) -> int:
-        """Return the total number of hits across all requested categories."""
-        return sum(
-            len(items)
-            for items in (
-                self.tracks,
-                self.albums,
-                self.artists,
-                self.playlists,
-                self.podcasts,
-                self.audiobooks,
-                self.episodes,
-                self.authors,
-                self.genres,
-                self.users,
-            )
-        )
 
 
 def _validate_page_limit(limit: int) -> None:
@@ -296,92 +225,6 @@ def _playlist_entry(value: object) -> PlaylistEntry:
         item,
         uid if isinstance(uid, str) else None,
         timestamp if isinstance(timestamp, str) else None,
-    )
-
-
-def parse_spotify_resource(
-    value: str,
-    kind: ResourceInputKind | None = None,
-) -> SpotifyResource:
-    """Parse and validate a Spotify URL, URI, or ID."""
-    value = value.strip()
-
-    if not value:
-        raise ValueError("Spotify resource must not be empty")
-
-    parsed_kind: str
-    resource_id: str
-
-    if value.startswith("spotify:"):
-        parts = value.split(":")
-
-        if len(parts) == 3:
-            _, parsed_kind, resource_id = parts
-        elif len(parts) == 5 and parts[1] == "user" and parts[3] == "playlist":
-            # Legacy user playlist URI: spotify:user:<user>:playlist:<id>.
-            parsed_kind, resource_id = "playlist", parts[4]
-        else:
-            raise ValueError(f"Unsupported Spotify URI: {value!r}")
-    else:
-        try:
-            parsed = urlsplit(value)
-        except ValueError as exc:
-            raise ValueError(f"Invalid Spotify URL: {value!r}") from exc
-
-        if parsed.scheme in {"http", "https"}:
-            hostname = (parsed.hostname or "").casefold()
-
-            if hostname not in {"open.spotify.com", "www.open.spotify.com"}:
-                if hostname in {"spotify.link", "www.spotify.link", "spoti.fi"}:
-                    raise ValueError("Expand Spotify short links to an open.spotify.com URL")
-
-                raise ValueError("Expected a URL on open.spotify.com")
-
-            segments = [unquote(part) for part in parsed.path.split("/") if part]
-
-            if segments and segments[0].startswith("intl-"):
-                segments.pop(0)
-
-            if segments and segments[0] in {"embed", "embed-podcast"}:
-                segments.pop(0)
-
-            # Legacy profile playlist path: /user/<username>/playlist/<id>.
-            if len(segments) >= 4 and segments[0] == "user" and segments[2] == "playlist":
-                parsed_kind, resource_id = "playlist", segments[3]
-            elif len(segments) >= 2:
-                parsed_kind, resource_id = segments[0], segments[1]
-            else:
-                raise ValueError(f"URL does not identify a Spotify resource: {value!r}")
-        elif parsed.scheme or "://" in value:
-            raise ValueError("Expected a Spotify URI or URL on open.spotify.com")
-        else:
-            if kind is None:
-                raise ValueError(
-                    "A bare Spotify ID is ambiguous; pass kind='track', 'album', etc."
-                )
-
-            parsed_kind, resource_id = kind, value
-
-    canonical_kind = normalize_resource_kind(parsed_kind)
-
-    if kind is not None and normalize_resource_kind(kind) != canonical_kind:
-        raise ValueError(f"Resource is a {canonical_kind}, but kind={kind!r} was requested")
-
-    if (
-        not resource_id
-        or len(resource_id) > 128
-        or any(character.isspace() or character in "/?:#" for character in resource_id)
-    ):
-        raise ValueError(f"Invalid Spotify resource ID: {resource_id!r}")
-
-    normalized_uri = f"spotify:{canonical_kind}:{resource_id}"
-    normalized_url = f"https://open.spotify.com/{canonical_kind}/{quote(resource_id, safe='')}"
-
-    return SpotifyResource(
-        kind=canonical_kind,
-        id=resource_id,
-        uri=normalized_uri,
-        url=normalized_url,
     )
 
 
@@ -461,7 +304,30 @@ async def _show_pages(
 
 
 class Catalogue:
-    """Search the catalogue; supply a client to include its private resources."""
+    """Reuse one session for typed catalogue reads and lazy page streams.
+
+    Use ``async with Catalogue() as spotify`` for anonymous reads. Supply an
+    authenticated client to include resources visible to that account. Creating
+    the catalogue makes no requests; authentication is deferred until a read.
+    A closed catalogue cannot be reopened.
+
+    Args:
+        client: Authenticated client or session to borrow without closing it.
+        proxy: Proxy URL for an owned anonymous session.
+        queries: Lower-level query interface to borrow instead of a client.
+        language: Language or locale for an owned session, such as ``en-US``.
+            Configure this on the supplied session when borrowing one.
+
+    Raises:
+        ValueError: Client, query owner, proxy or language options conflict.
+
+    Example::
+
+        async with Catalogue() as spotify:
+            hits = await spotify.search("Daft Punk", types="artist")
+            for artist in hits.artists:
+                print(artist.name, artist.uri)
+    """
 
     __slots__ = ("_queries", "_owner", "_proxy", "_session", "_language", "_entered", "_closed")
 
@@ -621,10 +487,28 @@ class Catalogue:
         /,
         *,
         types: SearchInputKind | Iterable[SearchInputKind] = DEFAULT_SEARCH_TYPES,
-        parameters: InclusionParameters | None = None,
+        options: SearchOptions | None = None,
         limit: int | None = None,
     ) -> SearchResults:
         """Search selected categories in one request.
+
+        Args:
+            query: Nonempty search text; surrounding whitespace is stripped.
+            types: One category or an iterable of categories. Defaults to
+                tracks, artists, albums, playlists and podcasts. Singular,
+                plural and documented aliases are accepted and deduplicated.
+            options: Advanced Spotify inclusion options.
+            limit: Results per category, from 1 to 100. Overrides the limit in
+                ``options``; defaults to 20 when neither is supplied.
+
+        Returns:
+            Hits grouped by category. Unrequested or unavailable categories
+            are empty tuples. Incomplete search previews may be skipped.
+
+        Raises:
+            ValueError: Query, categories or limit are invalid.
+            RuntimeError: This catalogue is outside its open context.
+            BaseClientError: Spotify returns an invalid search envelope.
 
         Example::
 
@@ -649,22 +533,20 @@ class Catalogue:
         if not selected:
             raise ValueError("At least one search type must be requested")
 
-        if parameters is None:
-            options = InclusionParameters(limit=20 if limit is None else limit)
-        elif limit is None:
-            options = parameters
-        else:
-            options = replace(parameters, limit=limit)
+        if options is None:
+            options = SearchOptions(limit=20)
+        if limit is not None:
+            options = replace(options, limit=limit)
 
         if type(options.limit) is not int or not 1 <= options.limit <= 100:
             raise ValueError("Search limit must be between 1 and 100")
 
         options = replace(
             options,
-            includeAudiobooks=(options.includeAudiobooks or "audiobook" in selected),
-            includeAuthors=(options.includeAuthors or "author" in selected),
-            includeEpisodeContentRatingsV2=(
-                options.includeEpisodeContentRatingsV2 or "episode" in selected
+            include_audiobooks=(options.include_audiobooks or "audiobook" in selected),
+            include_authors=(options.include_authors or "author" in selected),
+            include_episode_content_ratings_v2=(
+                options.include_episode_content_ratings_v2 or "episode" in selected
             ),
         )
 
@@ -675,13 +557,13 @@ class Catalogue:
         wrapper: Queries,
         query: str,
         kinds: Sequence[SearchKind],
-        parameters: InclusionParameters,
+        options: SearchOptions,
     ) -> SearchResults:
         """Fetch selected search categories together using one native search request."""
         variables: dict[str, Any] = {
             "searchTerm": query,
             "offset": 0,
-            **asdict(parameters),
+            **options.to_variables(),
             "isPrefix": None,
             "sectionFilters": ["GENERIC"],
         }
@@ -736,7 +618,7 @@ class Catalogue:
         query: str,
         /,
         *,
-        parameters: InclusionParameters | None = None,
+        options: SearchOptions | None = None,
     ) -> AsyncGenerator[Sequence[_ResultT], None]:
         """Stream typed result pages for a single persisted search operation."""
         query = query.strip()
@@ -744,29 +626,30 @@ class Catalogue:
         if not query:
             raise ValueError("Search query must not be empty")
 
-        options = parameters if parameters is not None else InclusionParameters()
+        if options is None:
+            options = SearchOptions()
 
         _validate_page_limit(options.limit)
 
         options = replace(
             options,
-            includeAudiobooks=options.includeAudiobooks
+            include_audiobooks=options.include_audiobooks
             or operation == Operations.SEARCH_AUDIOBOOKS,
-            includeAuthors=options.includeAuthors or operation == Operations.SEARCH_AUTHORS,
-            includeEpisodeContentRatingsV2=options.includeEpisodeContentRatingsV2
+            include_authors=options.include_authors or operation == Operations.SEARCH_AUTHORS,
+            include_episode_content_ratings_v2=options.include_episode_content_ratings_v2
             or operation == Operations.SEARCH_EPISODES,
         )
         wrapper = self.queries
         section_names = SEARCH_OPERATION_SECTIONS.get(operation)
 
         if section_names is None:
-            return wrapper.typed_search(typ, operation, query, parameters=options)
+            return wrapper.typed_search(typ, operation, query, options=options)
 
         return wrapper.typed_search(
             typ,
             Operations.SEARCH_DESKTOP,
             query,
-            parameters=options,
+            options=options,
             extract_page=lambda data: _search_section(data, section_names),
             skip_invalid=True,
         )
@@ -774,131 +657,251 @@ class Catalogue:
     def search_tracks(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Track], None]:
-        """Stream typed pages of matching tracks."""
+        """Stream typed pages of matching tracks.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available tracks in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             Track,
             Operations.SEARCH_TRACKS,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     def search_albums(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Album], None]:
-        """Stream typed pages of matching albums."""
+        """Stream typed pages of matching albums.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available albums in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             Album,
             Operations.SEARCH_ALBUMS,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     def search_artists(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Artist], None]:
-        """Stream typed pages of matching artists."""
+        """Stream typed pages of matching artists.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available artists in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             Artist,
             Operations.SEARCH_ARTISTS,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     def search_playlists(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Playlist], None]:
-        """Stream typed pages of matching playlists."""
+        """Stream typed pages of matching playlists.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available playlists in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             Playlist,
             Operations.SEARCH_PLAYLISTS,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     def search_podcasts(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Podcast], None]:
-        """Stream typed pages of matching podcasts."""
+        """Stream typed pages of matching podcasts.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available podcasts in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             Podcast,
             Operations.SEARCH_PODCASTS,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     def search_episodes(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Episode], None]:
-        """Stream typed pages of matching episodes."""
+        """Stream typed pages of matching episodes.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available episodes in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             Episode,
             Operations.SEARCH_EPISODES,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     def search_audiobooks(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Audiobook], None]:
-        """Stream typed pages of matching audiobooks."""
+        """Stream typed pages of matching audiobooks.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available audiobooks in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             Audiobook,
             Operations.SEARCH_AUDIOBOOKS,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     def search_users(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[User], None]:
-        """Stream typed pages of matching users."""
+        """Stream typed pages of matching users.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available users in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             User,
             Operations.SEARCH_USERS,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     def search_authors(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Author], None]:
-        """Stream typed pages of matching authors."""
+        """Stream typed pages of matching authors.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available authors in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             Author,
             Operations.SEARCH_AUTHORS,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     def search_genres(
         self, query: str, /, *, limit: int = 100
     ) -> AsyncGenerator[Sequence[Genre], None]:
-        """Stream typed pages of matching genres."""
+        """Stream typed pages of matching genres.
+
+        Args:
+            query: Nonempty search text.
+            limit: Page size from 1 to 100; this does not cap the total results.
+
+        Yields:
+            One page of available genres in Spotify's result order.
+
+        Note:
+            Use ``contextlib.aclosing`` if iteration may stop early. Argument
+            or request errors can surface when iteration begins.
+        """
         _validate_page_limit(limit)
 
         return self.search_typed(
             Genre,
             Operations.SEARCH_GENRES,
             query,
-            parameters=InclusionParameters(limit=limit),
+            options=SearchOptions(limit=limit),
         )
 
     async def iter_tracks(self, query: str, /) -> AsyncGenerator[Track, None]:
@@ -1094,7 +1097,8 @@ class Catalogue:
         resource = parse_spotify_resource(value, "playlist")
         response = await self.queries.request(
             "POST",
-            "https://spclient.wg.spotify.com/playlistextender/extendp/",
+            RECOMMENDATIONS,
+            retry_safe=True,
             json={
                 "playlistURI": resource.uri,
                 "trackSkipIDs": [parse_spotify_resource(track, "track").id for track in skip],
@@ -1117,7 +1121,8 @@ class Catalogue:
         body = b"".join(encode_field(1, encode_field(1, uri)) for uri in uris)
         response = await self.queries.request(
             "POST",
-            "https://spclient.wg.spotify.com/canvaz-cache/v0/canvases",
+            CANVASES,
+            retry_safe=True,
             headers={"accept": "application/protobuf", "content-type": "application/x-protobuf"},
             body=body,
         )

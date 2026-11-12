@@ -7,12 +7,12 @@ from typing import cast
 
 import pytest
 
-from spotapi.public import Public
-from spotapi.specialized.data_wrappers import (
+from spotapi.models.catalogue import (
     AlbumDetails,
     ArtistDetails,
     TrackDetails,
 )
+from spotapi.public import Public
 
 pytestmark = pytest.mark.live
 

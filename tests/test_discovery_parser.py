@@ -1,6 +1,6 @@
 """Chunk discovery must not confuse CSS hashes with JS names."""
 
-from spotapi.bundle_parsing import extract_mappings
+from spotapi._protocol.bundles import extract_mappings
 from spotapi.session import BundleSession
 
 

@@ -2,60 +2,44 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from urllib.parse import quote, urlsplit
-
-from .catalogue import SpotifyResource, parse_spotify_resource
+from ._parsing import mapping
+from ._protocol.routes import BLEND_CREATE, BLEND_JOIN
 from .client import AsyncClient
-from .playback import mapping
+from .models.blend import BlendInvitation
+from .resources import SpotifyResource, parse_spotify_resource
 from .session import AuthSession
 from .types import BaseClientError
 
 
-@dataclass(frozen=True, slots=True)
-class BlendInvitation:
-    id: str
-    url: str
-
-    @classmethod
-    def parse(cls, value: str) -> BlendInvitation:
-        """Normalize a Spotify Blend invitation URL or invitation ID."""
-        if "://" in value:
-            parsed = urlsplit(value)
-            if parsed.scheme != "https" or parsed.hostname != "open.spotify.com":
-                raise ValueError("Use a Spotify Blend invitation URL")
-            parts = parsed.path.strip("/").split("/")
-            if len(parts) != 3 or parts[:2] != ["blend", "taste-match"]:
-                raise ValueError("This Spotify link is not a Blend invitation")
-            identifier = parts[-1]
-            url = value
-        else:
-            identifier = value
-            url = "https://open.spotify.com/blend/taste-match/" + quote(identifier, safe="")
-
-        if (
-            not identifier
-            or len(identifier) > 128
-            or not identifier.replace("-", "").replace("_", "").isalnum()
-        ):
-            raise ValueError("Invalid Blend invitation ID")
-        return cls(identifier, url)
-
-
 class Blends:
-    """Create an invitation, then share its URL yourself."""
+    """Create and join Blend invitations with a borrowed authenticated client.
 
-    __slots__ = ("session",)
+    Both operations change server state and make one attempt. Sharing the
+    returned invitation URL remains the caller's responsibility.
+    """
+
+    __slots__ = (
+        "http",
+        "session",
+    )
 
     def __init__(self, client: AsyncClient | AuthSession) -> None:
         """Borrow the caller's authenticated Spotify session."""
         self.session = client.session if isinstance(client, AsyncClient) else client
+        self.http = self.session.client
 
     async def create(self) -> BlendInvitation:
-        """Generate a new Blend invitation; this creates a shareable invitation."""
-        response = await self.session.client.post(
-            "https://spclient.wg.spotify.com/blend-invitation/v1/generate",
-            headers=self.session.authorized_headers,
+        """Create a shareable invitation for the current account.
+
+        Returns:
+            The invitation ID and its normalized sharing URL.
+
+        A failed response can follow a successful server-side change. The request
+        is never automatically replayed.
+        """
+        response = await self.http.post(
+            BLEND_CREATE,
+            authorized=True,
             query={"market": "from_token"},
             max_attempts=1,
         )
@@ -65,12 +49,18 @@ class Blends:
         return BlendInvitation.parse(invitation)
 
     async def join(self, invitation: str | BlendInvitation) -> SpotifyResource:
-        """Join a Blend invitation and return the resulting playlist resource."""
+        """Join an invitation and return the resulting playlist identity.
+
+        Args:
+            invitation: A Blend invitation URL, ID or parsed invitation model.
+
+        This changes the current account's Blend membership. It is sent once;
+        check current membership before retrying an ambiguous failure.
+        """
         invite = BlendInvitation.parse(invitation) if isinstance(invitation, str) else invitation
-        response = await self.session.client.put(
-            "https://spclient.wg.spotify.com/blend-invitation/v2/join/"
-            + quote(invite.id, safe=""),
-            headers=self.session.authorized_headers,
+        response = await self.http.put(
+            BLEND_JOIN.url(invitation=invite.id),
+            authorized=True,
             query={"market": "from_token"},
             max_attempts=1,
         )

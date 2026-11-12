@@ -5,8 +5,8 @@ from .types import Response
 from .websocket import WebSocketClient
 
 __all__ = (
-    "Response",
     "HTTPClient",
     "RateLimiter",
+    "Response",
     "WebSocketClient",
 )

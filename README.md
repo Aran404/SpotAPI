@@ -65,14 +65,15 @@ public playlists. It cleans up its own connections.
 - **Duplicate-aware playlists.** Edit one occurrence of a track without touching its twin.
 - **Your account when you want it.** Liked songs, rankings, playlist edits and live player events.
 - **A CLI that does real work.** Search, credits, playlists, library and player control from one command.
-- **No developer-dashboard limits** No Client ID, no Premium requirement and no user cap for public data. [See the comparison](#spotapi-vs-the-official-web-api).
+- **No developer dashboard setup.** No Client ID, no Premium requirement and no user cap for public data. [See the comparison](#spotapi-vs-the-official-web-api).
 
 ## SpotAPI vs the official Web API
 
 In February 2026, Spotify [tightened Development Mode](https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security)
 for its official Web API. Libraries built on that API, such as Spotipy, work
-within those limits. SpotAPI's public/private catalogue features don't use a developer
-app, so none of them apply.
+within those limits. SpotAPI uses Spotify's web-player endpoints without a
+developer app. These endpoints have their own rate limits, authentication
+requirements and changing response contracts.
 
 | | Official Web API (Development Mode) | SpotAPI, public data |
 |---|---|---|
@@ -82,9 +83,9 @@ app, so none of them apply.
 | Intended use | Non-commercial personal projects and learning | Your call, subject to the [legal notice](LEGAL_NOTICE.md) |
 | Setup | Create an app, then wire up credentials | `pip install spotapi` |
 
-Spotify says Development Mode is for tinkering and shouldn't be the foundation
-of a business. If you're building something people will actually use, that's
-the gap SpotAPI fills.
+Choose based on the endpoints and authentication your application needs.
+SpotAPI relies on unofficial web-player contracts; see the
+[verification boundaries](docs/release-2.0.0.md#boundaries) before integrating.
 
 <sub>Based on Spotify's February 2026 announcement. The Premium requirement,
 user cap and one-Client-ID limit apply to existing integrations too. Spotify
@@ -197,7 +198,7 @@ async with Private.from_cookies(os.environ["SPOTIFY_COOKIE"]) as spotify:
 ## Guides
 
 [Catalogue](docs/catalogue.md) · [Account](docs/account.md) · [Player](docs/player.md) ·
-[API layout](docs/api-layout.md) · [Migration from v1](MIGRATION.md)
+[Request policy](docs/transport.md) · [API layout](docs/api-layout.md) · [Migration from v1](MIGRATION.md)
 
 ## Sponsorship
 

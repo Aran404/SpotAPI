@@ -30,10 +30,10 @@ from spotapi import Catalogue, Public, close_query_clients
 from spotapi.connection.http import HTTPClient
 from spotapi.connection.types import Methods, Response
 from spotapi.datastruct import ObjectDict, Pool
+from spotapi.models.catalogue import Track, from_dict
 from spotapi.queries import Queries
 from spotapi.query import QueryClient, SharedQueryClient
 from spotapi.session import QueryCache
-from spotapi.specialized.data_wrappers import Track, from_dict
 
 
 class Options(argparse.Namespace):
@@ -189,8 +189,21 @@ def legacy_search_overhead() -> dict[str, object]:
     the same track name. This measures client work, never network speed.
     """
     root = Path(__file__).resolve().parents[1]
+    revision = subprocess.run(
+        ["git", "log", "-1", "--format=%H", "--diff-filter=AM", "--", "spotapi/sync/song.py"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    if not revision:
+        return {
+            "available": False,
+            "reason": "Legacy source is absent from this checkout's history",
+        }
+
     source = subprocess.run(
-        ["git", "show", "HEAD:spotapi/sync/song.py"],
+        ["git", "show", f"{revision}:spotapi/sync/song.py"],
         cwd=root,
         capture_output=True,
         text=True,
@@ -264,6 +277,7 @@ def legacy_search_overhead() -> dict[str, object]:
 
     return {
         **summary(times),
+        "source_revision": revision,
         "source_sha256": hashlib.sha256(source.encode()).hexdigest(),
         "logical_requests": calls,
         "scope": "Actual v1 query_songs builder, fake sync transport, raw response; no auth/discovery/network. "

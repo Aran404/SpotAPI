@@ -58,7 +58,7 @@ def profile_body() -> dict[str, Any]:
 @pytest.fixture
 def session() -> Mock:
     client = Mock(spec=AsyncClient)
-    client.protocols.http.request = AsyncMock(
+    client.transport.request = AsyncMock(
         return_value=response(profile_body(), headers={"x-csrf-token": "profile-token"})
     )
     client.get = AsyncMock(return_value=response(text='<body data-csrf="page-token"></body>'))
@@ -90,7 +90,7 @@ async def test_plan_rotation_is_used_by_the_next_profile_request(session: Mock) 
     session.client.get.return_value = response(
         text='<script id="__NEXT_DATA__">' + json.dumps(page) + "</script>"
     )
-    session.client.protocols.http.request.side_effect = [
+    session.client.transport.request.side_effect = [
         response(profile_body(), headers={"x-csrf-token": "old-token"}),
         response({"validation_errors": []}),
     ]
@@ -102,7 +102,7 @@ async def test_plan_rotation_is_used_by_the_next_profile_request(session: Mock) 
     assert profile.birthdate == date(2000, 6, 1)
     assert profile.email not in repr(profile)
     assert plan.is_premium is True and not errors
-    calls = session.client.protocols.http.request.await_args_list
+    calls = session.client.transport.request.await_args_list
     assert "json" not in calls[0].kwargs
     assert calls[1].kwargs["headers"]["x-csrf-token"] == "rotated-token"
     assert calls[1].kwargs["json"] == {"profile": {"gender": "MALE"}}
@@ -114,13 +114,13 @@ async def test_csrf_refusal_can_retry_once_with_a_changed_response_token(
 ) -> None:
     http = AccountSession(session.client, "https://accounts.spotify.com/en/password-reset")
     http.csrf = "stale"
-    session.client.protocols.http.request.side_effect = [
+    session.client.transport.request.side_effect = [
         response(status=status, headers={"x-csrf-token": "fresh"}),
         response(status=204),
     ]
     await http.request("POST", "/api/password/recovery", body={"captcha": "manual-token"})
 
-    calls = session.client.protocols.http.request.await_args_list
+    calls = session.client.transport.request.await_args_list
     assert len(calls) == 2
     assert [call.kwargs["headers"]["x-csrf-token"] for call in calls] == ["stale", "fresh"]
     assert all(call.kwargs["max_attempts"] == 1 for call in calls)
@@ -133,19 +133,19 @@ async def test_account_failure_without_csrf_rotation_never_replays(
     http = AccountSession(session.client, "https://www.spotify.com/account/profile/")
     http.csrf = "unchanged"
     rejected = response(status=status)
-    session.client.protocols.http.request.return_value = rejected
+    session.client.transport.request.return_value = rejected
 
     with pytest.raises(HTTPError) as caught:
         await http.request("PUT", "/api/account-settings/v2/profile", body={"profile": {}})
 
     assert caught.value.status_code == status and caught.value.response is rejected
-    assert session.client.protocols.http.request.await_count == 1
+    assert session.client.transport.request.await_count == 1
 
 
 async def test_profile_update_preserves_omitted_fields_and_false_values(session: Mock) -> None:
     updated = profile_body()
     updated["profile"]["third_party_email"] = False
-    session.client.protocols.http.request.side_effect = [
+    session.client.transport.request.side_effect = [
         response(profile_body(), headers={"x-csrf-token": "csrf"}),
         response({"user_profile_response": updated}),
     ]
@@ -154,7 +154,7 @@ async def test_profile_update_preserves_omitted_fields_and_false_values(session:
 
     assert result is account.profile and not isinstance(result, AccountChallenge)
     assert result.third_party_email is False
-    sent = session.client.protocols.http.request.await_args_list[-1].kwargs["json"]
+    sent = session.client.transport.request.await_args_list[-1].kwargs["json"]
     assert sent["profile"] == {
         key: value for key, value in updated["profile"].items() if key != "username"
     }
@@ -170,14 +170,14 @@ async def test_missing_captcha_is_an_explicit_typed_request(session: Mock) -> No
 
     assert caught.value.challenge.action == "account_settings/profile_update"
     assert caught.value.challenge.enterprise is True
-    assert session.client.protocols.http.request.await_count == 1
+    assert session.client.transport.request.await_count == 1
 
 
 async def test_async_solver_and_account_challenge_are_returned_without_redirecting(
     session: Mock,
 ) -> None:
     solver = Mock(spec=CaptchaSolver, solve=AsyncMock(return_value="solved"))
-    session.client.protocols.http.request.side_effect = [
+    session.client.transport.request.side_effect = [
         response(profile_body(), headers={"x-csrf-token": "csrf"}),
         response(
             {
@@ -205,7 +205,7 @@ async def test_invalid_profile_option_fails_before_captcha_or_mutation(session: 
         await Account(session, solver=solver).edit_profile(country="ZZ")
 
     solver.solve.assert_not_awaited()
-    assert session.client.protocols.http.request.await_count == 1
+    assert session.client.transport.request.await_count == 1
 
 
 def test_nonce_matches_two_unsigned_browser_words(
@@ -223,10 +223,10 @@ def test_nonce_matches_two_unsigned_browser_words(
 
 async def test_password_recovery_uses_the_current_csrf_and_captcha_contract(session: Mock) -> None:
     reset = PasswordReset(session.client)
-    session.client.protocols.http.request.return_value = response(status=204)
+    session.client.transport.request.return_value = response(status=204)
     await reset.request("listener", token="captcha")
 
-    sent = session.client.protocols.http.request.await_args_list[0]
+    sent = session.client.transport.request.await_args_list[0]
     assert sent.args == ("POST", "https://accounts.spotify.com/api/password/recovery")
     assert sent.kwargs["json"]["emailOrUsername"] == "listener"
     assert sent.kwargs["json"]["flowId"] == reset.flow_id
@@ -235,10 +235,10 @@ async def test_password_recovery_uses_the_current_csrf_and_captcha_contract(sess
 
 
 async def test_password_change_is_one_request_with_no_captcha_dependency(session: Mock) -> None:
-    session.client.protocols.http.request.return_value = response(status=204)
+    session.client.transport.request.return_value = response(status=204)
     await Account(session).change_password("old-password", "new-password")
 
-    sent = session.client.protocols.http.request.await_args_list[0]
+    sent = session.client.transport.request.await_args_list[0]
     assert sent.args[1].endswith("/api/account-settings/v1/change-password")
     assert sent.kwargs["json"] == {"old_password": "old-password", "new_password": "new-password"}
     assert sent.kwargs["max_attempts"] == 1

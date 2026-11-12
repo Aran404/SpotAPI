@@ -51,7 +51,6 @@ class Response:
     body: bytes = b""
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         return f"<Response status={self.status_code.as_int()}>"
 
     @property

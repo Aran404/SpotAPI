@@ -10,18 +10,18 @@ from typing import Final, Literal, TypeAlias
 
 __all__ = (
     "DEFAULT_SEARCH_TYPES",
-    "InclusionParameters",
-    "Operations",
+    "READ_OPERATIONS",
     "RESOURCE_KIND_ALIASES",
-    "ResourceInputKind",
-    "ResourceKind",
     "SEARCH_DESKTOP_SECTIONS",
     "SEARCH_KIND_ALIASES",
     "SEARCH_OPERATION_SECTIONS",
-    "SEARCH_RAW_OPERATIONS",
     "SEARCH_RESULT_FIELDS",
+    "Operations",
+    "ResourceInputKind",
+    "ResourceKind",
     "SearchInputKind",
     "SearchKind",
+    "SearchOptions",
     "normalize_resource_kind",
     "normalize_search_kind",
 )
@@ -190,6 +190,54 @@ class Operations(StrEnum):
     INTERNAL_LINK_RECOMMENDER_TRACK = "internalLinkRecommenderTrack"
     CONCERT_CAMPAIGN = "ConcertCampaign"
 
+    ADD_TO_LIBRARY = "addToLibrary"
+    REMOVE_FROM_LIBRARY = "removeFromLibrary"
+    PIN_LIBRARY_ITEM = "pinLibraryItem"
+    UNPIN_LIBRARY_ITEM = "unpinLibraryItem"
+    FOLLOW_USERS = "followUsers"
+    UNFOLLOW_USERS = "unfollowUsers"
+    ADD_TO_PLAYLIST = "addToPlaylist"
+    REMOVE_FROM_PLAYLIST = "removeFromPlaylist"
+    MOVE_ITEMS_IN_PLAYLIST = "moveItemsInPlaylist"
+
+
+# Retry permission is explicit: unknown operations may be mutations even
+# though they are sent to the same GraphQL query endpoint.
+READ_OPERATIONS: Final[frozenset[Operations]] = frozenset(
+    {
+        Operations.ARE_ENTITIES_IN_LIBRARY,
+        Operations.FETCH_LIBRARY_TRACKS,
+        Operations.FETCH_PLAYLIST_CONTENTS,
+        Operations.FETCH_PLAYLIST_METADATA,
+        Operations.GET_ALBUM,
+        Operations.GET_EPISODE_OR_CHAPTER,
+        Operations.GET_PODCAST_OR_BOOK_NAME,
+        Operations.GET_TRACK,
+        Operations.IS_FOLLOWING_USERS,
+        Operations.LIBRARY_V3,
+        Operations.PROFILE_ATTRIBUTES,
+        Operations.QUERY_ALBUM_TRACKS,
+        Operations.QUERY_ARTIST_DISCOGRAPHY_ALBUMS,
+        Operations.QUERY_ARTIST_DISCOGRAPHY_ALL,
+        Operations.QUERY_ARTIST_DISCOGRAPHY_COMPILATIONS,
+        Operations.QUERY_ARTIST_DISCOGRAPHY_SINGLES,
+        Operations.QUERY_ARTIST_OVERVIEW,
+        Operations.QUERY_ARTIST_RELATED,
+        Operations.QUERY_BOOK_CHAPTERS,
+        Operations.QUERY_PODCAST_EPISODES,
+        Operations.QUERY_SHOW_METADATA_V2,
+        Operations.QUERY_TRACK_CREDITS_GROUPED_MODAL,
+        Operations.RECENTS,
+        Operations.SEARCH_AUDIOBOOKS,
+        Operations.SEARCH_AUTHORS,
+        Operations.SEARCH_DESKTOP,
+        Operations.SEARCH_EPISODES,
+        Operations.SEARCH_GENRES,
+        Operations.SEARCH_USERS,
+        Operations.USER_TOP_CONTENT,
+    }
+)
+
 
 ResourceKind: TypeAlias = Literal[
     "track",
@@ -329,8 +377,6 @@ SEARCH_OPERATION_SECTIONS: Final[Mapping[Operations, tuple[str, ...]]] = Mapping
     }
 )
 
-SEARCH_RAW_OPERATIONS: Final[Mapping[SearchKind, Operations]] = MappingProxyType({})
-
 SEARCH_RESULT_FIELDS: Final[Mapping[SearchKind, str]] = MappingProxyType(
     {
         "track": "tracks",
@@ -389,31 +435,43 @@ def normalize_search_kind(value: str) -> SearchKind:
         ) from None
 
 
-@dataclass(slots=True)
-class InclusionParameters:
-    """Optional variables for public search queries.
+@dataclass(slots=True, frozen=True)
+class SearchOptions:
+    """Advanced inclusion options for catalogue search.
 
-    Field names deliberately mirror Spotify's own (camelCase) GraphQL
-    variable names, so an instance can be sent to the API unchanged.
+    Python field names remain independent of Spotify's GraphQL variables.
+    Pass this object as ``options=`` to search methods. Their explicit ``limit``
+    argument overrides this object's page size without modifying it.
 
     Attributes:
-        limit: Page size requested from the server.
-        numberOfTopResults: Maximum number of "top result" entries.
-        includeAudiobooks: Include audiobooks in the results.
-        includeArtistHasConcertsField: Include the ``hasConcerts``
-            field on artists.
-        includePreReleases: Include pre-release items.
-        includeAlbumPreReleases: Include pre-release albums.
-        includeAuthors: Include audiobook authors in the results.
-        includeEpisodeContentRatingsV2: Include v2 content ratings on
-            podcast episodes.
+        limit: Results per category or page, from 1 to 100.
+        number_of_top_results: Maximum top-result entries requested from Spotify.
+        include_audiobooks: Request audiobook metadata.
+        include_artist_has_concerts_field: Request artist concert availability.
+        include_pre_releases: Request pre-release metadata.
+        include_album_pre_releases: Request pre-release albums.
+        include_authors: Request audiobook authors.
+        include_episode_content_ratings_v2: Request episode content ratings.
     """
 
     limit: int = 100
-    numberOfTopResults: int = 20
-    includeAudiobooks: bool = False
-    includeArtistHasConcertsField: bool = False
-    includePreReleases: bool = False
-    includeAlbumPreReleases: bool = False
-    includeAuthors: bool = False
-    includeEpisodeContentRatingsV2: bool = False
+    number_of_top_results: int = 20
+    include_audiobooks: bool = False
+    include_artist_has_concerts_field: bool = False
+    include_pre_releases: bool = False
+    include_album_pre_releases: bool = False
+    include_authors: bool = False
+    include_episode_content_ratings_v2: bool = False
+
+    def to_variables(self) -> dict[str, int | bool]:
+        """Return native GraphQL variables without exposing wire names as attributes."""
+        return {
+            "limit": self.limit,
+            "numberOfTopResults": self.number_of_top_results,
+            "includeAudiobooks": self.include_audiobooks,
+            "includeArtistHasConcertsField": self.include_artist_has_concerts_field,
+            "includePreReleases": self.include_pre_releases,
+            "includeAlbumPreReleases": self.include_album_pre_releases,
+            "includeAuthors": self.include_authors,
+            "includeEpisodeContentRatingsV2": self.include_episode_content_ratings_v2,
+        }

@@ -26,6 +26,20 @@
 
 ### Changed
 
+- Authenticated feature requests use `authorized=True`; credential assembly,
+  renewal, destination validation and redirect policy live in `AsyncClient`.
+- Identical artwork color and contrast-role shapes share `RGBA` and
+  `ContrastPalette` value types instead of nine duplicate dataclasses.
+- Result types live in the `models` package, grouped by domain; importing them
+  does not load the native HTTP transport. Old implementation paths were removed.
+- Internal endpoint templates, protobuf, bundle parsing and TOTP helpers live
+  in `_protocol`; repeated resource paths share one escaping implementation.
+
+- Advanced searches use immutable `SearchOptions` with snake_case fields and
+  `options=`; native GraphQL variable names remain internal to serialization.
+- Direct transport access is `client.transport` and `client.websocket`.
+- Authenticated profile attributes expose Python field names; see the migration guide.
+
 - Python 3.11+ and async/await are required. See [migration](MIGRATION.md) for
   compatibility changes and v1 features that have not been ported.
 - Hatch and `pyproject.toml` define package metadata; `requirements.txt` retains
@@ -38,6 +52,19 @@
 - Logging defaults to the standard library without configuring application sinks.
 
 ### Fixed
+
+- Directly constructed authentication sessions attach to their owning client,
+  so safe request renewal and shutdown behave consistently across factories.
+- `max_attempts=1` also prevents a second request after an authorization failure.
+- HEAD, 204 and 205 responses may be empty even with a JSON Content-Type.
+- Accepted cleanup statuses use `expected_statuses`, preserving normal
+  authorization handling without duplicating status checks in features.
+
+- Thread-local implicit query owners no longer share a slotted registry across threads.
+- Managed authorization rebuilds fresh credential headers after renewal; custom header names and JSON media types are case-insensitive.
+- The model decoder recognizes native GraphQL `__typename` fields consistently with search preflight.
+- Profile options, profile attributes and notification identities/cursors reject malformed contracts.
+- Exception logging respects the configured severity filter and synchronization.
 
 - Playlist add/remove operations reject error unions such as `NotFound` instead
   of interpreting a nonempty error object as success.

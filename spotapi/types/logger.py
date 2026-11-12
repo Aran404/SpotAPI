@@ -32,15 +32,15 @@ from typing import (
 )
 
 __all__ = (
-    "LoggerProtocol",
-    "LoggerColour",
+    "InbuiltLogger",
     "JsonLogger",
+    "Level",
+    "LoggerColour",
+    "LoggerMixin",
+    "LoggerProtocol",
     "MultiLogger",
     "NoopLogger",
-    "InbuiltLogger",
     "StandardLogger",
-    "LoggerMixin",
-    "Level",
 )
 
 P = ParamSpec("P")
@@ -296,15 +296,16 @@ class _BaseLogger:
         try:
             yield
         except exc_types as exc:
-            record = self._build_record(
-                level,
-                str(exc),
-                (),
-                {},
-                exc_info=(type(exc), exc, exc.__traceback__),
-            )
-
-            self._emit(record)
+            if self.is_enabled(level):
+                with self._lock if self._lock is not None else nullcontext():
+                    record = self._build_record(
+                        level,
+                        str(exc),
+                        (),
+                        {},
+                        exc_info=(type(exc), exc, exc.__traceback__),
+                    )
+                    self._emit(record)
 
             if reraise:
                 raise

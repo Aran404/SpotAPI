@@ -78,7 +78,6 @@ class Pool(Generic[T]):
         self._close_task: asyncio.Task[None] | None = None
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         return f"<Pool idle={len(self._idle)} in_flight={self._in_flight} closed={self.closed}>"
 
     def _check_loop(self) -> None:

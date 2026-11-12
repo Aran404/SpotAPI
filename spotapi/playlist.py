@@ -13,14 +13,24 @@ from contextlib import aclosing
 from typing import Final, Literal, TypeAlias, cast
 from urllib.parse import quote
 
+from spotapi.models.discovery import RecommendedTrack
+
+from ._protocol.routes import (
+    PLAYLIST,
+    PLAYLIST_BASE,
+    PLAYLIST_CHANGES,
+    PLAYLIST_REGISTER_IMAGE,
+    PLAYLIST_UPLOAD,
+    ROOTLIST,
+)
 from .catalogue import Catalogue
 from .client import AsyncClient
 from .datastruct import ObjectDict
-from .discovery import RecommendedTrack
-from .public import Public
+from .models.catalogue import PlaylistDetails, PlaylistEntry, from_dict
+from .operations import Operations
 from .query import QueryClient
+from .resources import parse_spotify_resource
 from .session import AuthSession
-from .specialized.data_wrappers import PlaylistDetails, PlaylistEntry, from_dict
 from .types import PlaylistError
 
 __all__: tuple[str, ...] = (
@@ -35,9 +45,8 @@ _JsonValue: TypeAlias = (
 )
 _Op: TypeAlias = dict[str, _JsonValue]
 
-_PLAYLIST_URL: Final[str] = "https://spclient.wg.spotify.com/playlist/v2/playlist"
-_COVER_UPLOAD_URL: Final[str] = "https://image-upload.spotify.com/v4/playlist"
-_ROOTLIST_URL: Final[str] = "https://spclient.wg.spotify.com/playlist/v2/user/{}/rootlist/changes"
+_PLAYLIST_URL: Final[str] = PLAYLIST_BASE
+_COVER_UPLOAD_URL: Final[str] = PLAYLIST_UPLOAD
 _PAGE_LIMIT: Final[int] = 100
 
 _JSON_HEADERS: Final[dict[str, str]] = {
@@ -57,7 +66,7 @@ def _now_ms() -> str:
 
 def _as_uri(kind: Literal["track", "playlist"], value: str) -> str:
     """Normalize the same URLs, URIs and IDs accepted by catalogue lookups."""
-    return Public.parse_url(value, kind=kind).uri
+    return parse_spotify_resource(value, kind=kind).uri
 
 
 def _item(uri: str) -> _Op:
@@ -116,7 +125,7 @@ class PlaylistHandler:
         qc: Query client sharing the session.
     """
 
-    __slots__ = ("session", "qc", "_username")
+    __slots__ = ("http", "session", "qc", "_username")
 
     def __init__(self, session: AuthSession | AsyncClient) -> None:
         """Initialize the handler with an authorized Spotify session.
@@ -125,17 +134,14 @@ class PlaylistHandler:
             session: Session used to authenticate playlist operations.
         """
         self.session = session.session if isinstance(session, AsyncClient) else session
+        self.http = self.session.client
         self.qc = QueryClient(self.session)
         self._username: str | None = None
 
-    def _headers(self) -> dict[str, str]:
-        """Combine managed authorization with JSON request headers."""
-        return {**self.session.authorized_headers, **_JSON_HEADERS}
-
     async def _post(self, url: str, payload: _Op) -> ObjectDict:
         """Send a mutation and require a nonempty JSON response."""
-        response = await self.session.client.post(
-            url, max_attempts=1, json=payload, headers=self._headers()
+        response = await self.http.post(
+            url, max_attempts=1, json=payload, authorized=True, headers=_JSON_HEADERS
         )
 
         body = response.json
@@ -146,7 +152,6 @@ class PlaylistHandler:
         return body
 
     async def _get_username(self) -> str:
-        # The username cannot change during a session, so fetch it once.
         """Cache the immutable username for this handler's authenticated session."""
         if self._username is None:
             attributes = await self.qc.get_profile_attributes()
@@ -177,7 +182,7 @@ class PlaylistHandler:
                 }
             ]
         }
-        url = _ROOTLIST_URL.format(quote(await self._get_username(), safe=""))
+        url = ROOTLIST.url(user=await self._get_username())
 
         body = await self._post(url, payload)
 
@@ -291,15 +296,13 @@ class PlaylistHandler:
         self, playlist: str, values: _Op, cleared: list[_JsonValue]
     ) -> None:
         """Apply a metadata change and require Spotify's resulting revision."""
+        resource = parse_spotify_resource(playlist, "playlist")
         operation: _Op = {
             "kind": "UPDATE_LIST_ATTRIBUTES",
             "updateListAttributes": {"newAttributes": {"values": values, "noValue": cleared}},
         }
         body = await self._post(
-            _PLAYLIST_URL
-            + "/"
-            + quote(_as_uri("playlist", playlist).rsplit(":", 1)[-1], safe="")
-            + "/changes",
+            PLAYLIST_CHANGES.url(playlist=resource.id),
             {
                 "deltas": [{"ops": [operation], "info": {"source": {"client": "WEBPLAYER"}}}],
                 "wantSyncResult": True,
@@ -310,7 +313,8 @@ class PlaylistHandler:
 
     async def set_playlist_cover(self, playlist: str, jpeg: bytes | None) -> None:
         """Upload a JPEG cover or clear it with None."""
-        uri = _as_uri("playlist", playlist)
+        resource = parse_spotify_resource(playlist, "playlist")
+        uri = resource.uri
         values: _Op = {"formatAttributes": [], "pictureSize": []}
         if jpeg is None:
             await self._set_playlist_attributes(uri, values, ["LIST_PICTURE"])
@@ -319,19 +323,19 @@ class PlaylistHandler:
         if not jpeg.startswith(b"\xff\xd8\xff"):
             raise ValueError("Provide JPEG image bytes or None")
 
-        upload = await self.session.client.post(
+        upload = await self.http.post(
             _COVER_UPLOAD_URL,
             body=jpeg,
-            headers={**self.session.authorized_headers, "content-type": "image/jpeg"},
+            authorized=True,
+            headers={"content-type": "image/jpeg"},
             max_attempts=1,
         )
         token: object = upload.json.get("uploadToken") if upload.json is not None else None
         if not isinstance(token, str) or not token:
             raise PlaylistError("Spotify returned no playlist cover upload token")
 
-        playlist_id = quote(uri.rsplit(":", 1)[-1], safe="")
         registered = await self._post(
-            f"{_PLAYLIST_URL}/{playlist_id}/register-image", {"uploadToken": token}
+            PLAYLIST_REGISTER_IMAGE.url(playlist=resource.id), {"uploadToken": token}
         )
         picture: object = registered.get("picture")
         if not isinstance(picture, str) or not picture:
@@ -342,10 +346,12 @@ class PlaylistHandler:
 
     async def get_playlist_metadata(self, playlist: str) -> PlaylistDetails:
         """Read canonical metadata directly; omit GraphQL-only presentation fields."""
-        uri = _as_uri("playlist", playlist)
-        response = await self.session.client.get(
-            _PLAYLIST_URL + "/" + quote(uri.rsplit(":", 1)[-1], safe=""),
-            headers=self._headers(),
+        resource = parse_spotify_resource(playlist, "playlist")
+        uri = resource.uri
+        response = await self.http.get(
+            PLAYLIST.url(playlist=resource.id),
+            authorized=True,
+            headers=_JSON_HEADERS,
             max_attempts=1,
         )
         body = response.json
@@ -421,7 +427,6 @@ class Playlist:
         self.playlist_id = _as_uri("playlist", playlist_id)
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         return f"<{type(self).__name__} playlist_id={self.playlist_id!r}>"
 
     def __eq__(self, other: object) -> bool:
@@ -461,7 +466,7 @@ class Playlist:
                 "playlistUri": self.playlist_id,
                 "newPosition": {"moveType": move_type, "fromUid": None},
             },
-            "addToPlaylist",
+            Operations.ADD_TO_PLAYLIST,
             max_attempts=1,
         )
 
@@ -610,7 +615,7 @@ class Playlist:
 
         response = await self.ph.qc.pathfinder_query(
             {"uids": uids, "playlistUri": self.playlist_id},
-            "removeFromPlaylist",
+            Operations.REMOVE_FROM_PLAYLIST,
             max_attempts=1,
         )
 
@@ -657,7 +662,7 @@ class Playlist:
                 "playlistUri": self.playlist_id,
                 "newPosition": {"moveType": move_type, "fromUid": anchor_uid},
             },
-            "moveItemsInPlaylist",
+            Operations.MOVE_ITEMS_IN_PLAYLIST,
             max_attempts=1,
         )
 

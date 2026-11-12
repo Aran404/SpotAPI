@@ -8,11 +8,11 @@ if TYPE_CHECKING:
     from spotapi.connection.types import Response
 
 __all__ = (
-    "SpotAPIError",
-    "HTTPError",
-    "WebsocketError",
     "BaseClientError",
+    "HTTPError",
     "PlaylistError",
+    "SpotAPIError",
+    "WebsocketError",
 )
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
+from ._protocol.routes import RESOLVE, SPCLIENT
 from .session import AuthSession
 from .types import BaseClientError
 
@@ -13,13 +14,13 @@ from .types import BaseClientError
 class ConnectEndpoints:
     dealer: str
     spclient: str
-    playback: str = "https://spclient.wg.spotify.com"
+    playback: str = SPCLIENT
 
     @classmethod
     async def resolve(cls, session: AuthSession) -> ConnectEndpoints:
         """Resolve Spotify's current dealer and spclient hosts for this session."""
         response = await session.client.get(
-            "https://apresolve.spotify.com/", query=[("type", "dealer-g2"), ("type", "spclient")]
+            RESOLVE, query=[("type", "dealer-g2"), ("type", "spclient")]
         )
 
         body = response.json

@@ -23,6 +23,22 @@ and `json.dumps`. No hidden HTTP calls occur when you inspect a model.
 Multi-item lookups reuse one client and run up to eight separate resource reads
 at a time. They return details in input order and propagate request failures.
 
+For advanced search inclusion options, use immutable Python fields:
+
+```python
+from spotapi import Public, SearchOptions
+
+results = await Public.search(
+    "Daft Punk",
+    types=("track", "album"),
+    options=SearchOptions(include_pre_releases=True),
+    limit=10,
+)
+```
+
+An explicit `limit` overrides the options object's page size without changing
+the object. Spotify's camelCase request keys stay inside the wire conversion.
+
 `Public` closes its client before a lookup returns and when a page stream
 finishes. For several operations, reuse one connection scope:
 

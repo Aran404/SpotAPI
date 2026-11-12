@@ -3,7 +3,9 @@
 from collections.abc import Mapping
 from typing import Any
 
-from .playback import PlayerState, mapping, records
+from spotapi.models.playback import PlayerState
+
+from ._parsing import mapping, records
 
 
 def command_applied(

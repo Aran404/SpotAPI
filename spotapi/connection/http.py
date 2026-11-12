@@ -107,7 +107,6 @@ class RateLimiter:
         self._lock = threading.Lock()
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         with self._lock:
             return f"<RateLimiter active_hosts={len(self._resume_at)}>"
 
@@ -243,7 +242,6 @@ class HTTPClient:
         self._rate_limiter = rate_limiter
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         return f"<HTTPClient max_attempts={self._max_attempts}>"
 
     async def __aenter__(self) -> Self:

@@ -21,14 +21,15 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Final, Self, TypedDict, cast
 
-from .bundle_parsing import (
+from ._protocol.bundles import (
     combine_chunks,
     extract_js_links,
     extract_mappings,
     extract_query_hashes,
 )
+from ._protocol.routes import CLIENT_TOKEN, TOKEN
+from ._protocol.totp import build_totp
 from .client import AsyncClient
-from .specialized.totp import build_totp
 from .types import HTTPError
 
 __all__ = (
@@ -50,8 +51,8 @@ _APP_CONFIG_TAG: Final[str] = '<script id="appServerConfig" type="text/plain">'
 _DISCOVERY_PASSES: Final[int] = 3
 _MAX_BUNDLE_DOWNLOADS: Final[int] = 8
 
-_TOKEN_URL: Final[str] = "https://open.spotify.com/api/token"
-_CLIENT_TOKEN_URL: Final[str] = "https://clienttoken.spotify.com/v1/clienttoken"
+_TOKEN_URL: Final[str] = TOKEN
+_CLIENT_TOKEN_URL: Final[str] = CLIENT_TOKEN
 _REFRESH_BUFFER: Final[float] = 60.0
 _MIN_REFRESH_DELAY: Final[float] = 1.0
 _RETRY_DELAY: Final[float] = 5.0
@@ -329,7 +330,6 @@ class BundleSession:
         self._hashes_loaded = False
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         return (
             f"<{type(self).__name__} "
             f"bundles={len(self._bundles)} links={len(self._links)} "
@@ -629,13 +629,13 @@ class AuthSession:
         self._auth_lock = asyncio.Lock()
         self.language = language
         self._require_user = False
-        self._raw_http_client = client.protocols.http
+        self._raw_http_client = client.transport
 
         self.client = client
         self.session = BundleSession(client)
+        client.session = self
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         refreshing = self._refresh_task is not None and not self._refresh_task.done()
 
         return f"<{type(self).__name__} token={self._token!r} auto_refresh={refreshing}>"
@@ -697,7 +697,7 @@ class AuthSession:
         authorized = False
 
         try:
-            client.protocols.http.set_cookies(cookies)
+            client.transport.set_cookies(cookies)
 
             token = await session.authorize()
             if token.is_anonymous is True:

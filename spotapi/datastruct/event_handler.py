@@ -40,7 +40,6 @@ class EventDispatcher:
         self._closing = False
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         listeners = sum(len(callbacks) for callbacks in self._listeners.values())
 
         return f"<EventDispatcher listeners={listeners} running={len(self._tasks)}>"

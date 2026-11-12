@@ -214,7 +214,6 @@ class WebSocketClient:
         self._last_message: wreq.Message | None = None
 
     def __repr__(self) -> str:
-        """Return a concise diagnostic representation."""
         return f"<WebSocketClient connected={self.is_connected}>"
 
     async def __aenter__(self) -> Self:

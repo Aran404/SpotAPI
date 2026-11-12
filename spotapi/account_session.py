@@ -10,10 +10,10 @@ from urllib.parse import urlsplit
 
 import wreq
 
+from ._parsing import mapping
 from .client import AsyncClient
 from .connection import Response
 from .connection.types import Methods
-from .playback import mapping
 from .types import BaseClientError, HTTPError
 
 
@@ -26,7 +26,7 @@ class AccountPage(HTMLParser):
     )
 
     def __init__(self, html: str) -> None:
-        """Initialize the account page parser or its borrowed cookie/CSRF session."""
+        """Extract the CSRF attribute and embedded account-state JSON."""
         super().__init__()
         self.csrf: str | None = None
         self._reading = False
@@ -66,7 +66,7 @@ class AccountSession:
     )
 
     def __init__(self, client: AsyncClient, page: str, *, locale: str = "en_US") -> None:
-        """Initialize the account page parser or its borrowed cookie/CSRF session."""
+        """Borrow a client and retain the account page, origin and locale."""
         self.client = client
         self.page = page
         self.locale = locale
@@ -121,7 +121,7 @@ class AccountSession:
             request: wreq.Request = {"headers": headers}
             if body is not None:
                 request["json"] = body
-            response = await self.client.protocols.http.request(
+            response = await self.client.transport.request(
                 method, self.origin + path, max_attempts=1, **request
             )
             replacement = response.headers.get("x-csrf-token")

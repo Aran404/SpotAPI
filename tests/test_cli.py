@@ -4,11 +4,19 @@ import json
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from spotapi import Playlist, Private, Public, SearchResults, SpotAPIError
+from spotapi import (
+    AsyncClient,
+    AuthSession,
+    Playlist,
+    Private,
+    Public,
+    SearchResults,
+    SpotAPIError,
+)
 from spotapi.cli import main
 
 
@@ -59,7 +67,7 @@ def test_cli_passes_the_exact_occurrence_to_playlist_move(
     @asynccontextmanager
     async def session(cookie: str) -> AsyncGenerator[object, None]:
         assert cookie == "test-cookie"
-        yield SimpleNamespace(session=object())
+        yield SimpleNamespace(session=Mock(spec=AuthSession, client=Mock(spec=AsyncClient)))
 
     move = AsyncMock()
     monkeypatch.setenv("SPOTIFY_COOKIE", "test-cookie")

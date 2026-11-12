@@ -12,6 +12,18 @@ playback changes. No environment feature flags are required.
 Tests permit access to private members for lifecycle assertions; other strict
 diagnostics remain enabled.
 
+Collect branch coverage for the library with the development dependencies installed:
+
+```bash
+python -m coverage run -m pytest -m "not live"
+python -m coverage report
+python -m coverage html
+```
+
+The offline CI matrix publishes `coverage.xml` for each Python version. It
+reports the baseline and missing branches without claiming a coverage percentage
+from test counts or imposing an unmeasured threshold.
+
 Transport and lifecycle tests use deterministic fakes; catalogue integration
 tests check actual Spotify response shapes separately. The shared-client
 tests verify creation, concurrent borrowing, cancellation, and shutdown.
