@@ -1,97 +1,197 @@
-# Migrating to SpotAPI 2
+# Migrating from SpotAPI 1.2.8
 
-SpotAPI 2 requires Python 3.11+ and uses `async`/`await` under `spotapi`.
-For a synchronous application, install the legacy release in its own environment
-with `python -m pip install "spotapi<2"`. SpotAPI 2 is a breaking upgrade.
+SpotAPI 2 is a rewrite, not a drop-in update. The published 1.2.8 package was
+synchronous, split features across classes such as `Song`, `Artist` and
+`PublicPlaylist`, and returned Spotify's nested dictionaries. SpotAPI 2 has an
+async core, typed results and explicit client lifetimes. It also provides
+`SyncCatalogue` for ordinary synchronous scripts.
 
-| Old | New | Reason |
+This guide compares the published `spotapi==1.2.8` wheel with SpotAPI 2. It does
+not describe the unpublished `async-v2` development branch.
+
+## Decide whether to migrate
+
+Use a fresh virtual environment for either version. Keep 1.2.8 pinned while you
+migrate an existing application:
+
+```sh
+python -m pip install "spotapi==1.2.8"
+```
+
+Install the current release in the new environment:
+
+```sh
+python -m pip install "spotapi>=2,<3"
+```
+
+SpotAPI 2 requires Python 3.11 or newer.
+
+## Why migrate?
+
+These are observable API differences, not performance claims.
+
+| Area | SpotAPI 1.2.8 | SpotAPI 2 |
 |---|---|---|
-| `InclusionParameters(..., includePreReleases=True)` and `parameters=` | `SearchOptions(..., include_pre_releases=True)` and `options=` | Immutable Python options with explicit conversion to Spotify's wire variables |
-| Empty `SEARCH_RAW_OPERATIONS` mapping | `SEARCH_DESKTOP_SECTIONS` | Every supported search category uses the consolidated desktop operation |
-| `client.protocols.http` / `client.protocols.ws` | `client.transport` / `client.websocket` | Direct transport access without an intermediate tuple |
-| Manually merged session credential headers | `client.get(url, authorized=True)` | Centralized credential construction, destination checks and safe renewal |
-| Directly constructed `AuthSession(client)` is detached | It attaches to its client; one session per client | Consistent refresh and shutdown ownership |
-| `max_attempts=1` can still replay after a 401 | It forbids renewal replay too | One attempt means one attempt for mutations |
-| Non-success statuses always raise | `expected_statuses=(404,)` | Explicit endpoint-specific status handling without using the raw transport |
-| `spotapi.playback`, `discovery`, `library_models` and models in feature modules | `spotapi.models` or its domain submodules | Result types are independent of feature clients |
-| Separate artwork color/contrast-role classes | `RGBA` and `ContrastPalette` in `models.catalogue.common` | Identical value contracts share one implementation; nested field names stay unchanged |
-| Public-looking `spotapi.protobuf`, `bundle_parsing`, `specialized.totp` helpers | Internal `spotapi._protocol` modules | Wire implementation details are not application-facing API |
-| `Profile.accountId`, `avatarBackgroundColor`, `socialHandle` | `account_id`, `avatar_background_color`, `social_handle` | Python names at the model boundary; wire keys remain unchanged |
-| `QueryWrapper` / `spotapi.v2.query_wrapper` | `Queries` / `spotapi.queries` | Name the persisted-query responsibility directly |
-| Deep `specialized.data_wrappers` application imports | `from spotapi.models import ...` | Discoverable public model namespace |
-| Extended searches return raw dictionaries through separate operations | Typed Audiobook/Episode/User/Author/Genre results from one `searchDesktop` request | Working anonymous search with stable return types |
-| `Public.get(playlist_url)` returns raw data | `PlaylistDetails`; use `Queries` for raw operations | Metadata is typed; track occurrence pagination is explicit |
-| `Public.get_podcast()` returns raw metadata | `PodcastDetails`; audiobooks use `get_audiobook()` | Respect Spotify's distinct podcast/audiobook entity types |
-| `Public.get(show_url)` assumes a podcast | Detects Podcast or Audiobook from response typename | Audiobooks also use Spotify show URLs |
-| PlaylistTrack requires presentation fields | Identity required; duration/artwork/ratings may be None | Legitimate partial Spotify payloads remain usable |
-| Playlist attributes are opaque dictionaries | Typed key/value attributes | Standard dataclass JSON export stays plain and predictable |
-| Query-cache format 1 | Format 2, rebuilt once | Discard incomplete hashes produced by the former JS/CSS chunk-map mix-up |
-| v1 `Song().paginate_songs(...)` | `Public.search_tracks(...)` with `async for` | Async I/O and typed results |
-| Nested raw search dictionaries | `result.tracks`, `track.name`, `artist.name` | Discoverable result models |
-| `spotapi.v2` | `spotapi` | One import namespace for the async package |
-| Public operations rely on an implicit loop pool | `Public` owns each operation; `async with Catalogue()` reuses a client | Deterministic cleanup and explicit connection reuse |
-| `query_client_pool()` returns generic `Pool` | Shared owner with `acquire()`, `close()`, `closed` | Preserve borrowing/shutdown interface; generic-pool internals are no longer available |
-| Global `connection.ClientPool` | `async with HTTPClient()` or `AsyncClient()` | Remove an unused, globally loop-bound pool above wreq's pool |
-| Unknown POST/PUT/PATCH/DELETE replayed by default | One attempt by default | Ambiguous failures may already have applied mutations |
-| Raw read-only POST inherits retries | Set `retry_safe=True` or explicit `max_attempts` | Make replay safety deliberate; built-in catalogue reads opt in automatically |
-| Unknown Pathfinder operation inherits retries | One attempt unless explicit `max_attempts` is supplied | Operation names alone do not prove read semantics |
-| Permanent HTTP wreq exceptions escape | `HTTPError` with original exception as cause | One library base (`SpotAPIError`); programmer errors and cancellation still propagate |
-| WebSocket listeners continue after context exit | Pending listeners are cancelled and awaited | Connection-scoped ownership |
-| Unlimited pending event callback tasks | 256 by default, configurable on `EventDispatcher(max_pending=...)` | Bound slow-listener memory; saturation is logged |
-| Indefinitely old query-cache entries accepted | Build-bound cache, 24-hour expiry, validated hashes, bounded input | Stale or malformed caches become misses |
-| `QueryCache.load()` / `save(hashes)` with a bare JSON mapping | Optional build version on load/save; versioned envelope on disk | Existing files are refreshed once; matching builds skip chunk downloads |
-| `BundleSession.warm()` retains every JavaScript chunk | Retains the main bundle after extracting hashes; `load()` explicitly fetches all sources | Avoid retaining source no longer needed for requests or token renewal |
-| `pytest` silently makes live requests | Use `pytest --live=read` explicitly | Reproducible offline contributor workflow |
-| pyproject permits wreq upgrades while requirements pins 0.12.0 | Both pin 0.12.0 | Test and install the same transport version |
-| Legacy `setup.py` with v1 metadata | Hatch / `pyproject.toml` only | Remove competing version and dependency metadata |
+| I/O model | Synchronous feature classes | Async-native API, plus the `SyncCatalogue` facade |
+| Results | Raw nested mappings | Typed models with attributes and explicit optional fields |
+| Connection ownership | Feature objects and a global public client pool | `async with` / `with` scopes with deterministic cleanup |
+| Public catalogue | Tracks, artists, albums, playlists, podcasts and episodes | Those resources plus audiobooks, chapters, profiles, charts, concerts, radio, credits, Canvas, colors, transcripts and embeds |
+| Search | Separate class methods and raw search envelopes | One typed multi-category search with category-specific helpers and iterators |
+| Account access | Email/password `Login`, mutable feature objects and bundled CAPTCHA vendors | Cookie or browser login, composed account helpers and a provider-neutral CAPTCHA protocol |
+| Player | Synchronous controls and a threaded event listener | Async controls, typed state, reconnecting event scopes, `wait_for` and explicit shutdown |
+| Playlist edits | Stateful playlist IDs and raw mappings | Typed playlists and occurrence-aware edits using Spotify item UIDs |
+| Tooling | Python API only | Scriptable CLI, optional Discover TUI, Studio desktop app and MCP server |
 
-`ObjectDict` mapping keys remain original JSON keys. `data["items"]` and
-`data._items` refer to the same key. When both `items` and `_items` exist,
-use `data["_items"]` or `data.__items` for the latter. Methods such as
-`items()` and `get()` retain normal dictionary meaning. Historical callers
-with pre-escaped `_items` pages remain accepted by page parsers.
+The wider surface does not make every v1 workflow portable. SpotAPI 2 does not
+retain v1's account registration, family-membership automation, email/password
+login, database saver classes, or bundled Capsolver/Capmonster clients. Use an
+existing Spotify session for authenticated v2 features. If your application
+depends on a removed workflow, keep 1.2.8 isolated until you replace it.
 
-Search metadata is legitimately optional. Check `track.duration is not None`
-before reading milliseconds, and check optional artist/publisher/artwork
-objects before dereferencing them. `Public.get_track` returns `TrackDetails`;
-`Public.get(url)` returns a union based on the resource identified by the URL.
+## Search
 
-Use `Public` for one-shot work. Lookups close before returning; page streams
-close on exhaustion or `aclose()`. Wrap streams in `contextlib.aclosing` if
-you may break early. Reuse `async with Catalogue() as spotify` for multiple
-operations, proxy configuration, and raw queries through `spotify.queries`.
-A catalogue cannot be reopened after closing. Injected `Queries` remain
-owned by their caller. `close_query_clients()` only applies to lower-level
-code using the implicit `Queries()` pool.
+Version 1.2.8 returned Spotify's raw search envelope:
 
-Authenticated playlist operations live in `spotapi.playlist` and accept an
-authorized `AuthSession`. They deliberately use one attempt. Reconcile state
-after ambiguous failures before deciding whether to retry yourself. The
-low-level WebSocket API retains wreq's error types.
+```python
+from spotapi import Song
+
+songs = Song().query_songs("weezer", limit=20)
+items = songs["data"]["searchV2"]["tracksV2"]["items"]
+for item in items:
+    print(item["item"]["data"]["name"])
+```
+
+The native SpotAPI 2 API is asynchronous and returns typed results:
+
+```python
+import asyncio
+
+from spotapi import Public
 
 
-Player helpers now accept `AsyncClient.from_cookies(...)` clients (or an
-explicit `AuthSession`). `PlayerStatus` is a scoped dealer observer, and
-`Player` adds device selection and single-attempt control. Replace v1's
-threaded `EventManager.subscribe` with async `@player.event` or
-`@player.listen("track_change")` callbacks inside `player.connect()`.
-Property reads use cached typed snapshots; `refresh()` performs an explicit
-request. Volume is an integer percentage from 0 to 100. HOBS observer IDs and
-full playback device IDs are separate arguments. See [the player guide](docs/player.md).
+async def main() -> None:
+    results = await Public.search("weezer", types="track", limit=20)
+    for track in results.tracks:
+        print(track.name, track.uri)
 
-`await player.start()` manages reconnection and stops with `await player.close()`.
-Use `wait_for(event, check=..., timeout=...)` for matching events. Connection
-cleanup includes the owned control-only registration, observers, timers and
-callbacks; the caller still owns the supplied authenticated client.
 
-Queue edits preserve occurrence UIDs and use the last observed revision.
-Library and history access are also reusable as `LikedTracks(client)` and
-`ListeningHistory(client)`. Recents represent dated grouped contexts and saved
-actions; they do not provide exact per-play timestamps.
+asyncio.run(main())
+```
 
-Managed authorization accepts HTTPS Spotify hosts and disables redirects. Custom
-headers must be a string mapping; replacing `Authorization` or `client-token`
-(case-insensitively) is rejected. Use the raw `client.transport` only when an
-integration deliberately needs to own its authentication/status policy. The
-feature helpers' `http` attribute is the validated `AsyncClient`, not the raw
-transport. See [request policy](docs/transport.md).
+For a synchronous script, use the same result models through
+`SyncCatalogue`:
+
+```python
+from spotapi import SyncCatalogue
+
+with SyncCatalogue() as spotify:
+    results = spotify.search("weezer", types="track", limit=20)
+    for track in results.tracks:
+        print(track.name, track.uri)
+```
+
+Do not use `SyncCatalogue` from a running event loop. In async applications and
+notebooks with an active loop, use `await Public.search(...)` or
+`async with Catalogue()`.
+
+## Common public operations
+
+| 1.2.8 | SpotAPI 2 async | SpotAPI 2 sync |
+|---|---|---|
+| `Song().query_songs(query, limit=20)` | `await Public.search(query, types="track", limit=20)` | `spotify.search(query, types="track", limit=20)` |
+| `Song().paginate_songs(query)` | `async for track in Public.iter_tracks(query)` | Not exposed as an unbounded iterator; page with the async API when needed |
+| `Song().get_track_info(track_id)` | `await Public.get_track(track_id)` | `spotify.get_track(track_id)` |
+| `Artist().query_artists(query, limit=20)` | `await Public.search(query, types="artist", limit=20)` | `spotify.search(query, types="artist", limit=20)` |
+| `Artist().get_artist(artist_id)` | `await Public.get_artist(artist_id)` | `spotify.get_artist(artist_id)` |
+| `PublicAlbum(album_id).get_album_info()` | `await Public.get_album(album_id)` | `spotify.get_album(album_id)` |
+| `PublicPlaylist(playlist_id).get_playlist_info()` | `await Public.get_playlist(playlist_id)` | `spotify.get_playlist(playlist_id)` |
+| `Podcast(podcast_id).get_podcast_info()` | `await Public.get_podcast(podcast_id)` | `spotify.get_podcast(podcast_id)` |
+| `Podcast().get_episode(episode_id)` | `await Public.get_podcast_episode(episode_id)` | `spotify.get_podcast_episode(episode_id)` |
+
+IDs, Spotify URIs and open.spotify.com URLs are accepted by the documented v2
+lookup methods. Returned models are values: reading `track.name` performs no
+network request. Use `spotapi.to_dict()` when an application needs JSON-safe
+dictionaries.
+
+## Reuse connections
+
+`Public` is convenient for unrelated one-shot calls. Reuse a `Catalogue` when
+several operations belong to one workflow:
+
+```python
+from spotapi import Catalogue
+
+
+async def inspect_artist(artist_uri: str) -> None:
+    async with Catalogue() as spotify:
+        artist = await spotify.get_artist(artist_uri)
+        top_tracks = await spotify.get_artist_top_tracks(artist.uri)
+        print(artist.name, len(top_tracks))
+```
+
+Page iterators are async generators. If a loop may stop early, close it
+explicitly with `contextlib.aclosing`.
+
+## Authentication and account features
+
+Version 1.2.8 constructed `Login` from an email or username, password, solver
+configuration and an optional saver. SpotAPI 2 does not accept account
+passwords. It uses an existing Spotify web session:
+
+```python
+import os
+
+from spotapi import Private
+
+
+async def show_profile() -> None:
+    async with Private.from_cookies(os.environ["SPOTIFY_COOKIE"]) as account:
+        profile = await account.get_profile()
+        print(profile)
+```
+
+For an interactive application, use `browser_login()` with `SavedSession`
+instead of collecting credentials. Never print, commit or send the Spotify
+cookie to another service.
+
+Authenticated helpers borrow their client. The surrounding `Private` or
+`AsyncClient` context owns token refresh, transports and shutdown. Playlist and
+player mutations are not automatically replayed after an ambiguous failure;
+read the resulting state before deciding whether to retry.
+
+## Player events and controls
+
+The v1 `Player` and `EventManager` were synchronous and built on a background
+listener. V2 event callbacks and controls are async and live inside an explicit
+connection scope:
+
+```python
+from spotapi import AsyncClient, Player
+
+
+async def watch_player(cookie: str) -> None:
+    async with await AsyncClient.from_cookies(cookie) as client:
+        player = Player(client)
+
+        @player.event
+        async def on_track_change(before, after) -> None:
+            if after is not None:
+                print(after.artist, after.name)
+
+        async with player.connect():
+            await player.pause()
+            await player.resume()
+```
+
+Important renames include `skip_next()` to `next()`, `skip_prev()` to
+`previous()`, `seek_to()` to `seek()`, `set_shuffle()` to `shuffle()`, and
+`set_volume()` to `volume()`. V2 repeat mode is `"off"`, `"context"` or
+`"track"`, rather than a boolean.
+
+## Read next
+
+- [First result](https://spotapi.readthedocs.io/en/latest/quickstart/)
+- [Catalogue and search](https://spotapi.readthedocs.io/en/latest/catalogue/)
+- [Accounts and playlists](https://spotapi.readthedocs.io/en/latest/account/)
+- [Player controls and events](https://spotapi.readthedocs.io/en/latest/player/)
+- [Python API reference](https://spotapi.readthedocs.io/en/latest/reference/)

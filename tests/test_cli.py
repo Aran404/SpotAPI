@@ -30,6 +30,18 @@ def test_cli_get_outputs_json(
     assert json.loads(capsys.readouterr().out)["uri"] == resource.uri
 
 
+def test_cli_reports_the_installed_version(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("spotapi.cli.package_version", Mock(return_value="2.1.0"))
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(["--version"])
+
+    assert exit_info.value.code == 0
+    assert capsys.readouterr().out == "spotapi 2.1.0\n"
+
+
 def test_cli_discover_explains_the_optional_install(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

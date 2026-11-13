@@ -19,8 +19,9 @@ fully typed async results. Start with public data, no signup and no developer
 dashboard. Connect your account later for saved music, playlist editing and live
 player events.
 
-> **SpotAPI 2 is a breaking async release.** Synchronous projects can pin
-> `spotapi==1.2.8`. See the [migration guide](https://github.com/Aran404/SpotAPI/blob/main/MIGRATION.md)
+> **SpotAPI 2 is a breaking, async-first release.** Existing v1 applications can
+> pin `spotapi==1.2.8` while migrating; new synchronous scripts can use
+> `SyncCatalogue`. See the [migration guide](https://github.com/Aran404/SpotAPI/blob/main/MIGRATION.md)
 > and the [release checks](https://spotapi.readthedocs.io/en/latest/release-checks/).
 
 ## First search

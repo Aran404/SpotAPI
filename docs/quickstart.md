@@ -44,10 +44,12 @@ python -m pip install "spotapi[demo]"
 spotapi discover "Daft Punk"
 ```
 
-After a release containing this command, install with `pip install "spotapi[demo]"`.
 No account is needed. Paste a public Spotify link, inspect artwork and metadata,
 or copy typed results as JSON. The optional interface uses the same catalogue
 API as your Python application. Plain `spotapi search` needs no demo dependencies.
+
+Run `spotapi --version` if the available commands do not match this guide. An
+older executable on `PATH` can otherwise look like the current installation.
 
 ## Reuse connections
 
@@ -67,9 +69,6 @@ Call `await explore()` from an async application or `asyncio.run(explore())` fro
 a script. Use `Public` for one-shot work and `Catalogue` for related operations.
 
 ## Synchronous scripts
-
-This facade is a new development-checkout addition; use the development install
-below until it is included in the package version you install.
 
 ```python
 from spotapi import SyncCatalogue

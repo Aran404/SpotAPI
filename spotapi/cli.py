@@ -11,6 +11,7 @@ import os
 import sys
 from collections.abc import Sequence
 from contextlib import aclosing
+from importlib.metadata import version as package_version
 
 from .account import Private
 from .embeds import get_embed
@@ -34,6 +35,11 @@ def _limit(value: str) -> int:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="spotapi", description=__doc__)
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {package_version('spotapi')}",
+    )
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("studio", help="open the desktop application (studio extra)")
     discover = commands.add_parser("discover", help="browse Spotify in your terminal (demo extra)")

@@ -23,12 +23,16 @@
 - Managed account scopes accept explicit proxy and language options.
 - Keep sponsorship placements below usage material, with optional integration
   partnerships and privately quoted scope.
+- Report the installed distribution with `spotapi --version` so executable and
+  package mismatches are immediately visible.
 - Require `wreq` 0.12.3 or newer within the compatible 0.12 release line for
   corrected coroutine cancellation; 0.13 remains excluded because it changes
   binary response types.
 
 ### Fixed
 
+- Replace the migration page's intermediate-branch internals with verified
+  `spotapi==1.2.8` examples, feature differences and removed-workflow boundaries.
 - Dealer disconnects wake command waiters and clear readiness; temporary device
   loss no longer discards a valid late ACK. Quiet dealers allow one snapshot
   refresh within the existing deadline; old snapshots cannot prove success.
