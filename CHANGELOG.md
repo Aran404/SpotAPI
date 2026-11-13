@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.0 - unreleased
+## 2.1.0 - 2026-11-13
 
 ### Added
 
@@ -23,6 +23,9 @@
 - Managed account scopes accept explicit proxy and language options.
 - Keep sponsorship placements below usage material, with optional integration
   partnerships and privately quoted scope.
+- Require `wreq` 0.12.3 or newer within the compatible 0.12 release line for
+  corrected coroutine cancellation; 0.13 remains excluded because it changes
+  binary response types.
 
 ### Fixed
 

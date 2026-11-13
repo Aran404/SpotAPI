@@ -7,8 +7,8 @@ python -m pip install "spotapi[studio]"
 spotapi studio
 ```
 
-For an unreleased checkout, use `python -m pip install -e ".[studio]"` first.
-The application, frontend and icons ship in the wheel.
+The application, frontend and icons ship in the wheel. Contributors running a
+checkout can instead use `python -m pip install -e ".[studio]"`.
 
 Studio uses the platform's native WebView through pywebview, with no bundled browser
 or remote frontend dependencies. Windows needs the Microsoft Edge WebView2 runtime.

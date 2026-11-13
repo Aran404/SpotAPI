@@ -71,23 +71,31 @@ statement/branch coverage is 72.3% with the packaged Studio now included in
 the measurement (the earlier library-only baseline was 74.5%); this is not exhaustive
 endpoint coverage.
 
-The observations below describe earlier validation of the release candidate.
-They do not certify subsequent additions in this working tree.
+The final dependency range requires `wreq>=0.12.3,<0.13`. The offline suite and
+three live anonymous search cases passed against 0.12.3. A clean environment
+resolved that version from the built wheel, exercised the CLI entry points and
+found Studio's packaged frontend and native icons.
 
 ### Distribution and documentation review
 
-The next development version is `2.1.0.dev0`: PyPI and Git already contain
-`2.0.0`. No release was published by this review. Studio now ships as an optional
+Version `2.1.0` is prepared for release; PyPI remains on `2.0.0` until the
+release tag is published. Studio ships as an optional
 application behind `spotapi studio`, with its frontend and native icons in the
 wheel. The example module remains a compatibility launcher. Browser checks cover
 the minimum native window size, including visible results and reachable sign-in.
 Native launch failure and normal shutdown have deterministic ownership tests.
 
 Read the Docs uses its version-2 MkDocs configuration with pinned documentation
-dependencies and strict builds. The hosted URL returned HTTP 403 from this
-environment, so project activation and the hosted build are not certified here.
-Confirm those in the Read the Docs dashboard. Main-branch integration still
+dependencies and strict builds. The hosted `latest` site loaded successfully;
+all 13 navigation pages rendered with headings, non-empty code blocks, valid
+same-page anchors and no replacement characters. The Spotipy migration guide
+also renders as ordinary Markdown on GitHub. Main-branch integration still
 requires the hosted platform matrix to pass; a source push is not a PyPI release.
+
+The published 2.0.0 page demonstrates why the 2.1.0 README now uses canonical
+Read the Docs and GitHub destinations: PyPI rewrites relative links under the
+project URL. The 2.1.0 wheel metadata contains no relative Markdown targets, and
+its long description passes Twine's renderer check.
 
 ### Earlier release-candidate observations
 

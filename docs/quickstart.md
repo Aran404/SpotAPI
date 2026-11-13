@@ -37,10 +37,10 @@ Spotify build. Reusing a `Catalogue` avoids repeating session setup.
 
 ## Browse from your terminal
 
-The development checkout includes a keyboard-driven browser:
+Install the optional keyboard-driven browser:
 
 ```sh
-python -m pip install -e ".[demo]"
+python -m pip install "spotapi[demo]"
 spotapi discover "Daft Punk"
 ```
 
@@ -121,10 +121,10 @@ For small, complete scripts, see
 [search and artist lookup](https://github.com/Aran404/SpotAPI/blob/main/examples/public_search.py)
 and [playlist metadata export](https://github.com/Aran404/SpotAPI/blob/main/examples/export.py).
 
-## Development checkout
+## Install from source
 
-New additions on `main` may precede the published package. To run the current
-repository and its examples, clone it and install from its root:
+Contributors can run the current repository and its examples by cloning it and
+installing from the repository root:
 
 ```sh
 python -m pip install -e .

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="spotapi/_studio/assets/logo.svg" width="84" height="84" alt="SpotAPI symbol">
+  <img src="https://raw.githubusercontent.com/Aran404/SpotAPI/main/spotapi/_studio/assets/logo.svg" width="84" height="84" alt="SpotAPI symbol">
 </p>
 
 <h1 align="center">SpotAPI</h1>
@@ -20,12 +20,8 @@ dashboard. Connect your account later for saved music, playlist editing and live
 player events.
 
 > **SpotAPI 2 is a breaking async release.** Synchronous projects can pin
-> `spotapi==1.2.8`. See the [migration guide](MIGRATION.md) and the
-> [release checks](docs/release-checks.md).
-
-This README includes unreleased additions. Until they reach PyPI, install this
-checkout with `python -m pip install -e ".[demo,studio]"`. Packaged releases
-include both interfaces; users do not need a clone to launch them.
+> `spotapi==1.2.8`. See the [migration guide](https://github.com/Aran404/SpotAPI/blob/main/MIGRATION.md)
+> and the [release checks](https://spotapi.readthedocs.io/en/latest/release-checks/).
 
 ## First search
 
@@ -74,10 +70,7 @@ public playlists. It cleans up its own connections.
 
 Browse search results, artwork and typed data directly from your terminal:
 
-![SpotAPI Discover turns one terminal command into browsable Spotify results and typed data](assets/cli-demo.gif)
-
-For this development checkout, use `python -m pip install -e ".[demo]"`.
-Once the release containing `discover` is published, the package-only setup is:
+![SpotAPI Discover turns one terminal command into browsable Spotify results and typed data](https://raw.githubusercontent.com/Aran404/SpotAPI/main/assets/cli-demo.gif)
 
 ```bash
 python -m pip install "spotapi[demo]"
@@ -86,8 +79,8 @@ spotapi discover "Daft Punk"
 
 | Demo | What you get | Run it |
 |---|---|---|
-| **[Discover](examples/discover.py)** | A keyboard-driven terminal UI for browsing Spotify's public search. No login. **Start here.** | `spotapi discover "Daft Punk"` |
-| **[Mix map](examples/mix_map.py)** | Finds harmonically compatible transitions in a public playlist and tells you how far to shift the incoming track's tempo. | `python -m examples.mix_map` |
+| **[Discover](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py)** | A keyboard-driven terminal UI for browsing Spotify's public search. No login. **Start here.** | `spotapi discover "Daft Punk"` |
+| **[Mix map](https://github.com/Aran404/SpotAPI/blob/main/examples/mix_map.py)** | Finds harmonically compatible transitions in a public playlist and tells you how far to shift the incoming track's tempo. | `python -m examples.mix_map` |
 
 Discover accepts a search query or Spotify link. Mix map runs from a clone of
 the repository and accepts your own public playlist link. Tempo and key data
@@ -99,20 +92,21 @@ Open a track, read its credits, follow links into artists and albums, or expand
 the typed data behind every view. Studio also shows public lyrics and can seek to
 a timed line on a connected Spotify player.
 
-![SpotAPI Studio: the listening desk](examples/studio/preview.png)
+![SpotAPI Studio: the listening desk](https://raw.githubusercontent.com/Aran404/SpotAPI/main/examples/studio/preview.png)
 
 ```bash
 python -m pip install "spotapi[studio]"
 spotapi studio
 ```
 
-Studio uses your platform's native WebView; see the [platform setup](docs/studio.md).
+Studio uses your platform's native WebView; see the [platform setup](https://spotapi.readthedocs.io/en/latest/studio/).
 
 Use **Connect Spotify** to sign in through Spotify's normal login window, or set
 `SPOTIFY_COOKIE` in a local `.env`. Cookies stay in Python. Playback controls an
 existing Spotify device; Studio does not render audio.
 
-[Studio guide](docs/studio.md) · [Small examples](examples)
+[Studio guide](https://spotapi.readthedocs.io/en/latest/studio/) ·
+[Small examples](https://github.com/Aran404/SpotAPI/tree/main/examples)
 
 ## Go beyond search
 
@@ -130,7 +124,7 @@ spotapi player status
 
 `search` and `get` work anonymously. Library and player commands, playlist edits
 and `playlist items --private` read `SPOTIFY_COOKIE` from your environment. See
-[sign-in setup](docs/studio.md#sign-in).
+[sign-in setup](https://spotapi.readthedocs.io/en/latest/studio/#sign-in).
 
 Run `spotapi playlist --help`, `spotapi library --help` or `spotapi player --help`
 for every action. Playlist `remove` and `move` take occurrence IDs from
@@ -142,12 +136,12 @@ Pick the idea closest to yours:
 
 | Your idea | Start with |
 |---|---|
-| A DJ crate with tempo and harmonic keys | [Playlist crate](examples/playlist_crate.py) |
+| A DJ crate with tempo and harmonic keys | [Playlist crate](https://github.com/Aran404/SpotAPI/blob/main/examples/playlist_crate.py) |
 | A public-data inspector | `spotapi discover` or `spotapi get SPOTIFY_URL` |
 | A playlist discovery companion | `Public.get_radio()` · `Public.get_playlist_recommendations()` |
-| Your own music dashboard | [Account, rankings and saved music](docs/account.md) |
+| Your own music dashboard | [Account, rankings and saved music](https://spotapi.readthedocs.io/en/latest/account/) |
 | A duplicate-aware playlist curator | `Playlist.items()` · `Playlist.move_occurrences()` · `Playlist.remove_occurrences()` |
-| A live now-playing display | [Player example](examples/player.py) · [Lyrics example](examples/lyrics.py) |
+| A live now-playing display | [Player example](https://github.com/Aran404/SpotAPI/blob/main/examples/player.py) · [Lyrics example](https://github.com/Aran404/SpotAPI/blob/main/examples/lyrics.py) |
 
 ### Public data: reuse one `Catalogue`
 
@@ -198,12 +192,12 @@ requirements and changing response contracts.
 | Developer app / Client ID | Required; **up to 25 apps per developer** | Not needed |
 | Spotify account | **App owner needs Premium** in Development Mode | Not needed |
 | Authorized users | **Up to five** per Client ID | No cap to manage |
-| Intended use | Non-commercial personal projects and learning | Your call, subject to the [legal notice](LEGAL_NOTICE.md) |
+| Intended use | Non-commercial personal projects and learning | Your call, subject to the [legal notice](https://github.com/Aran404/SpotAPI/blob/main/LEGAL_NOTICE.md) |
 | Setup | Create an app, then wire up credentials | `pip install spotapi` |
 
 Choose based on the endpoints and authentication your application needs.
 SpotAPI relies on unofficial web-player contracts; see the
-[verification boundaries](docs/release-checks.md#boundaries) before integrating.
+[verification boundaries](https://spotapi.readthedocs.io/en/latest/release-checks/#boundaries) before integrating.
 
 <sub>Checked against Spotify's [migration guide](https://developer.spotify.com/documentation/web-api/tutorials/february-2026-migration-guide)
 and [July 2026 update](https://developer.spotify.com/documentation/web-api/references/changes/july-2026).
@@ -216,12 +210,18 @@ Development Mode apps share their developer account's quota.</sub>
 Read the [complete rendered documentation](https://spotapi.readthedocs.io/), or
 jump directly to a guide:
 
-[First result](docs/quickstart.md) · [Coming from Spotipy](docs/from-spotipy.md) ·
-[Discovery, previews and captions](docs/discovery.md) · [Python API reference](docs/reference.md)
+[First result](https://spotapi.readthedocs.io/en/latest/quickstart/) ·
+[Coming from Spotipy](https://spotapi.readthedocs.io/en/latest/from-spotipy/) ·
+[Discovery, previews and captions](https://spotapi.readthedocs.io/en/latest/discovery/) ·
+[Python API reference](https://spotapi.readthedocs.io/en/latest/reference/)
 
 
-[Catalogue](docs/catalogue.md) · [Account](docs/account.md) · [Player](docs/player.md) ·
-[Request policy](docs/transport.md) · [API layout](docs/api-layout.md) · [Migration from v1](MIGRATION.md)
+[Catalogue](https://spotapi.readthedocs.io/en/latest/catalogue/) ·
+[Account](https://spotapi.readthedocs.io/en/latest/account/) ·
+[Player](https://spotapi.readthedocs.io/en/latest/player/) ·
+[Request policy](https://spotapi.readthedocs.io/en/latest/transport/) ·
+[API layout](https://spotapi.readthedocs.io/en/latest/api-layout/) ·
+[Migration from v1](https://github.com/Aran404/SpotAPI/blob/main/MIGRATION.md)
 
 ## Sponsorship
 
@@ -234,11 +234,14 @@ services are never required for ordinary public-data workflows.
 
 Contact [aran.inbox.personal@gmail.com](mailto:aran.inbox.personal@gmail.com)
 to discuss a placement and arrange payment directly through PayPal.
-See [sponsorship details](SPONSORSHIP.md).
+See [sponsorship details](https://github.com/Aran404/SpotAPI/blob/main/SPONSORSHIP.md).
 
 ## Contributing
 
-[Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Release review](docs/release-checks.md) ·
-[Legal notice](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)
+[Contributing](https://github.com/Aran404/SpotAPI/blob/main/CONTRIBUTING.md) ·
+[Tests](https://github.com/Aran404/SpotAPI/blob/main/tests/README.md) ·
+[Release review](https://spotapi.readthedocs.io/en/latest/release-checks/) ·
+[Legal notice](https://github.com/Aran404/SpotAPI/blob/main/LEGAL_NOTICE.md) ·
+[GPL-3.0](https://github.com/Aran404/SpotAPI/blob/main/LICENSE)
 
 If SpotAPI helps you build something, star the repository or share what you built.

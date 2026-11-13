@@ -18,8 +18,8 @@ python -m pip install spotapi
 spotapi search "Daft Punk"
 ```
 
-Want a visual first result? The current checkout also includes
-`spotapi discover "Daft Punk"` with the optional demo dependencies. See
+Want a visual first result? Install the demo extra and run
+`spotapi discover "Daft Punk"`. See
 [terminal setup](quickstart.md#browse-from-your-terminal).
 
 ```python

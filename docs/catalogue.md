@@ -65,7 +65,7 @@ For runnable introductions, see the scripts in [examples](https://github.com/Ara
 
 ## Discovered On playlists
 
-The development checkout adds `get_artist_discovered_on` to `Catalogue`,
+`get_artist_discovered_on` is available on `Catalogue`,
 `Public` and `SyncCatalogue`. It returns Spotify's bounded playlist selection
 in server order; an unavailable slot is `None`. This is not an exhaustive list
 of playlist placements, and no historical placements are inferred.

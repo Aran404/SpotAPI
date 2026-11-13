@@ -1,8 +1,7 @@
 # Discovery, previews and captions
 
-These APIs are part of the current development checkout. Check the installed
-release before using them in an existing application; use `pip install -e .`
-from the repository root to exercise `main`.
+Install the relevant optional extra where a section calls for one. Public
+catalogue features otherwise use the core package and need no developer key.
 
 ## Charts, recommendations and concerts
 
