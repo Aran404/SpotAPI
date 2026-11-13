@@ -10,43 +10,43 @@ for a particular feature instead of migrating an entire application.
 
 ## Public search
 
-=== "Spotipy"
+### Spotipy
 
-    ```python
-    import spotipy
-    from spotipy.oauth2 import SpotifyClientCredentials
+```python
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
-    spotify = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
-    response = spotify.search(q="Daft Punk", type="track", limit=5)
-    for track in response["tracks"]["items"]:
-        print(track["name"], track["uri"])
-    ```
+spotify = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
+response = spotify.search(q="Daft Punk", type="track", limit=5)
+for track in response["tracks"]["items"]:
+    print(track["name"], track["uri"])
+```
 
-    Configure your developer credentials for this official Web API flow.
+Configure your developer credentials for this official Web API flow.
 
-=== "SpotAPI · async"
+### SpotAPI: async
 
-    ```python
-    from spotapi import Public
+```python
+from spotapi import Public
 
-    results = await Public.search("Daft Punk", types="track", limit=5)
+results = await Public.search("Daft Punk", types="track", limit=5)
+for track in results.tracks:
+    print(track.name, track.uri)
+```
+
+This snippet runs inside an async function or a notebook supporting `await`.
+Public data uses an anonymous web-player session, without a developer app.
+
+### SpotAPI: sync
+
+```python
+from spotapi import SyncCatalogue
+
+with SyncCatalogue() as spotify:
+    results = spotify.search("Daft Punk", types="track", limit=5)
     for track in results.tracks:
         print(track.name, track.uri)
-    ```
-
-    This snippet runs inside an async function or a notebook supporting await.
-    Public data uses an anonymous web-player session, without a developer app.
-
-=== "SpotAPI · sync"
-
-    ```python
-    from spotapi import SyncCatalogue
-
-    with SyncCatalogue() as spotify:
-        results = spotify.search("Daft Punk", types="track", limit=5)
-        for track in results.tracks:
-            print(track.name, track.uri)
-    ```
+```
 
 ## Map the task, not the method spelling
 

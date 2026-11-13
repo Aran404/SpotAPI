@@ -9,7 +9,7 @@
   <a href="#see-it-in-action">Demos</a> ·
   <a href="#studio">Studio</a> ·
   <a href="#build-it-into-your-app">Integrate</a> ·
-  <a href="#guides">Guides</a>
+  <a href="https://spotapi.readthedocs.io/">Docs</a>
 </p>
 
 ---
@@ -35,8 +35,6 @@ Requires Python 3.11 or newer.
 python -m pip install spotapi
 spotapi search "Daft Punk"
 ```
-
-![Running spotapi search Daft Punk returns track names and Spotify URIs](assets/cli-demo.gif)
 
 No key, no login, no config. The first request discovers Spotify's current
 web-player queries; this can take longer on a cold cache. Later runs reuse
@@ -75,6 +73,8 @@ public playlists. It cleans up its own connections.
 ## See it in action
 
 Browse search results, artwork and typed data directly from your terminal:
+
+![SpotAPI Discover turns one terminal command into browsable Spotify results and typed data](assets/cli-demo.gif)
 
 For this development checkout, use `python -m pip install -e ".[demo]"`.
 Once the release containing `discover` is published, the package-only setup is:
@@ -212,6 +212,9 @@ previously authorized user counts above five; Extended Quota Mode differs.
 Development Mode apps share their developer account's quota.</sub>
 
 ## Guides
+
+Read the [complete rendered documentation](https://spotapi.readthedocs.io/), or
+jump directly to a guide:
 
 [First result](docs/quickstart.md) · [Coming from Spotipy](docs/from-spotipy.md) ·
 [Discovery, previews and captions](docs/discovery.md) · [Python API reference](docs/reference.md)

@@ -4,6 +4,10 @@ Use the root exports for clients and utilities, and `spotapi.models` for results
 The reference below is generated from the implementation's signatures and
 docstrings during the documentation build. Examples use Python 3.11+.
 
+**Reading this file on GitHub?** Open the
+[rendered API reference](https://spotapi.readthedocs.io/en/latest/reference/)
+to see the generated signatures, types and docstrings below.
+
 ## One-shot public reads
 
 ::: spotapi.public.Public
