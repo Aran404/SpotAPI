@@ -13,7 +13,8 @@ import random
 import sys
 import threading
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import AsyncGenerator, Mapping, Sequence
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from types import TracebackType
@@ -66,6 +67,8 @@ _PERMANENT_TRANSPORT_ERRORS: Final = (
     wreq.exceptions.RedirectError,
     wreq.exceptions.StatusError,
 )
+
+_TRANSPORT_ERRORS = _RETRYABLE_TRANSPORT_ERRORS + _PERMANENT_TRANSPORT_ERRORS
 
 _SPOTIFY_COOKIE_URLS: Final[tuple[str, ...]] = (
     "https://open.spotify.com",
@@ -335,6 +338,30 @@ class HTTPClient:
             for url in _SPOTIFY_COOKIE_URLS:
                 jar.add(cookie, url)
 
+    @asynccontextmanager
+    async def stream(
+        self, method: Methods, url: str, **kwargs: Unpack[wreq.Request]
+    ) -> AsyncGenerator[wreq.Response, None]:
+        """Borrow a native streaming response for one attempt and always close it.
+
+        No body is buffered or status validated. The consumer owns size/type
+        validation. Network errors, including failures while iterating chunks,
+        become HTTPError; programmer errors and cancellation propagate.
+        """
+        host = (urlsplit(url).hostname or "").casefold()
+        await self._rate_limiter.wait(host)
+        try:
+            response = await self._wclient.request(getattr(wreq.Method, method), url, **kwargs)
+            async with response:
+                if response.status.as_int() == 429:
+                    delay = _parse_retry_after(response_headers(response))
+                    self._rate_limiter.pause(
+                        host, self._compute_delay(0) if delay is None else delay
+                    )
+                yield response
+        except _TRANSPORT_ERRORS as error:
+            raise HTTPError("Streaming HTTP request failed") from error
+
     async def request(
         self,
         method: Methods,
@@ -537,12 +564,17 @@ class HTTPClient:
         )
 
 
+def response_headers(response: wreq.Response) -> dict[str, str]:
+    """Decode native header bytes as Latin-1 with lowercase field names."""
+    return {
+        bytes(key).decode("latin-1").lower(): bytes(value).decode("latin-1")
+        for key, value in response.headers
+    }
+
+
 async def _to_response(raw: wreq.Response) -> Response:
     """Convert a ``wreq`` response into a SpotAPI ``Response``."""
-    headers = {
-        bytes(key).decode("latin-1").lower(): bytes(value).decode("latin-1")
-        for key, value in raw.headers
-    }
+    headers = response_headers(raw)
     content_type = headers.get("content-type", "").casefold()
     binary = "json" not in content_type and (
         "protobuf" in content_type

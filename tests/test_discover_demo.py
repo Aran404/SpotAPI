@@ -1,8 +1,9 @@
 """The optional demo should cover the catalogue without needing network access."""
 
 import asyncio
+from functools import partial
 from io import StringIO
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -13,9 +14,47 @@ pytest.importorskip("httpx")
 # The image renderer probes the real terminal during import. Headless tests
 # must not read terminal replies through pytest's captured stdin.
 with patch("sys.__stdout__", StringIO()):
-    from examples import discover
+    from spotapi._demo import discover
 
 from spotapi.models import Track
+
+
+async def test_shutdown_releases_images_even_when_a_feed_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = discover.Discover("Example")
+    image = Mock(spec=discover.pil.Image)
+    app.images["cover"] = image
+    app.cache["track"] = object()
+    app.expanded["track"] = object()
+    close_catalogue = AsyncMock()
+    monkeypatch.setattr(discover.Catalogue, "close", close_catalogue)
+    monkeypatch.setattr(app, "close_feeds", AsyncMock(side_effect=RuntimeError("feed failed")))
+
+    with pytest.raises(RuntimeError, match="feed failed"):
+        await app.on_unmount()
+
+    assert app.http.is_closed
+    close_catalogue.assert_awaited_once()
+    image.close.assert_called_once()
+    assert not app.images
+    assert not app.cache
+    assert not app.expanded
+
+
+@pytest.fixture(autouse=True)
+def offline_image_transport(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep headless demo tests independent of proxy configuration and network access."""
+
+    def unexpected_request(request: discover.httpx.Request) -> discover.httpx.Response:
+        raise AssertionError(f"Unexpected image request in an offline test: {request.url.host}")
+
+    factory = partial(
+        discover.httpx.AsyncClient,
+        transport=discover.httpx.MockTransport(unexpected_request),
+        trust_env=False,
+    )
+    monkeypatch.setattr(discover.httpx, "AsyncClient", factory)
 
 
 async def test_ten_tabs_render_and_finish_their_feeds(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -38,6 +77,27 @@ async def test_ten_tabs_render_and_finish_their_feeds(monkeypatch: pytest.Monkey
         assert len(app.tables) == 10
         assert all(table.row_count == 1 for table in app.tables.values())
         assert "Example" in app.export_screenshot()
+
+
+@pytest.mark.parametrize("key", ("escape", "down"))
+async def test_search_can_return_to_results_without_a_mouse(
+    monkeypatch: pytest.MonkeyPatch, key: str
+) -> None:
+    async def search(term: str):
+        yield [Track(id="track", name="Example", uri="spotify:track:track")]
+
+    monkeypatch.setattr(
+        discover, "sources", Mock(return_value={"Tracks": discover.Source(search)})
+    )
+    app = discover.Discover("Example")
+    async with app.run_test(size=(130, 42)) as pilot:
+        await pilot.pause()
+        search_box = app.query_one("#search", discover.SearchInput)
+        search_box.focus()
+        await pilot.pause()
+        assert app.focused is search_box
+        await pilot.press(key)
+        assert app.focused is app.tables["Tracks"]
 
 
 def test_playlist_rows_show_optional_bpm_and_keys() -> None:

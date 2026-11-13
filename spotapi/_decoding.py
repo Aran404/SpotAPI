@@ -5,8 +5,9 @@ from __future__ import annotations
 import types
 from collections.abc import Mapping
 from dataclasses import MISSING, fields, is_dataclass
+from datetime import date, datetime
 from functools import lru_cache
-from typing import Any, TypeVar, Union, cast, get_args, get_origin, get_type_hints
+from typing import Any, Literal, TypeVar, Union, cast, get_args, get_origin, get_type_hints
 
 T = TypeVar("T")
 _UNION_ORIGINS = (Union, types.UnionType)
@@ -105,6 +106,16 @@ def _decode_sequence(annotation: Any, value: Any, path: str) -> Any:
 
 
 def _decode_scalar(annotation: Any, value: Any, path: str) -> Any:
+    if annotation is date or annotation is datetime:
+        if isinstance(value, str):
+            return annotation.fromisoformat(value)
+        if type(value) is annotation:
+            return value
+        raise TypeError(f"{path}: expected an ISO date or datetime")
+    if isinstance(annotation, type) and issubclass(annotation, BaseException):
+        if not isinstance(value, annotation):
+            raise TypeError(f"{path}: exception metadata cannot reconstruct an exception")
+        return value
     if annotation is bool:
         if type(value) is not bool:
             raise TypeError(f"{path}: expected bool")
@@ -125,6 +136,12 @@ def _decode(annotation: Any, value: Any, path: str) -> Any:
         return value
 
     origin = get_origin(annotation)
+    if origin is Literal:
+        if not any(
+            type(value) is type(option) and value == option for option in get_args(annotation)
+        ):
+            raise TypeError(f"{path}: value is not one of the declared literal choices")
+        return value
     if origin in _UNION_ORIGINS:
         return _decode_union(annotation, value, path)
     if value is None:

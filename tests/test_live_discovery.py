@@ -22,3 +22,14 @@ async def test_live_discovery() -> None:
         assert all(track.id and track.uri and track.name for track in tracks)
         canvases = await catalogue.get_canvases(["33XUHrCbrAW6me9ewdCZip"])
         assert all(canvas.url and canvas.track_uri for canvas in canvases)
+
+
+async def test_live_artist_discovered_on() -> None:
+    async with Catalogue() as catalogue:
+        playlists = await catalogue.get_artist_discovered_on("4tZwfgrHOc3mvqYlEYSvVi")
+    assert playlists
+    assert any(playlist is not None for playlist in playlists)
+    assert all(
+        playlist is None or (playlist.name and playlist.uri.startswith("spotify:playlist:"))
+        for playlist in playlists
+    )

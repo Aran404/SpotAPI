@@ -3,19 +3,61 @@
 Sponsorship supports maintenance, testing against Spotify changes, documentation
 and development of the async library.
 
-We welcome monthly sponsors offering proxy, CAPTCHA, anti-bot and other developer
-services relevant to SpotAPI users. A labeled sponsor listing above Quickstart
-puts your product in front of readers before installation. Where a relevant guide
-exists, we can include a labeled link alongside the workflow it supports so
-readers can see when to use your service.
+## Options
 
-An exclusive placement reserves the agreed category for one paid sponsor at a
-time across the README and guides. We agree on the category, placement, price
-and any referral link before payment. Exclusivity runs for the paid month and
-can be renewed by agreement. The placement agreement covers paid listings.
+Request a quote for the placement and scope that fit your product. Pricing,
+availability and duration are agreed privately before payment; placements do
+not promise clicks, leads or adoption.
+
+| Tier | What it includes |
+|---|---|
+| Supporter | A labeled text link in the README sponsorship section. |
+| Featured partner | A logo, one-line description and relevant guide mention where useful. |
+| README category exclusive | Featured placement and no competing paid README placement in the agreed category. |
+| Integration partner | README category exclusivity, a useful maintained optional integration and its guide. Development and maintenance are scoped separately. |
+
+Integration-only arrangements and narrower placements can be quoted separately.
+Keep featured listings to four compact placements; supporters use a compact
+text list. Existing category commitments take precedence over new bookings.
+Integration sponsorship starts only after technical review and a concrete scope;
+payment does not buy acceptance of arbitrary features.
+
+## Placement and exclusivity
+
+We welcome developer services with a concrete use for SpotAPI users. Sponsor
+listings appear in the README's Sponsorship section near the bottom, after the
+installation and usage material. A relevant guide can include a labeled link
+beside the workflow the service supports. The first result stays the priority.
+
+Category exclusivity can include one officially maintained sponsored integration,
+not just a listing. For example, a CAPTCHA provider could sponsor an optional
+adapter implementing the existing `CaptchaSolver` protocol. Agree on the provider,
+category, integration scope, duration, maintenance and placement before payment.
+README-only exclusivity does not reserve the documentation or integration layer.
+Combined exclusivity names those surfaces explicitly. Unpaid technical references
+and user-supplied alternatives are not competing paid placements.
+
+## Integration standards
+
+Integrations must satisfy the same code review, documentation and testing
+standards as the library. They are explicitly enabled, with optional dependencies
+where needed. Credentials stay under the user's control. Paid requests must
+never start silently, and public catalogue access must not depend on a sponsor.
+
+Exclusivity applies to the agreed official sponsored integration and paid
+placements. Users remain free to supply their own protocol implementations or
+credentials; it does not remove the provider-neutral API. No provider is bundled
+or endorsed solely because it offers payment. An integration is accepted only
+when it is useful, maintainable and clearly disclosed as sponsored.
+Ending a sponsorship removes its paid promotion; it does not disable installed
+functionality. Compatibility changes are documented through release notes,
+rather than tied to payment status.
+
+## Contact
 
 Email [aran.inbox.personal@gmail.com](mailto:aran.inbox.personal@gmail.com)
-with your product link and preferred placement. Payments are arranged directly
+with your product link, preferred placement and any integration requirements
+to request a quote. Payments are arranged directly
 through PayPal, with payment details confirmed by email.
 
 Paid placements are labeled **Sponsor**. Affiliate links, when used, are labeled

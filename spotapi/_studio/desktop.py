@@ -161,7 +161,7 @@ def page() -> str:
         .replace("{{nonce}}", nonce)
         .replace(
             "<!-- STUDIO_LOGO -->",
-            (root.parents[1] / "assets" / "logo.svg").read_text(encoding="utf-8"),
+            (root / "assets" / "logo.svg").read_text(encoding="utf-8"),
         )
         .replace("/* STUDIO_STYLE */", (root / "style.css").read_text(encoding="utf-8"))
         .replace("// STUDIO_SCRIPT", (root / "app.js").read_text(encoding="utf-8"))
@@ -172,12 +172,11 @@ def main() -> None:
     """Launch Studio using an explicit .env session or a user-driven browser login."""
     from dotenv import load_dotenv
 
-    load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+    load_dotenv(Path.cwd() / ".env")
     webview = cast(WebView, import_module("webview"))
     loop = asyncio.new_event_loop()
     studio = Studio()
     worker = threading.Thread(target=loop.run_forever, name="spotapi-studio", daemon=True)
-    worker.start()
 
     def notify(status: str) -> None:
         """Notify the page using fixed scripts with no embedded account values."""
@@ -186,16 +185,20 @@ def main() -> None:
         )
 
     bridge = Bridge(studio, loop, webview, notify)
-    window = webview.create_window(
-        "SpotAPI Studio",
-        html=page(),
-        js_api=bridge,
-        width=1480,
-        height=960,
-        min_size=(980, 720),
-        background_color="#121016",
-        text_select=True,
-    )
+    try:
+        window = webview.create_window(
+            "SpotAPI Studio",
+            html=page(),
+            js_api=bridge,
+            width=1480,
+            height=960,
+            min_size=(980, 720),
+            background_color="#121016",
+            text_select=True,
+        )
+    except BaseException:
+        loop.close()
+        raise
 
     def initialize() -> None:
         """Load credentials in Python only and notify the already-rendered application."""
@@ -203,12 +206,9 @@ def main() -> None:
         if cookie:
             notify("signed_in" if _authenticate(studio, loop, cookie) else "failed")
 
+    worker.start()
     try:
-        icon = (
-            Path(__file__).resolve().parents[2]
-            / "assets"
-            / ("logo.ico" if os.name == "nt" else "logo.png")
-        )
+        icon = Path(__file__).parent / "assets" / ("logo.ico" if os.name == "nt" else "logo.png")
         webview.start(initialize, private_mode=True, icon=str(icon))
     finally:
 
@@ -220,6 +220,8 @@ def main() -> None:
                 task.cancel()
             await asyncio.gather(*pending, return_exceptions=True)
             await studio.close()
+            await loop.shutdown_asyncgens()
+            await loop.shutdown_default_executor()
 
         try:
             asyncio.run_coroutine_threadsafe(shutdown(), loop).result(timeout=15)

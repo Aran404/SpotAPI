@@ -4,20 +4,24 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import importlib
+import importlib.util
 import json
 import os
 import sys
 from collections.abc import Sequence
 from contextlib import aclosing
-from dataclasses import asdict, is_dataclass
 
 from .account import Private
+from .embeds import get_embed
 from .library import LikedTracks
+from .media import Media
 from .models import PlaylistEntry
 from .operations import SEARCH_DESKTOP_SECTIONS, SearchKind
 from .player import Player
 from .playlist import Playlist
 from .public import Public
+from .serialization import to_dict
 from .types import SpotAPIError
 
 
@@ -31,6 +35,9 @@ def _limit(value: str) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="spotapi", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("studio", help="open the desktop application (studio extra)")
+    discover = commands.add_parser("discover", help="browse Spotify in your terminal (demo extra)")
+    discover.add_argument("query", nargs="*", help="search words or a Spotify link")
     search = commands.add_parser("search", help="search the public catalogue")
     search.add_argument("query", help="text to search for")
     search.add_argument("--type", choices=tuple(SEARCH_DESKTOP_SECTIONS), default="track")
@@ -40,6 +47,32 @@ def _parser() -> argparse.ArgumentParser:
     get.add_argument("resource", help="Spotify URL or URI")
     credits = commands.add_parser("credits", help="show a track's contributors as JSON")
     credits.add_argument("track")
+
+    for name, help_text in (
+        ("chart", "read editorial chart metadata"),
+        ("events", "read upcoming artist concerts"),
+        ("similar-albums", "recommend albums from a track"),
+        ("colors", "extract a Spotify image palette"),
+        ("embed", "read public embed metadata and preview URLs"),
+        ("transcript", "read episode captions using SPOTIFY_COOKIE"),
+        ("lyrics", "read entitled lyrics using SPOTIFY_COOKIE"),
+    ):
+        commands.add_parser(name, help=help_text).add_argument("resource")
+    commands.add_parser("charts", help="list editorial chart shortcuts")
+    download = commands.add_parser(
+        "download", help="save published preview, cover or Canvas assets"
+    )
+    download.add_argument("kind", choices=("cover", "preview", "canvas"))
+    download.add_argument("resource", help="Spotify resource URL or URI")
+    download.add_argument(
+        "--output", required=True, help="Destination file; existing files are never replaced"
+    )
+
+    download.add_argument(
+        "--embed-cover",
+        action="store_true",
+        help="Tag a preview with artwork; requires spotapi[media]",
+    )
 
     playlist = commands.add_parser("playlist", help="list or edit playlist occurrences")
     playlists = playlist.add_subparsers(dest="action", required=True)
@@ -88,14 +121,13 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _json(value: object) -> None:
-    def encode(item: object) -> object:
-        return asdict(item) if is_dataclass(item) and not isinstance(item, type) else str(item)
-
-    print(json.dumps(value, indent=2, default=encode))
+    print(json.dumps(to_dict(value), indent=2))
 
 
 async def _search(args: argparse.Namespace) -> None:
     kind: SearchKind = args.type
+    if sys.stderr.isatty():
+        print("Searching Spotify... First-time setup may take a moment.", file=sys.stderr)
     results = await Public.search(args.query, types=kind, limit=args.limit)
     hits = results[kind]
     if args.json:
@@ -165,8 +197,49 @@ async def _run_player(player: Player, args: argparse.Namespace) -> None:
         }[action]()
 
 
+async def _run_discovery(args: argparse.Namespace) -> None:
+    command: str = args.command
+    if command == "charts":
+        result = Public.list_charts()
+    elif command == "chart":
+        result = await Public.get_chart(args.resource)
+    elif command == "events":
+        result = await Public.get_artist_events(args.resource)
+    elif command == "similar-albums":
+        result = await Public.get_similar_albums(args.resource)
+    elif command == "colors":
+        result = await Public.get_colors(args.resource)
+    else:
+        result = await get_embed(args.resource)
+    _json(result)
+
+
+async def _run_download(args: argparse.Namespace) -> None:
+    media = Media()
+    if args.kind == "canvas":
+        canvas = await Public.get_canvas(args.resource)
+        if canvas is None:
+            raise ValueError("This track has no Canvas")
+        destination = await media.download_canvas(canvas, args.output)
+    else:
+        source = await get_embed(args.resource)
+        if args.kind == "cover":
+            destination = await media.download_cover(source, args.output)
+        else:
+            destination = await media.download_preview(
+                source, args.output, embed_cover=args.embed_cover
+            )
+    _json({"path": str(destination)})
+
+
 async def _run(args: argparse.Namespace) -> None:
     command: str = args.command
+    if command in {"charts", "chart", "events", "similar-albums", "colors", "embed"}:
+        await _run_discovery(args)
+        return
+    if command == "download":
+        await _run_download(args)
+        return
     if command == "search":
         await _search(args)
         return
@@ -185,6 +258,12 @@ async def _run(args: argparse.Namespace) -> None:
     if not cookie:
         raise ValueError("Set SPOTIFY_COOKIE to use your Spotify account.")
 
+    if command in {"transcript", "lyrics"}:
+        async with Private.from_cookies(cookie) as account:
+            helper = account.transcripts if command == "transcript" else account.lyrics
+            _json(await helper.get(args.resource))
+        return
+
     async with Private.from_cookies(cookie) as account:
         if command == "library":
             await _run_library(account.liked_tracks, args)
@@ -199,8 +278,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the requested command and return a process exit code."""
     args = _parser().parse_args(argv)
     try:
-        asyncio.run(_run(args))
-    except (SpotAPIError, ValueError, RuntimeError, TimeoutError) as error:
+        if args.command == "studio":
+            if any(importlib.util.find_spec(name) is None for name in ("webview", "dotenv")):
+                raise RuntimeError('Install Studio with: pip install "spotapi[studio]"')
+            desktop = importlib.import_module("spotapi._studio.desktop")
+            desktop.main()
+        elif args.command == "discover":
+            dependencies = ("textual", "textual_image", "PIL", "httpx")
+            if any(importlib.util.find_spec(name) is None for name in dependencies):
+                raise RuntimeError(
+                    'Install the terminal browser with: pip install "spotapi[demo]"'
+                )
+            browser = importlib.import_module("spotapi._demo.discover")
+            browser.main(" ".join(args.query))
+        else:
+            asyncio.run(_run(args))
+    except (SpotAPIError, ValueError, RuntimeError, TimeoutError, OSError) as error:
         print(f"spotapi: {str(error) or 'Request timed out.'}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:

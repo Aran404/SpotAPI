@@ -158,6 +158,10 @@ class QueryClient:
     _QUERY_VERSION: ClassVar[int] = 1
     # Used only if bundle discovery does not supply this persisted query.
     _QUERY_HASH_FALLBACKS: ClassVar[dict[str, str]] = {
+        # Public protocol values observed in the SpotifyScraper source snapshot (2026-11-12).
+        "similarAlbumsBasedOnThisTrack": "1d1f93a737498adca2c892c73af87fc0b052afe4e1a33c989540c32413dfae17",
+        "ArtistConcerts": "ef53c43b865496b9890b7167eab1dc614a8949ef9451b3c41184ea888de8bd2b",
+        "fetchExtractedColors": "36e90fcaea00d47c695fce31874efeb2519b97d4cd0ee1abfb4f8dc9348596ea",
         # Last independently published web-player hash (2026-11-02).
         # Search operations are now exposed through searchDesktop.
         "searchDesktop": "db61238974d27839a136c9dc02bfdbe3fab7635f21cf85976ebff9a1ee281345",
@@ -167,6 +171,8 @@ class QueryClient:
         # current web bundle. Dynamic discovery always takes precedence.
         "getTrack": "612585ae06ba435ad26369870deaae23b5c8800a256cd8a57e08eddc25a37294",
         "queryArtistOverview": "eafb1620d783ece118e72fbfede2b0064483e029d3c1aafafa1c2de0e25a89e7",
+        # Independently returned 40 typed related artists on 2026-11-13.
+        "queryArtistRelated": "3d031d6cb22a2aa7c8d203d49b49df731f58b1e2799cc38d9876d58771aa66f3",
         "queryPodcastEpisodes": "3539d746cf882f3909660de40b4ef472b3f5893a0761d617c282541de5d412c5",
         # Community-reported value; live endpoint validity is not verified.
         "getEpisodeOrChapter": "9697538fe993af785c10725a40bb9265a20b998ccd2383bd6f586e01303824e9",
@@ -245,7 +251,11 @@ class QueryClient:
                 ``operation_name``, the response body was empty, or it
                 contained no ``data`` object.
         """
-        query_hash = self.session.session.query_hash(operation_name)
+        bundles = self.session.session
+        query_hash = bundles.query_hash(operation_name)
+
+        if not query_hash:
+            query_hash = await bundles.resolve_query(operation_name)
 
         if not query_hash:
             query_hash = self._QUERY_HASH_FALLBACKS.get(operation_name, "")

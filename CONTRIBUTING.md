@@ -45,3 +45,22 @@ Do not infer network speedups from the offline ownership comparison.
 
 See the [API layout](docs/api-layout.md) for module responsibilities and
 ownership. Follow the [code of conduct](CODE_OF_CONDUCT.md).
+
+
+## Documentation
+
+The site uses MkDocs Material and source-generated Python API references.
+Read the Docs reads `.readthedocs.yaml`; CI builds the same `mkdocs.yml` strictly.
+Use Python 3.12 for the pinned documentation toolchain:
+
+```sh
+python -m pip install -r requirements-docs.txt
+python -m mkdocs build --strict
+python -m mkdocs serve
+```
+
+Local research, captured metadata and audit notes under `docs/research` are
+excluded from the site and Git. Do not add credentials to examples or screenshots.
+To activate hosting, import the public repository in Read the Docs, select main,
+and confirm the actual project slug before advertising its public URL. The
+configuration alone does not create an account, project, webhook or hosted site.

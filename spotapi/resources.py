@@ -7,7 +7,7 @@ from urllib.parse import quote, unquote, urlsplit
 
 from .operations import ResourceInputKind, ResourceKind, normalize_resource_kind
 
-__all__ = ("SpotifyResource", "parse_spotify_resource")
+__all__ = ("SpotifyResource", "parse_spotify_image", "parse_spotify_resource")
 
 
 @dataclass(slots=True, frozen=True)
@@ -109,3 +109,34 @@ def parse_spotify_resource(
         uri=normalized_uri,
         url=normalized_url,
     )
+
+
+def parse_spotify_image(value: str) -> str:
+    """Normalize a Spotify image URI or CDN image URL for palette queries.
+
+    Current embed pages use image-cdn hosts while catalogue responses may use
+    i.scdn.co. Both resolve to the same spotify:image identity. Credentials and
+    foreign hosts are rejected; query strings do not become part of the ID.
+    """
+    if value.startswith("spotify:image:"):
+        identifier = value.removeprefix("spotify:image:")
+    else:
+        parsed = urlsplit(value)
+        host = (parsed.hostname or "").casefold()
+        if (
+            parsed.scheme != "https"
+            or parsed.username is not None
+            or parsed.password is not None
+            or not (host == "i.scdn.co" or host.endswith(".spotifycdn.com"))
+            or not parsed.path.startswith("/image/")
+        ):
+            raise ValueError("Use a Spotify image URI or HTTPS Spotify CDN image URL")
+        identifier = parsed.path.removeprefix("/image/")
+    if (
+        not identifier
+        or len(identifier) > 128
+        or not identifier.isascii()
+        or not identifier.isalnum()
+    ):
+        raise ValueError("Invalid Spotify image identity")
+    return f"spotify:image:{identifier}"

@@ -100,4 +100,4 @@ controllers can omit dealer ACKs, so known commands may complete on a fresh snap
 proving their result. Unsupported context actions are rejected locally; an autoplay
 or radio context can explicitly disable shuffle and repeat. The current live control
 suite verifies queue changes and a timer-driven pause, and changes shuffle/repeat
-only when Spotify permits them. See the [release checks](release-2.0.0.md).
+only when Spotify permits them. See the [release checks](release-checks.md).

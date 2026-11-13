@@ -1,11 +1,14 @@
 # SpotAPI Studio
 
-From the v2 checkout:
+Install the optional desktop application:
 
 ```bash
-python -m pip install -e ".[studio]"
-python -m examples.studio
+python -m pip install "spotapi[studio]"
+spotapi studio
 ```
+
+For an unreleased checkout, use `python -m pip install -e ".[studio]"` first.
+The application, frontend and icons ship in the wheel.
 
 Studio uses the platform's native WebView through pywebview, with no bundled browser
 or remote frontend dependencies. Windows needs the Microsoft Edge WebView2 runtime.
@@ -19,7 +22,7 @@ and sign in yourself in the separate Spotify window. Studio reads only that wind
 `sp_dc` after Spotify returns to its web player, then validates the session through
 `AsyncClient.from_cookies`. It does not inspect an existing browser's profile.
 
-Alternatively, set `SPOTIFY_COOKIE` in the environment or the root `.env`. The
+Alternatively, set `SPOTIFY_COOKIE` in the environment or `.env` in the directory you launch Studio from. The
 provided session remains in Python; it is not sent to the local page, printed,
 stored by Studio or returned from the bridge. The login WebView uses private mode.
 Login may require Spotify's own browser challenge. Stealth and CAPTCHA bypass are

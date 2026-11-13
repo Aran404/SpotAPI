@@ -1,6 +1,43 @@
 # Changelog
 
-## 2.0.0 — unreleased
+## 2.1.0 - unreleased
+
+### Added
+
+- Launch the packaged desktop application with `spotapi studio` after installing
+  `spotapi[studio]`; its frontend and icons ship in the wheel.
+- Keep first results and sign-in visible in Studio's minimum-size window,
+  with independently scrollable navigation.
+- Launch the packaged terminal browser with `spotapi discover` and the demo extra.
+- Read artist Discovered On playlists, concerts, similar albums and image palettes.
+- Read typed podcast captions, explicit embed snapshots and public media assets.
+- Export JSON-safe models, collect ordered partial-failure batches, optionally
+  cache anonymous responses and reuse the async core from `SyncCatalogue`.
+- Optional browser login, OS-keyring sessions and read-only MCP integration.
+- Read the Docs configuration, generated API reference and a Spotipy migration guide.
+
+### Changed
+
+- Discover the main and search-route bundles first, loading other routes on demand
+  with eight continuously scheduled workers and build-specific hash caching.
+- Managed account scopes accept explicit proxy and language options.
+- Keep sponsorship placements below usage material, with optional integration
+  partnerships and privately quoted scope.
+
+### Fixed
+
+- Dealer disconnects wake command waiters and clear readiness; temporary device
+  loss no longer discards a valid late ACK. Quiet dealers allow one snapshot
+  refresh within the existing deadline; old snapshots cannot prove success.
+- Playback restoration preserves its original target and primary error, and
+  does not confirm a seek that failed. Commands are never silently replayed.
+- Failed route downloads can be retried rather than becoming permanent misses.
+- Anonymous embed fallback preserves proxies and cannot downgrade borrowed scopes.
+- Sync shutdown rejects nested event loops before losing resource ownership.
+- Discover releases cached images when feed shutdown fails, and Escape/Down
+  return keyboard focus from search to results.
+
+## 2.0.0
 
 - Use `spotapi` for all async imports. The synchronous release remains available as `spotapi==1.2.8`.
 - Install the `spotapi` command for anonymous track search and JSON resource lookups.
@@ -77,7 +114,7 @@
 - Playback restrictions, canonical playlist metadata reads, and optional model
   fields are handled explicitly.
 
-See the [release checks](docs/release-2.0.0.md) and [player coverage](docs/player-coverage.md)
+See the [release checks](docs/release-checks.md) and [player coverage](docs/player-coverage.md)
 for supported workflows and known gaps.
 
 ## v1 history

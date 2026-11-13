@@ -1,18 +1,16 @@
 <p align="center">
-  <img src="assets/logo.svg" width="84" height="84" alt="SpotAPI symbol">
+  <img src="spotapi/_studio/assets/logo.svg" width="84" height="84" alt="SpotAPI symbol">
 </p>
 
 <h1 align="center">SpotAPI</h1>
 <p align="center"><b>Spotify for Python. Async, typed, and no API key for public data.</b></p>
 <p align="center">
-  <a href="#30-second-start">Start</a> ·
+  <a href="#first-search">Start</a> ·
   <a href="#see-it-in-action">Demos</a> ·
   <a href="#studio">Studio</a> ·
   <a href="#build-it-into-your-app">Integrate</a> ·
   <a href="#guides">Guides</a>
 </p>
-
-<p align="center"><sub>Sponsored placements available · <a href="SPONSORSHIP.md">Sponsor SpotAPI</a></sub></p>
 
 ---
 
@@ -23,9 +21,13 @@ player events.
 
 > **SpotAPI 2 is a breaking async release.** Synchronous projects can pin
 > `spotapi==1.2.8`. See the [migration guide](MIGRATION.md) and the
-> [release checks](docs/release-2.0.0.md).
+> [release checks](docs/release-checks.md).
 
-## 30-second start
+This README includes unreleased additions. Until they reach PyPI, install this
+checkout with `python -m pip install -e ".[demo,studio]"`. Packaged releases
+include both interfaces; users do not need a clone to launch them.
+
+## First search
 
 Requires Python 3.11 or newer.
 
@@ -36,9 +38,12 @@ spotapi search "Daft Punk"
 
 ![Running spotapi search Daft Punk returns track names and Spotify URIs](assets/cli-demo.gif)
 
-That's it. No key, no login, no config.
+No key, no login, no config. The first request discovers Spotify's current
+web-player queries; this can take longer on a cold cache. Later runs reuse
+queries cached for the same Spotify build.
 
-Prefer Python?
+Next, [browse with Discover](#see-it-in-action), [open Studio](#studio), or start
+building directly in Python:
 
 ```python
 import asyncio
@@ -59,7 +64,7 @@ public playlists. It cleans up its own connections.
 
 ## Why SpotAPI
 
-- **No API key for public data.** Search, lookups, credits, lyrics and playlists work anonymously.
+- **No API key for public data.** Search, lookups, credits and public playlists work anonymously.
 - **Typed and async.** Every result is a model you can autocomplete, not a dict you have to guess at.
 - **No surprises.** Reading a model never triggers a hidden HTTP request. Optional metadata stays optional.
 - **Duplicate-aware playlists.** Edit one occurrence of a track without touching its twin.
@@ -67,45 +72,26 @@ public playlists. It cleans up its own connections.
 - **A CLI that does real work.** Search, credits, playlists, library and player control from one command.
 - **No developer dashboard setup.** No Client ID, no Premium requirement and no user cap for public data. [See the comparison](#spotapi-vs-the-official-web-api).
 
-## SpotAPI vs the official Web API
-
-In February 2026, Spotify [tightened Development Mode](https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security)
-for its official Web API. Libraries built on that API, such as Spotipy, work
-within those limits. SpotAPI uses Spotify's web-player endpoints without a
-developer app. These endpoints have their own rate limits, authentication
-requirements and changing response contracts.
-
-| | Official Web API (Development Mode) | SpotAPI, public data |
-|---|---|---|
-| Developer app / Client ID | Required, **one per developer** | Not needed |
-| Spotify account | **Premium required** | Not needed |
-| Authorized users | **Up to five** per Client ID | No cap to manage |
-| Intended use | Non-commercial personal projects and learning | Your call, subject to the [legal notice](LEGAL_NOTICE.md) |
-| Setup | Create an app, then wire up credentials | `pip install spotapi` |
-
-Choose based on the endpoints and authentication your application needs.
-SpotAPI relies on unofficial web-player contracts; see the
-[verification boundaries](docs/release-2.0.0.md#boundaries) before integrating.
-
-<sub>Based on Spotify's February 2026 announcement. The Premium requirement,
-user cap and one-Client-ID limit apply to existing integrations too. Spotify
-may change these rules again, so check the post for the latest.</sub>
-
 ## See it in action
 
-Clone the repo and run any of these from its root. Install once:
+Browse search results, artwork and typed data directly from your terminal:
+
+For this development checkout, use `python -m pip install -e ".[demo]"`.
+Once the release containing `discover` is published, the package-only setup is:
 
 ```bash
-python -m pip install -e ".[demo]"
+python -m pip install "spotapi[demo]"
+spotapi discover "Daft Punk"
 ```
 
 | Demo | What you get | Run it |
 |---|---|---|
-| **[Discover](examples/discover.py)** ⭐ | A keyboard-driven terminal UI for browsing Spotify's public search. No login. **Start here.** | `python -m examples.discover "Daft Punk"` |
-| **[Credit trail](examples/credit_trail.py)** | Connects *One More Time*, *Harder, Better, Faster, Stronger* and *Starboy* through shared contributor IDs, showing where one person is credited as producer, writer or lyricist. | `python -m examples.credit_trail` |
+| **[Discover](examples/discover.py)** | A keyboard-driven terminal UI for browsing Spotify's public search. No login. **Start here.** | `spotapi discover "Daft Punk"` |
 | **[Mix map](examples/mix_map.py)** | Finds harmonically compatible transitions in a public playlist and tells you how far to shift the incoming track's tempo. | `python -m examples.mix_map` |
 
-Credit trail and Mix map accept your own Spotify links. Discover takes a search query.
+Discover accepts a search query or Spotify link. Mix map runs from a clone of
+the repository and accepts your own public playlist link. Tempo and key data
+depend on what Spotify supplies; missing analysis stays unknown.
 
 ## Studio
 
@@ -116,9 +102,11 @@ a timed line on a connected Spotify player.
 ![SpotAPI Studio: the listening desk](examples/studio/preview.png)
 
 ```bash
-python -m pip install -e ".[studio]"
-python -m examples.studio
+python -m pip install "spotapi[studio]"
+spotapi studio
 ```
+
+Studio uses your platform's native WebView; see the [platform setup](docs/studio.md).
 
 Use **Connect Spotify** to sign in through Spotify's normal login window, or set
 `SPOTIFY_COOKIE` in a local `.env`. Cookies stay in Python. Playback controls an
@@ -155,7 +143,7 @@ Pick the idea closest to yours:
 | Your idea | Start with |
 |---|---|
 | A DJ crate with tempo and harmonic keys | [Playlist crate](examples/playlist_crate.py) |
-| A credits rabbit hole | [Song credits](examples/credits.py) |
+| A public-data inspector | `spotapi discover` or `spotapi get SPOTIFY_URL` |
 | A playlist discovery companion | `Public.get_radio()` · `Public.get_playlist_recommendations()` |
 | Your own music dashboard | [Account, rankings and saved music](docs/account.md) |
 | A duplicate-aware playlist curator | `Playlist.items()` · `Playlist.move_occurrences()` · `Playlist.remove_occurrences()` |
@@ -170,7 +158,9 @@ from spotapi import Catalogue
 
 async with Catalogue() as spotify:
     results = await spotify.search("Daft Punk")
-    artist = await spotify.get_artist(results.artists[0].uri)
+    if results.artists:
+        artist = await spotify.get_artist(results.artists[0].uri)
+        print(artist.name)
 ```
 
 ### Your own account: `Private`
@@ -195,16 +185,49 @@ async with Private.from_cookies(os.environ["SPOTIFY_COOKIE"]) as spotify:
 - Use `AsyncClient` directly to share transports and configure connection options.
 - See the guides for ownership, cancellation and explicit mutations.
 
+## SpotAPI vs the official Web API
+
+In February 2026, Spotify [tightened Development Mode](https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security)
+for its official Web API. Libraries built on that API, such as Spotipy, work
+within those limits. SpotAPI uses Spotify's web-player endpoints without a
+developer app. These endpoints have their own rate limits, authentication
+requirements and changing response contracts.
+
+| | Official Web API (Development Mode) | SpotAPI, public data |
+|---|---|---|
+| Developer app / Client ID | Required; **up to 25 apps per developer** | Not needed |
+| Spotify account | **App owner needs Premium** in Development Mode | Not needed |
+| Authorized users | **Up to five** per Client ID | No cap to manage |
+| Intended use | Non-commercial personal projects and learning | Your call, subject to the [legal notice](LEGAL_NOTICE.md) |
+| Setup | Create an app, then wire up credentials | `pip install spotapi` |
+
+Choose based on the endpoints and authentication your application needs.
+SpotAPI relies on unofficial web-player contracts; see the
+[verification boundaries](docs/release-checks.md#boundaries) before integrating.
+
+<sub>Checked against Spotify's [migration guide](https://developer.spotify.com/documentation/web-api/tutorials/february-2026-migration-guide)
+and [July 2026 update](https://developer.spotify.com/documentation/web-api/references/changes/july-2026).
+The app owner needs Premium in Development Mode. Existing apps can retain
+previously authorized user counts above five; Extended Quota Mode differs.
+Development Mode apps share their developer account's quota.</sub>
+
 ## Guides
+
+[First result](docs/quickstart.md) · [Coming from Spotipy](docs/from-spotipy.md) ·
+[Discovery, previews and captions](docs/discovery.md) · [Python API reference](docs/reference.md)
+
 
 [Catalogue](docs/catalogue.md) · [Account](docs/account.md) · [Player](docs/player.md) ·
 [Request policy](docs/transport.md) · [API layout](docs/api-layout.md) · [Migration from v1](MIGRATION.md)
 
 ## Sponsorship
 
-Sponsor SpotAPI's maintenance and development. Monthly placements include a
-labeled spot above Quickstart and, where relevant, a link in the guide your
-customers would use. Category exclusivity is available by agreement.
+Support SpotAPI's maintenance, testing and documentation. Sponsors receive a
+clearly labeled placement here and, where useful, in a relevant guide.
+
+Choose a supporter listing, featured placement, README category exclusivity,
+or an optional integration partnership such as a CAPTCHA-provider adapter. Users keep their choice of provider; paid
+services are never required for ordinary public-data workflows.
 
 Contact [aran.inbox.personal@gmail.com](mailto:aran.inbox.personal@gmail.com)
 to discuss a placement and arrange payment directly through PayPal.
@@ -212,7 +235,7 @@ See [sponsorship details](SPONSORSHIP.md).
 
 ## Contributing
 
-[Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Release review](docs/release-2.0.0.md) ·
+[Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Release review](docs/release-checks.md) ·
 [Legal notice](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)
 
-If SpotAPI helps you build something, a ⭐ helps other developers find it.
+If SpotAPI helps you build something, star the repository or share what you built.

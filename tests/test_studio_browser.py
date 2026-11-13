@@ -11,8 +11,8 @@ import pytest
 pytest.importorskip("playwright.async_api")
 from playwright.async_api import Error, Page, async_playwright
 
-from examples.studio.actions import manifest
-from examples.studio.desktop import page
+from spotapi._studio.actions import manifest
+from spotapi._studio.desktop import page
 
 ARTIST = {"uri": "spotify:artist:artist", "profile": {"name": "Daft Punk"}}
 ALBUM = {"uri": "spotify:album:album", "name": "Discovery"}
@@ -112,6 +112,24 @@ async def test_discovery_detail_and_navigation_round_trip(
     ).wait_for()
     assert "top" in requests and "detail" in requests
     assert await view.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+
+
+async def test_minimum_window_keeps_results_and_account_controls_reachable(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, _ = studio_page
+    await view.set_viewport_size({"width": 980, "height": 720})
+    track = view.get_by_role("heading", name="One More Time", exact=True)
+    assert await track.evaluate(
+        "el => el.getBoundingClientRect().bottom <= document.querySelector('.playerbar').getBoundingClientRect().top"
+    )
+    assert await view.get_by_role("button", name="Feature lab API", exact=True).evaluate(
+        "el => el.getBoundingClientRect().bottom <= document.querySelector('.sidebar-nav').getBoundingClientRect().bottom"
+    )
+    await view.locator("#login").focus()
+    assert await view.locator("#login").evaluate(
+        "el => el.getBoundingClientRect().bottom <= document.querySelector('.playerbar').getBoundingClientRect().top"
+    )
 
 
 async def test_lab_cancel_never_sends_an_account_mutation(

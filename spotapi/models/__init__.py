@@ -3,6 +3,7 @@
 from spotapi.resources import SpotifyResource
 
 from .account import AccountChallenge, AccountPlan, AccountProfile, ProfileValidationError
+from .batch import BatchItem
 from .blend import BlendInvitation
 from .catalogue import (
     Album,
@@ -35,7 +36,8 @@ from .catalogue.artist_details import (
 from .catalogue.credits import Credit, TrackCredits
 from .catalogue.entities import AudiobookChapter, ProfilePlaylist
 from .catalogue.playlist_track import MusicalKey
-from .discovery import Canvas, RecommendedTrack
+from .discovery import Canvas, Chart, Concert, ConcertArtist, CoverColors, RecommendedTrack
+from .embeds import Embed
 from .history import RecentItem
 from .library import LibraryItem, LibraryOption, LibraryPage, SavedTrack
 from .lyrics import LyricLine, Lyrics, LyricSyllable
@@ -43,7 +45,9 @@ from .notifications import Notification, NotificationPage
 from .playback import Device, PlaybackQuality, PlaybackTrack, PlaybackUpdate, PlayerState
 from .profiles import ProfilePlaylists
 from .search import SearchResults
+from .sessions import SessionInfo
 from .stats import TimeRange, TopContent
+from .transcripts import Transcript, TranscriptLine
 
 __all__ = (
     "AccountChallenge",
@@ -60,10 +64,16 @@ __all__ = (
     "Audiobook",
     "AudiobookChapter",
     "Author",
+    "BatchItem",
     "BlendInvitation",
     "Canvas",
+    "Chart",
+    "Concert",
+    "ConcertArtist",
+    "CoverColors",
     "Credit",
     "Device",
+    "Embed",
     "Episode",
     "Genre",
     "LibraryItem",
@@ -95,11 +105,14 @@ __all__ = (
     "RecommendedTrack",
     "SavedTrack",
     "SearchResults",
+    "SessionInfo",
     "SpotifyResource",
     "TimeRange",
     "TopContent",
     "Track",
     "TrackCredits",
     "TrackDetails",
+    "Transcript",
+    "TranscriptLine",
     "User",
 )

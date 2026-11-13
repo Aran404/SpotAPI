@@ -1,6 +1,6 @@
 """Endpoint construction preserves resource identity and regional hosts."""
 
-from spotapi._protocol.routes import CONNECT_ROUTES, LYRICS_IMAGE, PROFILE, ROOTLIST
+from spotapi._protocol.routes import CONNECT_ROUTES, LYRICS_IMAGE, PROFILE, RADIO, ROOTLIST
 
 
 def test_profile_names_are_encoded_as_one_path_segment() -> None:
@@ -29,3 +29,10 @@ def test_rootlist_username_uses_the_same_segment_encoding() -> None:
     assert ROOTLIST.url(user="listener@example.com").endswith(
         "/playlist/v2/user/listener%40example.com/rootlist/changes"
     )
+
+
+def test_radio_seed_is_encoded_as_one_path_segment() -> None:
+    assert RADIO.url(seed="spotify:track:abc") == (
+        "https://spclient.wg.spotify.com/inspiredby-mix/v2/seed_to_playlist/spotify:track:abc"
+    )
+    assert RADIO.url(seed="spotify:track:a/b").endswith("spotify:track:a%2Fb")

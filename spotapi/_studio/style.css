@@ -82,6 +82,15 @@ svg {
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+.sidebar > * {
+  flex-shrink: 0;
+}
+.sidebar-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 .brand {
   display: flex;
@@ -1335,4 +1344,18 @@ pre {
   padding-top: 18px;
   border-top: 1px solid var(--line);
   margin-top: 15px;
+}
+
+@media (max-height: 800px) {
+  .hero {
+    display: none;
+  }
+  .nav {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 2px;
+  }
+  .sidebar-bottom p {
+    display: none;
+  }
 }

@@ -9,12 +9,51 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from examples.studio.actions import ACTIONS
-from examples.studio.desktop import Bridge, _authenticate, page
-from examples.studio.lyrics import parse_lyrics
-from examples.studio.service import Studio, first_page, serialize
 from spotapi import AsyncClient, Catalogue, Player
+from spotapi._studio.actions import ACTIONS
+from spotapi._studio.desktop import Bridge, _authenticate, page
+from spotapi._studio.lyrics import parse_lyrics
+from spotapi._studio.service import Studio, first_page, serialize
 from spotapi.models import AccountChallenge
+
+
+def test_window_creation_failure_closes_the_unstarted_loop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from spotapi._studio import desktop
+
+    loop = asyncio.new_event_loop()
+    backend = Mock()
+    backend.create_window.side_effect = RuntimeError("Native window unavailable")
+    monkeypatch.setattr("dotenv.load_dotenv", Mock())
+    monkeypatch.setattr(desktop, "import_module", Mock(return_value=backend))
+    monkeypatch.setattr(desktop.asyncio, "new_event_loop", Mock(return_value=loop))
+    worker = Mock()
+    monkeypatch.setattr(desktop.threading, "Thread", Mock(return_value=worker))
+    with pytest.raises(RuntimeError, match="Native window unavailable"):
+        desktop.main()
+    assert loop.is_closed()
+    worker.start.assert_not_called()
+
+
+def test_native_app_exit_closes_its_worker_loop(monkeypatch: pytest.MonkeyPatch) -> None:
+    from spotapi._studio import desktop
+
+    loop = asyncio.new_event_loop()
+    backend = Mock()
+
+    def initialize(callback: object, **options: object) -> None:
+        assert callable(callback)
+        callback()
+
+    backend.start.side_effect = initialize
+    monkeypatch.setattr("dotenv.load_dotenv", Mock())
+    monkeypatch.delenv("SPOTIFY_COOKIE", raising=False)
+    monkeypatch.setattr(desktop, "import_module", Mock(return_value=backend))
+    monkeypatch.setattr(desktop.asyncio, "new_event_loop", Mock(return_value=loop))
+    desktop.main()
+    assert loop.is_closed()
+    backend.start.assert_called_once()
 
 
 def test_public_lyrics_distinguish_timed_lines_from_plain_text() -> None:
@@ -164,7 +203,7 @@ async def test_login_timeout_cancels_authentication_before_it_can_replace_the_se
         finally:
             cancelled.set()
 
-    monkeypatch.setattr("examples.studio.desktop._LOGIN_TIMEOUT", 0.05)
+    monkeypatch.setattr("spotapi._studio.desktop._LOGIN_TIMEOUT", 0.05)
     studio = Mock(authenticate=authenticate)
     pending = asyncio.create_task(
         asyncio.to_thread(_authenticate, studio, asyncio.get_running_loop(), "sp_dc=synthetic")

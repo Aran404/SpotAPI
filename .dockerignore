@@ -1,0 +1,9 @@
+*
+!spotapi/
+!spotapi/**
+!pyproject.toml
+!README.md
+!LICENSE
+!Dockerfile.mcp
+spotapi/**/__pycache__/
+spotapi/**/*.pyc

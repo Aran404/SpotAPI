@@ -2,15 +2,14 @@
 
 import asyncio
 import json
-from dataclasses import asdict
 
-from spotapi import Public
+from spotapi import Public, to_dict
 
 
 async def main() -> None:
     playlist = await Public.get_playlist("37i9dQZF1DXcBWIGoYBM5M")
 
-    print(json.dumps(asdict(playlist), indent=2))
+    print(json.dumps(to_dict(playlist), indent=2))
 
 
 if __name__ == "__main__":

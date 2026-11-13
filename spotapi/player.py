@@ -7,6 +7,7 @@ import math
 import secrets
 import time
 from collections.abc import Mapping, Sequence
+from contextlib import suppress
 from typing import Any, Literal
 
 from spotapi.models.history import RecentItem
@@ -22,6 +23,7 @@ from .library import LikedTracks
 from .resources import SpotifyResource, parse_spotify_resource
 from .session import AuthSession
 from .status import PlayerStatus
+from .types import HTTPError
 
 
 def _validate_device_id(value: str) -> None:
@@ -219,13 +221,28 @@ class Player(PlayerStatus):
 
         async def confirmed_state() -> None:
             """Wait for a new snapshot matching this command's requested result."""
+            refreshed = False
             async with asyncio.timeout(timeout):
                 while not command_applied(
-                    endpoint, arguments or {}, previous, self._selected_state()
+                    endpoint, arguments or {}, previous, self._selected_state(require_route=False)
                 ):
-                    await self.wait_for("state_update", timeout=timeout)
+                    try:
+                        await self.wait_for(
+                            "state_update", timeout=timeout if refreshed else min(3, timeout / 2)
+                        )
+                    except TimeoutError:
+                        if refreshed:
+                            raise
+                        refreshed = True
+                        # A failed snapshot read does not rule out a later ACK.
+                        with suppress(HTTPError):
+                            await self.refresh()
 
-        tasks = {asyncio.create_task(confirmed_state())}
+        async def disconnected() -> None:
+            await self.wait_until_disconnected()
+            raise RuntimeError("Dealer disconnected before command confirmation")
+
+        tasks = {asyncio.create_task(confirmed_state()), asyncio.create_task(disconnected())}
         if isinstance(ack_id, str) and ack_id:
             tasks.add(asyncio.create_task(self.wait_for_ack(ack_id, timeout=timeout)))
         try:
@@ -238,9 +255,10 @@ class Player(PlayerStatus):
                     task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    def _selected_state(self) -> PlayerState | None:
+    def _selected_state(self, *, require_route: bool = True) -> PlayerState | None:
         """Return a snapshot only when it belongs to the selected active device."""
-        self._route("player/command")
+        if require_route:
+            self._route("player/command")
 
         if self.state is not None and self.target_device_id in (None, self.state.active_device_id):
             return self.state

@@ -244,7 +244,13 @@ class PlayerStatus:
 
         async with asyncio.timeout(timeout):
             while ack_id not in self._acks:
-                if self._closing or self.connection_id != connection:
+                if (
+                    self._closing
+                    or self._disconnected.is_set()
+                    or self.connection_id != connection
+                ):
+                    if self._error is not None:
+                        raise BaseClientError("Dealer connection failed") from self._error
                     raise RuntimeError("Connection closed before command acknowledgement")
 
                 self._ack_received.clear()
@@ -503,15 +509,18 @@ class PlayerStatus:
         @websocket.event("close")
         async def disconnected() -> None:
             """Wake waiters and the connection supervisor after dealer disconnect."""
+            self._ready.clear()
             self._disconnected.set()
+            self._ack_received.set()
             self._events.dispatch("disconnect")
 
         @websocket.event("error")
         async def failed(error: Exception) -> None:
             """Retain the connection failure and wake the connection supervisor."""
             self._error = error
-
+            self._ready.clear()
             self._disconnected.set()
+            self._ack_received.set()
             self._events.dispatch("error", error)
 
         return websocket

@@ -27,18 +27,22 @@ class Route:
 
     ``base`` can be replaced with a resolved regional host. Query parameters
     belong to the HTTP client's ``query`` argument, not the path template.
+    ``safe`` preserves service-specific delimiters, such as radio-seed URI
+    colons; slashes in resource values remain encoded.
     """
 
     path: str
     base: str = SPCLIENT
+    safe: str = ""
 
     def url(self, *, base: str | None = None, **parameters: str) -> str:
         """Build a URL, encoding each supplied parameter exactly once."""
-        encoded = {name: quote(value, safe="") for name, value in parameters.items()}
+        encoded = {name: quote(value, safe=self.safe) for name, value in parameters.items()}
         return f"{(base or self.base).rstrip('/')}{self.path.format_map(encoded)}"
 
 
 LYRICS = Route("/color-lyrics/v2/track/{track}")
+RADIO = Route("/inspiredby-mix/v2/seed_to_playlist/{seed}", safe=":")
 LYRICS_IMAGE = Route("/color-lyrics/v2/track/{track}/image/{image}")
 PROFILE = Route("/user-profile-view/v3/profile/{user}")
 PROFILE_SECTION = Route("/user-profile-view/v3/profile/{user}/{section}")
@@ -58,3 +62,5 @@ CONNECT_ROUTES = MappingProxyType(
 DEVICE = Route("/track-playback/v1/devices/{device}")
 DEVICE_STATE = Route("/track-playback/v1/devices/{device}/state")
 DEVICE_REGISTER = Route("/track-playback/v1/devices")
+
+TRANSCRIPT = Route("/transcript-read-along/v2/episode/{episode}")

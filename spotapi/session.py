@@ -317,6 +317,8 @@ class BundleSession:
         "_app_server_config",
         "_hashes",
         "_hashes_loaded",
+        "_discovery_lock",
+        "_discovery_complete",
     )
 
     def __init__(self, client: AsyncClient, *, cache: QueryCache | None = None) -> None:
@@ -328,6 +330,8 @@ class BundleSession:
         self._app_server_config: _AppServerConfig | None = None
         self._hashes: dict[str, str] | None = None
         self._hashes_loaded = False
+        self._discovery_lock = asyncio.Lock()
+        self._discovery_complete = False
 
     def __repr__(self) -> str:
         return (
@@ -389,11 +393,12 @@ class BundleSession:
         return self.all_queries.get(name, "")
 
     async def warm(self) -> None:
-        """Fetch missing bundles and refresh persisted-query hashes.
+        """Load entry-point bundles and build-specific cached query hashes.
 
         Existing bundles, including those retrieved by a prior ``load()``
         call, are used to refresh a potentially stale disk cache. If no hashes
-        can be extracted, the existing cached hashes remain available.
+        can be extracted, the existing cached hashes remain available. Other
+        route chunks are discovered by ``resolve_query`` when needed.
         """
         if self._app_server_config is None:
             await self._discover_links()
@@ -407,12 +412,14 @@ class BundleSession:
             self._hashes_loaded = True
 
         if not self._bundles:
-            if self._hashes:
-                # The current main bundle contains the TOTP material. Cached
-                # hashes for this exact build avoid downloading every chunk.
-                primary = {url for url in self._links if "/web-player." in url}
+            primary = {url for url in self._links if "/web-player." in url}
+            self._bundles.update(await self._fetch_all(primary))
 
-                self._bundles.update(await self._fetch_all(primary))
+            if self._bundles and not self._hashes:
+                self._links |= await asyncio.to_thread(self._embedded_links, self._bundles)
+                # Search is the common entry point and has its own route chunk.
+                search = {url for url in self._links if "/xpui-routes-search." in url}
+                self._bundles.update(await self._fetch_all(search))
 
             if not self._bundles:
                 await fetch_js_bundles(self)
@@ -443,6 +450,18 @@ class BundleSession:
         if primary:
             self._bundles.clear()
             self._bundles.update(primary)
+
+    async def resolve_query(self, name: str, /) -> str:
+        """Discover other route chunks only when an operation needs them."""
+        if value := self.query_hash(name):
+            return value
+        async with self._discovery_lock:
+            if not self.query_hash(name) and not self._discovery_complete:
+                await self.load()
+                complete = self._links.issubset(self._bundles)
+                await self.warm()
+                self._discovery_complete = complete
+            return self.query_hash(name)
 
     async def load(self) -> dict[str, str]:
         """Discover and fetch JavaScript bundles over a bounded number of passes.
@@ -490,12 +509,12 @@ class BundleSession:
         return hashes
 
     async def _fetch_all(self, urls: Iterable[str]) -> dict[str, str]:
-        """Fetch bundles in small concurrent batches; failed downloads are skipped."""
+        """Keep bounded workers busy without waiting for a whole batch to finish."""
         targets = list(urls)
+        pending = iter(targets)
         fetched: dict[str, str] = {}
 
         async def fetch(url: str) -> str | None:
-            """Fetch runtime authentication metadata from Spotify's deployed resources."""
             try:
                 return await self._fetch_bundle(url)
             except asyncio.CancelledError:
@@ -505,20 +524,15 @@ class BundleSession:
 
                 return None
 
-        for start in range(0, len(targets), _MAX_BUNDLE_DOWNLOADS):
-            batch = targets[start : start + _MAX_BUNDLE_DOWNLOADS]
+        async def worker() -> None:
+            # Taking the next URL has no await: workers cannot claim it twice.
+            for url in pending:
+                if (source := await fetch(url)) is not None:
+                    fetched[url] = source
 
-            async with asyncio.TaskGroup() as task_group:
-                tasks = {
-                    url: task_group.create_task(fetch(url), name="spotify-bundle-fetch")
-                    for url in batch
-                }
-
-            fetched.update(
-                (url, result)
-                for url, task in tasks.items()
-                if (result := task.result()) is not None
-            )
+        async with asyncio.TaskGroup() as task_group:
+            for _ in range(min(len(targets), _MAX_BUNDLE_DOWNLOADS)):
+                task_group.create_task(worker(), name="spotify-bundle-fetch")
 
         return fetched
 

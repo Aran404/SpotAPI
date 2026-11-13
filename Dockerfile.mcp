@@ -1,0 +1,8 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY pyproject.toml README.md LICENSE ./
+COPY spotapi ./spotapi
+RUN pip install --no-cache-dir ".[mcp]" && useradd --create-home --uid 10001 spotapi
+USER spotapi
+ENV PYTHONUNBUFFERED=1
+ENTRYPOINT ["spotapi-mcp"]

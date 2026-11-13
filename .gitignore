@@ -186,3 +186,9 @@ Thumbs.db
 
 # Session-specific audit notes (keep contributor guides and regression tests)
 /docs/code-quality-review.md
+
+# Generated anonymous demo snapshots
+/credit-atlas.html
+
+# Optional public metadata response cache
+.spotapi-cache/

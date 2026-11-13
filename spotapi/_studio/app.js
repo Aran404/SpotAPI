@@ -50,7 +50,7 @@ async function api(action, values = {}, quiet = false) {
   if (!window.pywebview?.api) {
     if (!quiet)
       toast(
-        "Start with python -m examples.studio to connect the Python library.",
+        "Start with spotapi studio to connect the Python library.",
       );
     return null;
   }

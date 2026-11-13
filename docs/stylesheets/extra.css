@@ -1,0 +1,7 @@
+:root {
+  --md-text-font: ui-sans-serif, system-ui, sans-serif;
+  --md-code-font: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+.md-typeset h1 { font-weight: 750; letter-spacing: -.035em; }
+.md-typeset .md-button { border-radius: .4rem; }
+.md-typeset .admonition { border-radius: .4rem; }

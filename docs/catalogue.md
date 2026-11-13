@@ -11,6 +11,7 @@
 | Read album tracks in order | `Public.get_album_tracks` |
 | Browse albums, singles or compilations | `Public.get_artist_releases(artist, kind="albums")` |
 | Explore neighboring artists | `await Public.get_related_artists(artist)` |
+| Read an artist's Discovered On selection | `await Public.get_artist_discovered_on(artist)` |
 | Read artist top tracks and play counts | `await Public.get_artist_top_tracks(artist)` |
 | Explore public curators and their first playlists | `await Public.get_profile(username, limit=20)` |
 | Read podcast episodes | `Public.get_podcast_episodes` / `Public.iter_podcast_episodes` |
@@ -60,4 +61,23 @@ or `TypeError`; cancellation propagates. The default logger uses stdlib
 replayed automatically after ambiguous failures.
 
 
-For runnable introductions, see the scripts in [examples](../examples).
+For runnable introductions, see the scripts in [examples](https://github.com/Aran404/SpotAPI/blob/main/examples).
+
+## Discovered On playlists
+
+The development checkout adds `get_artist_discovered_on` to `Catalogue`,
+`Public` and `SyncCatalogue`. It returns Spotify's bounded playlist selection
+in server order; an unavailable slot is `None`. This is not an exhaustive list
+of playlist placements, and no historical placements are inferred.
+
+```python
+playlists = await Public.get_artist_discovered_on(artist_url)
+for playlist in playlists:
+    if playlist is not None:
+        print(playlist.name, playlist.uri)
+```
+
+The native response shape was observed in prior account research. Parser
+fixtures cover unavailable entries and contract failures; a fresh managed-client
+live check remains a release gate. Missing or changed collections raise an
+error rather than becoming an empty successful result.

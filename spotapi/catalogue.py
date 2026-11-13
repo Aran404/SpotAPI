@@ -16,15 +16,18 @@ from typing import (
     cast,
     overload,
 )
-from urllib.parse import quote
 
 from spotapi.models.discovery import Canvas, RecommendedTrack, recommended_tracks
 
-from ._parsing import records
+from ._parsing import mapping, records
 from ._protocol.protobuf import ProtoMessage, encode_field
-from ._protocol.routes import CANVASES, RECOMMENDATIONS
+from ._protocol.routes import CANVASES, PROFILE, RADIO, RECOMMENDATIONS
+from .batch import BatchItem, fetch_many
+from .cache import CachedQueries, ResponseCache
+from .charts import Chart, chart, list_charts
 from .client import AsyncClient
 from .datastruct import ObjectDict
+from .embeds import Embed, get_embed
 from .models.catalogue import (
     Album,
     AlbumDetails,
@@ -57,7 +60,9 @@ from .models.catalogue.artist_details import (
 )
 from .models.catalogue.credits import Credit, TrackCredits
 from .models.catalogue.entities import AudiobookChapter
+from .models.discovery import Concert, CoverColors
 from .models.search import SearchResults
+from .models.transcripts import Transcript
 from .operations import (
     DEFAULT_SEARCH_TYPES,
     SEARCH_DESKTOP_SECTIONS,
@@ -72,9 +77,10 @@ from .operations import (
 )
 from .queries import Queries
 from .query import QueryClient, SharedQueryClient
-from .resources import SpotifyResource, parse_spotify_resource
+from .resources import SpotifyResource, parse_spotify_image, parse_spotify_resource
 from .session import AuthSession, normalize_language
-from .types import BaseClientError
+from .transcripts import Transcripts
+from .types import BaseClientError, HTTPError
 
 __all__ = (
     "Album",
@@ -244,6 +250,33 @@ def _search_section(data: ObjectDict, names: tuple[str, ...]) -> ObjectDict:
     raise BaseClientError(f"searchDesktop: response contains no {'/'.join(names)} section")
 
 
+def _discovered_playlists(data: ObjectDict) -> tuple[Playlist | None, ...]:
+    """Keep unavailable discovery slots distinct from malformed playlist data."""
+    page = _page(data, "artistUnion", "relatedContent", "discoveredOnV2")
+    items: object = page.get("items")
+    if not isinstance(items, list):
+        raise BaseClientError("Artist response has no discovered-on items")
+    playlists: list[Playlist | None] = []
+    for item in cast(list[object], items):
+        payload = mapping(mapping(item).get("data"))
+        if payload.get("__typename") == "GenericError":
+            playlists.append(None)
+            continue
+        uri = payload.get("uri")
+        name = payload.get("name")
+        if (
+            payload.get("__typename") != "Playlist"
+            or not isinstance(uri, str)
+            or not uri.startswith("spotify:playlist:")
+            or not uri.removeprefix("spotify:playlist:")
+            or not isinstance(name, str)
+            or not name
+        ):
+            raise BaseClientError("Artist response contains an invalid discovered-on playlist")
+        playlists.append(from_dict(Playlist, payload))
+    return tuple(playlists)
+
+
 def _parse_show_page(
     page: ObjectDict, operation: Operations, model: type[_ShowItemT]
 ) -> list[_ShowItemT]:
@@ -329,7 +362,16 @@ class Catalogue:
                 print(artist.name, artist.uri)
     """
 
-    __slots__ = ("_queries", "_owner", "_proxy", "_session", "_language", "_entered", "_closed")
+    __slots__ = (
+        "_queries",
+        "_owner",
+        "_proxy",
+        "_session",
+        "_language",
+        "_entered",
+        "_closed",
+        "_cache",
+    )
 
     def __init__(
         self,
@@ -338,6 +380,7 @@ class Catalogue:
         proxy: str | None = None,
         queries: Queries | None = None,
         language: str | None = None,
+        cache: ResponseCache | None = None,
     ) -> None:
         """Configure an owned anonymous catalogue or borrow a supplied client or query owner."""
         if (client is not None and queries is not None) or (
@@ -345,6 +388,9 @@ class Catalogue:
         ):
             raise ValueError("Configure one client, query owner or proxy")
 
+        if cache is not None and (client is not None or queries is not None):
+            raise ValueError("Response caching is only supported for owned anonymous catalogues")
+        self._cache = cache
         self._queries = queries
         self._owner: SharedQueryClient | None = None
         self._proxy = proxy
@@ -378,7 +424,13 @@ class Catalogue:
             elif self._language is not None:
                 factory = partial(QueryClient.create, language=self._language)
             self._owner = SharedQueryClient(factory)
-            self._queries = Queries(self._owner)
+            self._queries = (
+                CachedQueries(
+                    self._owner, self._cache, f"{self._language or 'en'}|{self._proxy or 'direct'}"
+                )
+                if self._cache is not None
+                else Queries(self._owner)
+            )
 
         self._entered = True
 
@@ -1035,6 +1087,22 @@ class Catalogue:
 
         return tuple(from_dict(ArtistRelatedArtists, collection).items)
 
+    async def get_artist_discovered_on(self, uri: str, /) -> tuple[Playlist | None, ...]:
+        """Read an artist's Discovered On playlist selection in server order.
+
+        Unavailable slots are None. This is Spotify's bounded discovery
+        selection, not every playlist containing the artist or a placement
+        history. Availability depends on Spotify's current catalogue.
+        """
+        resource = parse_spotify_resource(uri, "artist")
+        data = await self.queries.query(
+            Operations.QUERY_ARTIST_DISCOVERED_ON, {"uri": resource.uri}
+        )
+        Queries.resource_data(
+            data, Operations.QUERY_ARTIST_DISCOVERED_ON, expected_uri=resource.uri
+        )
+        return _discovered_playlists(data)
+
     async def get_artist_releases(
         self,
         uri: str,
@@ -1074,8 +1142,7 @@ class Catalogue:
         if resource.kind not in {"track", "artist", "album"}:
             raise ValueError("Radio needs a track, artist or album")
         response = await self.queries.get_json(
-            "https://spclient.wg.spotify.com/inspiredby-mix/v2/seed_to_playlist/"
-            + quote(resource.uri, safe=":"),
+            RADIO.url(seed=resource.uri),
             query={"response-format": "json"},
         )
         if not isinstance(response.get("mediaItems"), list):
@@ -1174,7 +1241,7 @@ class Catalogue:
         resource = parse_spotify_resource(value, "user")
 
         data = await self.queries.get_json(
-            f"https://spclient.wg.spotify.com/user-profile-view/v3/profile/{quote(resource.id, safe='')}",
+            PROFILE.url(user=resource.id),
             query={
                 "playlist_limit": str(limit),
                 "artist_limit": "0",
@@ -1341,3 +1408,107 @@ class Catalogue:
             async for page in pages:
                 for episode in page:
                     yield episode
+
+    @staticmethod
+    def list_charts() -> tuple[Chart, ...]:
+        """List editorial playlist shortcuts without making requests."""
+        return list_charts()
+
+    async def get_chart(self, key: str) -> PlaylistDetails:
+        """Read chart metadata; paginate its tracks using the returned playlist URI."""
+        return await self.get_playlist(chart(key).uri)
+
+    async def get_similar_albums(self, track: str, *, limit: int = 10) -> tuple[Album, ...]:
+        """Read album recommendations seeded by a track ID, URI or URL.
+
+        limit is from 1 to 50. An empty list is valid; a missing collection is
+        a contract error. Recommendations can vary by request region.
+        """
+        if type(limit) is not int or not 1 <= limit <= 50:
+            raise ValueError("limit must be between 1 and 50")
+        resource = parse_spotify_resource(track, "track")
+        data = await self.queries.query(
+            Operations.SIMILAR_ALBUMS_BASED_ON_THIS_TRACK, {"uri": resource.uri, "limit": limit}
+        )
+        collection = _page(data, "seoRecommendedTrackAlbum")
+        if not isinstance(collection.get("items"), list):
+            raise BaseClientError("Spotify returned no similar albums collection")
+        albums: list[Album] = []
+        for row in records(collection["items"]):
+            payload = mapping(row.get("data"))
+            if payload.get("__typename") in {"NotFound", "Unavailable"}:
+                continue
+            albums.append(from_dict(Album, payload))
+        return tuple(albums)
+
+    async def get_artist_events(self, artist: str) -> tuple[Concert, ...]:
+        """Read upcoming artist concerts; returned inventory depends on region."""
+        resource = parse_spotify_resource(artist, "artist")
+        data = await self.queries.query(
+            Operations.ARTIST_CONCERTS, {"artistUri": resource.uri, "includeNearby": False}
+        )
+        collection = _page(data, "concerts", "concerts")
+        if not isinstance(collection.get("items"), list):
+            raise BaseClientError("Spotify returned no artist events collection")
+        return tuple(
+            Concert.from_dict(mapping(row.get("data")))
+            for row in records(collection["items"])
+            if mapping(row.get("data")).get("__typename") not in {"NotFound", "Unavailable"}
+        )
+
+    async def get_colors(self, image: str) -> CoverColors:
+        """Extract a palette from a spotify:image URI or Spotify CDN image URL.
+
+        No image bytes are downloaded. Supply artwork identity rather than a
+        track ID; existing cover-art models expose the corresponding image URLs.
+        """
+        image_uri = parse_spotify_image(image)
+        data = await self.queries.query(
+            Operations.FETCH_EXTRACTED_COLORS, {"imageUris": [image_uri]}
+        )
+        return CoverColors.from_dict(data)
+
+    async def get_transcript(self, episode: str) -> Transcript:
+        """Read episode captions using the explicitly supplied authenticated client."""
+        _ = self.queries
+        if self._session is None:
+            raise RuntimeError("Transcripts require Catalogue(authenticated_client)")
+        return await Transcripts(self._session).get(episode)
+
+    async def fetch_many(
+        self, values: Sequence[str], *, kind: ResourceInputKind | None = None, concurrency: int = 8
+    ) -> tuple[BatchItem[SpotifyItem], ...]:
+        """Read resources with individual failures preserved in input order.
+
+        kind allows bare IDs of one resource type. Omit it for mixed typed
+        URLs/URIs. Unlike strict plural getters, one invalid input does not
+        abort the batch. Cancellation propagates and worker count is bounded.
+        """
+        return await fetch_many(values, partial(self.get, kind=kind), concurrency=concurrency)
+
+    async def lookup(
+        self, value: str, *, kind: ResourceInputKind | None = None, fallback: bool = True
+    ) -> SpotifyItem | Embed:
+        """Read a rich resource, optionally falling back to an explicit embed model.
+
+        Fallback is anonymous-only and handles unavailable/changed catalogue
+        contracts or transient HTTP failures. It never retries account failures
+        or presents sparse embed metadata as a complete detail model. Check
+        isinstance(result, Embed) when you need to distinguish the source.
+        """
+        resource = parse_spotify_resource(value, kind)
+        can_fallback = (
+            fallback
+            and self._session is None
+            and self._owner is not None
+            and resource.kind in {"track", "album", "artist", "playlist", "show", "episode"}
+        )
+        try:
+            return await self.get(resource.uri)
+        except HTTPError as error:
+            if not can_fallback or error.status_code not in {404, 408, 429, 500, 502, 503, 504}:
+                raise
+        except BaseClientError:
+            if not can_fallback:
+                raise
+        return await get_embed(resource.uri, proxy=self._proxy)

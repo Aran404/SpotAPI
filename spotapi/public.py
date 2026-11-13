@@ -8,8 +8,11 @@ from typing import Literal, TypeVar, overload
 
 from spotapi.models.discovery import Canvas, RecommendedTrack
 
+from .batch import BatchItem
 from .catalogue import Catalogue, SpotifyItem
+from .charts import Chart, list_charts
 from .datastruct import ObjectDict
+from .embeds import Embed, get_embed
 from .models import (
     Album,
     AlbumDetails,
@@ -38,6 +41,7 @@ from .models import (
     User,
 )
 from .models.catalogue.entities import AudiobookChapter
+from .models.discovery import Concert, CoverColors
 from .operations import (
     DEFAULT_SEARCH_TYPES,
     Operations,
@@ -448,9 +452,9 @@ class Public:
                 yield page
 
     @staticmethod
-    async def get_playlist(uri: str, /) -> PlaylistDetails:
+    async def get_playlist(uri: str, /, *, language: str | None = None) -> PlaylistDetails:
         """Read public playlist metadata from a URL, URI, or ID."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_playlist(uri)
 
     @staticmethod
@@ -502,9 +506,11 @@ class Public:
                 yield page
 
     @staticmethod
-    async def get_related_artists(uri: str, /) -> tuple[ArtistRelatedArtist, ...]:
+    async def get_related_artists(
+        uri: str, /, *, language: str | None = None
+    ) -> tuple[ArtistRelatedArtist, ...]:
         """Explore the related artists shown on a public artist profile."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_related_artists(uri)
 
     @staticmethod
@@ -524,9 +530,9 @@ class Public:
                 yield page
 
     @staticmethod
-    async def get_radio(seed: str) -> SpotifyResource | None:
+    async def get_radio(seed: str, *, language: str | None = None) -> SpotifyResource | None:
         """Resolve track, artist or album radio using a self-cleaning anonymous session."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_radio(seed)
 
     @staticmethod
@@ -550,9 +556,9 @@ class Public:
             return await catalogue.get_canvases(tracks)
 
     @staticmethod
-    async def get_track_credits(uri: str, /) -> TrackCredits:
+    async def get_track_credits(uri: str, /, *, language: str | None = None) -> TrackCredits:
         """Discover the performers, writers and producers credited on a song."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_track_credits(uri)
 
     @staticmethod
@@ -562,57 +568,65 @@ class Public:
             return await catalogue.get_artist_top_tracks(uri)
 
     @staticmethod
-    async def get_profile(value: str, /, *, limit: int = 20) -> PublicProfile:
+    async def get_profile(
+        value: str, /, *, limit: int = 20, language: str | None = None
+    ) -> PublicProfile:
         """Read a public user's profile and first public playlists; no login needed."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_profile(value, limit=limit)
 
     @staticmethod
-    async def get_artist(uri: str, /) -> ArtistDetails:
+    async def get_artist(uri: str, /, *, language: str | None = None) -> ArtistDetails:
         """Fetch an artist profile and overview by Spotify URL, URI, or ID."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_artist(uri)
 
     @staticmethod
-    async def get_album(uri: str, /) -> AlbumDetails:
+    async def get_album(uri: str, /, *, language: str | None = None) -> AlbumDetails:
         """Fetch album metadata and track information."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_album(uri)
 
     @staticmethod
-    async def get_track(uri: str, /) -> TrackDetails:
+    async def get_track(uri: str, /, *, language: str | None = None) -> TrackDetails:
         """Fetch track metadata by Spotify URL, URI, or ID."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_track(uri)
 
     @staticmethod
-    async def get_tracks(tracks: Sequence[str], /) -> tuple[TrackDetails, ...]:
+    async def get_tracks(
+        tracks: Sequence[str], /, *, language: str | None = None
+    ) -> tuple[TrackDetails, ...]:
         """Fetch several tracks in input order using one client."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_tracks(tracks)
 
     @staticmethod
-    async def get_albums(albums: Sequence[str], /) -> tuple[AlbumDetails, ...]:
+    async def get_albums(
+        albums: Sequence[str], /, *, language: str | None = None
+    ) -> tuple[AlbumDetails, ...]:
         """Fetch several albums in input order using one client."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_albums(albums)
 
     @staticmethod
-    async def get_artists(artists: Sequence[str], /) -> tuple[ArtistDetails, ...]:
+    async def get_artists(
+        artists: Sequence[str], /, *, language: str | None = None
+    ) -> tuple[ArtistDetails, ...]:
         """Fetch several artists in input order using one client."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_artists(artists)
 
     @staticmethod
-    async def get_podcast(uri: str, /) -> PodcastDetails:
+    async def get_podcast(uri: str, /, *, language: str | None = None) -> PodcastDetails:
         """Read podcast metadata from a URL, URI, or bare show ID."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_podcast(uri)
 
     @staticmethod
-    async def get_audiobook(uri: str, /) -> Audiobook:
+    async def get_audiobook(uri: str, /, *, language: str | None = None) -> Audiobook:
         """Read audiobook metadata from its Spotify show link, URI or ID."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_audiobook(uri)
 
     @staticmethod
@@ -628,9 +642,11 @@ class Public:
                 yield page
 
     @staticmethod
-    async def get_podcast_episode(uri: str, /) -> PodcastEpisodeDetails:
+    async def get_podcast_episode(
+        uri: str, /, *, language: str | None = None
+    ) -> PodcastEpisodeDetails:
         """Fetch a podcast episode by Spotify URL, URI, or ID."""
-        async with Catalogue() as catalogue:
+        async with Catalogue(language=language) as catalogue:
             return await catalogue.get_podcast_episode(uri)
 
     @staticmethod
@@ -656,3 +672,71 @@ class Public:
         ):
             async for page in pages:
                 yield page
+
+    @staticmethod
+    def list_charts() -> tuple[Chart, ...]:
+        """List editorial playlist shortcuts without creating a client."""
+        return list_charts()
+
+    @staticmethod
+    async def get_chart(key: str, *, language: str | None = None) -> PlaylistDetails:
+        """Read an editorial playlist's metadata by its chart shortcut."""
+        async with Catalogue(language=language) as catalogue:
+            return await catalogue.get_chart(key)
+
+    @staticmethod
+    async def get_similar_albums(
+        track: str, *, limit: int = 10, language: str | None = None
+    ) -> tuple[Album, ...]:
+        """Recommend albums from a track using one automatically closed scope."""
+        async with Catalogue(language=language) as catalogue:
+            return await catalogue.get_similar_albums(track, limit=limit)
+
+    @staticmethod
+    async def get_artist_discovered_on(
+        artist: str, /, *, language: str | None = None
+    ) -> tuple[Playlist | None, ...]:
+        """Read discovery playlists, retaining unavailable slots as None."""
+        async with Catalogue(language=language) as catalogue:
+            return await catalogue.get_artist_discovered_on(artist)
+
+    @staticmethod
+    async def get_artist_events(
+        artist: str, *, language: str | None = None
+    ) -> tuple[Concert, ...]:
+        """Read an artist's upcoming concerts in the current request region."""
+        async with Catalogue(language=language) as catalogue:
+            return await catalogue.get_artist_events(artist)
+
+    @staticmethod
+    async def get_colors(image: str, *, language: str | None = None) -> CoverColors:
+        """Extract a Spotify image palette using one automatically closed scope."""
+        async with Catalogue(language=language) as catalogue:
+            return await catalogue.get_colors(image)
+
+    @staticmethod
+    async def fetch_many(
+        values: Sequence[str],
+        *,
+        concurrency: int = 8,
+        kind: ResourceInputKind | None = None,
+        language: str | None = None,
+    ) -> tuple[BatchItem[SpotifyItem], ...]:
+        """Read mixed URLs/URIs, keeping per-input failures instead of aborting."""
+        async with Catalogue(language=language) as catalogue:
+            return await catalogue.fetch_many(values, kind=kind, concurrency=concurrency)
+
+    @staticmethod
+    async def get_embed(
+        value: str, *, kind: ResourceInputKind | None = None, browser: bool = False
+    ) -> Embed:
+        """Read public embed metadata, optionally using the Playwright browser extra."""
+        return await get_embed(value, kind=kind, browser=browser)
+
+    @staticmethod
+    async def lookup(
+        value: str, *, kind: ResourceInputKind | None = None, fallback: bool = True
+    ) -> SpotifyItem | Embed:
+        """Read rich catalogue details with an explicitly typed public embed fallback."""
+        async with Catalogue() as catalogue:
+            return await catalogue.lookup(value, kind=kind, fallback=fallback)

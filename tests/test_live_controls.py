@@ -3,13 +3,13 @@
 import asyncio
 import os
 from collections.abc import Awaitable, Callable
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 from spotapi import AsyncClient, Player
-from spotapi.models import PlayerState
-
-pytestmark = [pytest.mark.live, pytest.mark.authenticated, pytest.mark.mutates]
+from spotapi.models import PlaybackTrack, PlayerState
+from spotapi.types import HTTPError
 
 
 async def wait_state(player: Player, check: Callable[[PlayerState], bool]) -> PlayerState:
@@ -32,6 +32,9 @@ async def wait_state(player: Player, check: Callable[[PlayerState], bool]) -> Pl
             await asyncio.sleep(0.02)
 
 
+@pytest.mark.live
+@pytest.mark.authenticated
+@pytest.mark.mutates
 async def test_live_queue_options_and_pause_timer_restore_original_state() -> None:
     async with (
         await AsyncClient.from_cookies(os.environ["SPOTIFY_COOKIE"]) as client,
@@ -45,6 +48,8 @@ async def test_live_queue_options_and_pause_timer_restore_original_state() -> No
         track = baseline.track
         original_position = baseline.position_ms
         original_uids = {item.uid for item in baseline.next_tracks}
+        player.select(baseline.active_device_id)
+        failure: BaseException | None = None
 
         try:
             await player.pause()
@@ -90,8 +95,16 @@ async def test_live_queue_options_and_pause_timer_restore_original_state() -> No
                 await asyncio.sleep(0)
                 await player.sleep_timer(2)
             await wait_state(player, lambda state: state.is_paused)
+        except BaseException as error:
+            failure = error
+            raise
         finally:
-            await restore_playback(player, baseline, original_position, original_uids)
+            try:
+                await restore_playback(player, baseline, original_position, original_uids)
+            except Exception as cleanup:
+                if failure is not None:
+                    raise failure from cleanup
+                raise
 
 
 async def restore_playback(
@@ -103,12 +116,14 @@ async def restore_playback(
     """Attempt every restoration step and report failures together rather than masking them."""
     errors: list[Exception] = []
 
-    async def attempt(label: str, operation: Awaitable[None]) -> None:
+    async def attempt(label: str, operation: Awaitable[None]) -> bool:
         try:
             await operation
         except Exception as error:
             error.add_note("Playback restoration: " + label)
             errors.append(error)
+            return False
+        return True
 
     await attempt("cancel timer", player.sleep_timer(None))
     state = player.state
@@ -136,8 +151,8 @@ async def restore_playback(
             and before_seek.track
             and before_seek.track.uri == uri
             and abs(before_seek.position_ms - position) >= 1500
+            and await attempt("restore position", player.seek(position))
         ):
-            await attempt("restore position", player.seek(position))
             try:
                 await wait_state(
                     player,
@@ -155,3 +170,30 @@ async def restore_playback(
             )
     if errors:
         raise ExceptionGroup("Playback restoration failed", errors)
+
+
+async def test_failed_restoration_seek_is_not_followed_by_a_confirmation_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state = PlayerState(
+        timestamp=0,
+        active_device_id="device",
+        track=PlaybackTrack("spotify:track:track"),
+        position=10000,
+        duration_ms=300000,
+        is_playing=False,
+        is_paused=True,
+        playback_speed=1,
+        context_uri=None,
+    )
+    player = Mock(spec=Player, state=state)
+    failure = HTTPError("Connection failed")
+    player.seek = AsyncMock(side_effect=failure)
+    confirmation = AsyncMock(side_effect=AssertionError("Seek never succeeded"))
+    monkeypatch.setattr(__name__ + ".wait_state", confirmation)
+
+    with pytest.raises(ExceptionGroup) as caught:
+        await restore_playback(player, state, 1000, set())
+
+    assert caught.value.exceptions == (failure,)
+    confirmation.assert_not_awaited()

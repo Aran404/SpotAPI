@@ -1,5 +1,5 @@
-"""Launch with ``python -m examples.studio`` from the repository root."""
+"""Launch the installed application; prefer ``spotapi studio``."""
 
-from .desktop import main
+from spotapi.cli import main
 
-main()
+raise SystemExit(main(["studio"]))

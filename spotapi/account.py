@@ -14,11 +14,13 @@ from .blend import Blends
 from .captcha import CaptchaChallenge, CaptchaSolver, captcha_token
 from .client import AsyncClient
 from .library import Library, LikedTracks
+from .lyrics import LyricsClient
 from .models.account import AccountChallenge, AccountPlan, AccountProfile, ProfileValidationError
 from .notifications import Notifications
 from .profiles import Profiles
 from .session import AuthSession
 from .stats import ListeningStats
+from .transcripts import Transcripts
 from .types import BaseClientError, HTTPError
 
 _SITE_KEY = "6LfCVLAUAAAAALFwwRnnCJ12DalriUGbj8FW_J39"
@@ -61,6 +63,8 @@ class Account:
         "profiles",
         "notifications",
         "blends",
+        "transcripts",
+        "lyrics",
     )
 
     def __init__(
@@ -72,6 +76,8 @@ class Account:
     ) -> None:
         """Borrow an authenticated client; configure locale and an optional CAPTCHA solver."""
         self.session = client.session if isinstance(client, AsyncClient) else client
+        self.transcripts = Transcripts(self.session)
+        self.lyrics = LyricsClient(self.session)
         self.http = AccountSession(
             self.session.client, "https://www.spotify.com/account/profile/", locale=locale
         )
@@ -264,7 +270,11 @@ class Private(Account):
 
     @classmethod
     @asynccontextmanager
-    async def from_cookies(cls, cookies: str) -> AsyncGenerator[Self]:
-        """Open an authenticated account and close its client on context exit."""
-        async with await AsyncClient.from_cookies(cookies) as client:
+    async def from_cookies(
+        cls, cookies: str, *, proxy: str | None = None, language: str = "en"
+    ) -> AsyncGenerator[Self]:
+        """Open an account with explicit connection options and close it on exit."""
+        async with await AsyncClient.from_cookies(
+            cookies, proxy=proxy, language=language
+        ) as client:
             yield cls(client)

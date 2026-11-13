@@ -235,6 +235,9 @@ READ_OPERATIONS: Final[frozenset[Operations]] = frozenset(
         Operations.SEARCH_GENRES,
         Operations.SEARCH_USERS,
         Operations.USER_TOP_CONTENT,
+        Operations.SIMILAR_ALBUMS_BASED_ON_THIS_TRACK,
+        Operations.ARTIST_CONCERTS,
+        Operations.FETCH_EXTRACTED_COLORS,
     }
 )
 

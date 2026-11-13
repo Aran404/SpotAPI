@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import Mapping
 from datetime import date
@@ -10,7 +11,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from spotapi import Account, AsyncClient, CaptchaRequired, CaptchaSolver, PasswordReset
+from spotapi import Account, AsyncClient, CaptchaRequired, CaptchaSolver, PasswordReset, Private
 from spotapi.account_session import AccountPage, AccountSession
 from spotapi.connection import Response
 from spotapi.datastruct import ObjectDict
@@ -72,6 +73,31 @@ def test_account_page_reads_csrf_attribute_and_next_data() -> None:
     )
     assert page.csrf == "attribute-token"
     assert page.data["props"]["csrfToken"] == "json-token"
+
+
+async def test_private_scope_forwards_connection_options_and_exits_on_cancellation(
+    monkeypatch: pytest.MonkeyPatch, session: Mock
+) -> None:
+    client = session.client
+    client.session = session
+    client.__aenter__ = AsyncMock(return_value=client)
+    client.__aexit__ = AsyncMock(return_value=False)
+    factory = AsyncMock(return_value=client)
+    monkeypatch.setattr(AsyncClient, "from_cookies", factory)
+
+    with pytest.raises(asyncio.CancelledError):
+        async with Private.from_cookies(
+            "sp_dc=synthetic", proxy="http://proxy.test:8080", language="fr"
+        ) as account:
+            assert account.session is session
+            raise asyncio.CancelledError()
+
+    factory.assert_awaited_once_with(
+        "sp_dc=synthetic", proxy="http://proxy.test:8080", language="fr"
+    )
+    client.__aexit__.assert_awaited_once()
+    assert client.__aexit__.await_args is not None
+    assert client.__aexit__.await_args.args[0] is asyncio.CancelledError
 
 
 async def test_plan_rotation_is_used_by_the_next_profile_request(session: Mock) -> None:

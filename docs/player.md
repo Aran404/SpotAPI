@@ -18,7 +18,7 @@ async with await AsyncClient.from_cookies(cookie) as client:
         await player.wait_until_disconnected()
 ```
 
-See the [typed runnable example](../examples/player.py). No playback commands
+See the [typed runnable example](https://github.com/Aran404/SpotAPI/blob/main/examples/player.py). No playback commands
 run automatically. A connection resolves regional hosts, waits for the dealer
 connection ID, registers a control-only device, subscribes a hidden observer
 and obtains a full snapshot. Exiting drains callbacks and timers, removes both
@@ -66,6 +66,8 @@ announce the same song again. `state.quality`, `modes`, `restrictions` and
 Inside the connection scope, `player.select(device)` chooses a target. The
 active device is the default. `Player(client, device=..., source=...)` also
 accepts explicit full playback IDs.
+Pin a device for a multi-step workflow so an active-device change cannot
+redirect later commands to another player.
 
 ```python
 await player.pause()
@@ -104,6 +106,9 @@ Transfers preserve paused state unless `play` is supplied. Mutations use one
 attempt. Commands with `wait=True` complete on a matching dealer acknowledgement
 or a fresh state proving the requested result. Without an acknowledgement ID,
 they still require that state proof; otherwise they time out without replay.
+If the dealer is quiet, confirmation requests at most one snapshot within the
+same deadline. A reparsed snapshot with an old timestamp is not proof. Dealer
+disconnects fail pending confirmations promptly and preserve their cause.
 Reconcile state after ambiguous failures or timeouts before retrying yourself.
 
 For low-level experimentation, `command(endpoint, wait=False, **arguments)`
@@ -140,7 +145,7 @@ availability; HTTP failures propagate. `Lyrics`, `LyricLine` and `LyricSyllable`
 provide typed text, language, provider and timing data. Milliseconds are
 integers, zero end times become None, and duplicate start times are retained.
 `at()` returns all lines sharing the active timestamp; unsynchronized lyrics
-return an empty tuple. See the [lyrics example](../examples/lyrics.py).
+return an empty tuple. See the [lyrics example](https://github.com/Aran404/SpotAPI/blob/main/examples/lyrics.py).
 
 Offline tests replay sanitized versions of all four dealer captures and verify
 outgoing request bodies. Authenticated live checks require a nonempty local

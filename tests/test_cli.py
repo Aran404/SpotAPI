@@ -30,6 +30,55 @@ def test_cli_get_outputs_json(
     assert json.loads(capsys.readouterr().out)["uri"] == resource.uri
 
 
+def test_cli_discover_explains_the_optional_install(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=None))
+    launch = Mock()
+    monkeypatch.setattr("spotapi.cli.importlib.import_module", launch)
+    assert main(["discover", "Daft Punk"]) == 1
+    captured = capsys.readouterr()
+    assert not captured.out
+    assert 'pip install "spotapi[demo]"' in captured.err
+    launch.assert_not_called()
+
+
+def test_cli_studio_explains_the_optional_install(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=None))
+    launch = Mock()
+    monkeypatch.setattr("spotapi.cli.importlib.import_module", launch)
+    assert main(["studio"]) == 1
+    assert 'pip install "spotapi[studio]"' in capsys.readouterr().err
+    launch.assert_not_called()
+
+
+def test_cli_studio_lets_the_native_app_own_its_event_loop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
+    desktop = Mock()
+    monkeypatch.setattr("spotapi.cli.importlib.import_module", Mock(return_value=desktop))
+    runner = Mock(side_effect=AssertionError("Native Studio must own its event loop"))
+    monkeypatch.setattr("spotapi.cli.asyncio.run", runner)
+    assert main(["studio"]) == 0
+    desktop.main.assert_called_once_with()
+
+
+def test_cli_discover_launches_outside_the_async_runner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
+    launch = Mock()
+    monkeypatch.setattr("spotapi.cli.importlib.import_module", Mock(return_value=launch))
+    runner = Mock(side_effect=AssertionError("Textual must own its event loop"))
+    monkeypatch.setattr("spotapi.cli.asyncio.run", runner)
+    assert main(["discover", "Daft", "Punk"]) == 0
+    launch.main.assert_called_once_with("Daft Punk")
+    runner.assert_not_called()
+
+
 def test_cli_empty_search_keeps_stdout_clean(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

@@ -1,1 +1,1 @@
-"""SpotAPI Studio: an optional desktop example built entirely on the library."""
+"""Compatibility launcher for the packaged SpotAPI Studio application."""

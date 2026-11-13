@@ -34,6 +34,8 @@ jobs:
         working-directory: /tmp
         run: |
           spotapi --help
+          spotapi discover --help
+          spotapi studio --help
           python -I - <<'PY'
           import os
           from importlib.util import find_spec
@@ -44,6 +46,13 @@ jobs:
           assert not Path(spotapi.__file__).resolve().is_relative_to(Path(os.environ["GITHUB_WORKSPACE"]).resolve())
           assert find_spec("spotapi.v2") is None
           assert callable(Private.from_cookies)
+          assert find_spec("spotapi._demo.discover") is not None
+          assert find_spec("spotapi._demo.details") is not None
+          from spotapi._studio.desktop import page
+          assert "STUDIO_SCRIPT" not in page()
+          from importlib.resources import files
+          for asset in ("logo.svg", "logo.png", "logo.ico"):
+              assert files("spotapi._studio").joinpath("assets", asset).is_file()
           assert Public.parse_url("spotify:track:abc").id == "abc"
           PY
       - uses: actions/upload-artifact@v4

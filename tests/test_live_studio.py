@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from examples.studio.service import Studio
+from spotapi._studio.service import Studio
 
 pytestmark = [pytest.mark.live, pytest.mark.authenticated]
 

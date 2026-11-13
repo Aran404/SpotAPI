@@ -2,17 +2,20 @@
 
 import asyncio
 
-from spotapi import Public
+from spotapi import Catalogue
 
 
 async def main() -> None:
-    results = await Public.search("Daft Punk", limit=5)
+    async with Catalogue() as spotify:
+        results = await spotify.search("Daft Punk", types=("track", "artist"), limit=5)
 
-    for track in results.tracks:
-        print(track.name, track.uri)
+        for track in results.tracks:
+            print(track.name, track.uri)
 
-    if results.artists:
-        artist = await Public.get_artist(results.artists[0].uri)
+        if not results.artists:
+            return
+
+        artist = await spotify.get_artist(results.artists[0].uri)
 
         if artist.stats:
             print(f"{artist.name}: {artist.stats.monthly_listeners:,} monthly listeners")

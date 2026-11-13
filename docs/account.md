@@ -8,17 +8,23 @@ ambiguous failures. A batch can partially apply before an error is reported;
 read the resulting saved, pinned or followed state before retrying.
 
 ```python
+import asyncio
 import os
-from spotapi import Account, AsyncClient
+
+from spotapi import Private
 
 
 async def show_favorites() -> None:
-    async with await AsyncClient.from_cookies(os.environ["SPOTIFY_COOKIE"]) as client:
-        account = Account(client)
+    async with Private.from_cookies(os.environ["SPOTIFY_COOKIE"]) as account:
         favorites = await account.stats.get(time_range="medium_term", limit=5)
         for track in favorites.tracks:
             print(track.name, track.uri)
+
+
+asyncio.run(show_favorites())
 ```
+
+`Private.from_cookies` also accepts `proxy` and `language` keyword arguments.
 
 `ListeningStats`, `Library`, `LikedTracks`, `Profiles`, `Notifications` and `Blends`
 also work independently with the same client. Helpers never close a borrowed client.

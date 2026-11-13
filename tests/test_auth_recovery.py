@@ -9,12 +9,33 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from spotapi import AsyncClient, Catalogue
+from spotapi._protocol.totp import extract_totp_secret, generate_totp
 from spotapi.connection import HTTPClient, Response
 from spotapi.connection.types import Methods
 from spotapi.datastruct import ObjectDict
 from spotapi.query import QueryClient
 from spotapi.session import AccessToken, AuthSession
 from spotapi.types import HTTPError
+
+
+@pytest.mark.parametrize(
+    "timestamp,expected",
+    [(59, "94287082"), (1111111109, "07081804"), (1111111111, "14050471")],
+)
+def test_totp_matches_rfc6238_sha1_vectors(timestamp: int, expected: str) -> None:
+    assert generate_totp(b"12345678901234567890", timestamp=timestamp, digits=8) == expected
+
+
+def test_totp_uses_latest_version_from_the_main_bundle_only() -> None:
+    bundles = {
+        "https://cdn.test/extra.js": 'secret:"ignored",version:99',
+        "https://cdn.test/web-player.main.js": (
+            'secret:"old",version:9;secret:"current",version:10'
+        ),
+    }
+    assert extract_totp_secret(bundles) == ("current", 10)
+    with pytest.raises(RuntimeError, match="TOTP secret"):
+        extract_totp_secret({"https://cdn.test/extra.js": bundles["https://cdn.test/extra.js"]})
 
 
 def response(status: int) -> Mock:

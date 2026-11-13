@@ -19,6 +19,8 @@ def command_applied(
         return False
     if before is not None and current.active_device_id != before.active_device_id:
         return False
+    if before is not None and current.timestamp <= before.timestamp:
+        return False
     if endpoint == "pause":
         return current.is_paused
     if endpoint == "resume":

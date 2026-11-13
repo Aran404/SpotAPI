@@ -15,6 +15,7 @@ import pytest
 import wreq
 
 from spotapi import AsyncClient, LyricsClient, Player, PlayerStatus
+from spotapi.command_state import command_applied
 from spotapi.connect import ConnectEndpoints
 from spotapi.connection import HTTPClient, Response
 from spotapi.datastruct import ObjectDict
@@ -23,6 +24,12 @@ from spotapi.session import AccessToken, AuthSession
 from spotapi.types import BaseClientError, HTTPError
 
 FIXTURES = Path(__file__).parent / "fixtures" / "connect"
+
+
+def test_reparsed_old_snapshot_is_not_command_confirmation() -> None:
+    before = PlayerState.from_cluster(packet(2)["payloads"][0]["cluster"])
+    assert not command_applied("resume", {}, before, replace(before))
+    assert command_applied("resume", {}, before, replace(before, timestamp=before.timestamp + 1))
 
 
 def packet(number: int) -> dict[str, Any]:
@@ -587,6 +594,93 @@ async def test_command_acknowledgement_handles_early_and_late_replies(
         await pending
 
 
+@pytest.mark.parametrize("ack_id", [None, "pending"])
+@pytest.mark.parametrize("event", ["close", "error"])
+async def test_disconnect_fails_pending_commands_promptly_without_replay(
+    session: Mock, monkeypatch: pytest.MonkeyPatch, ack_id: str | None, event: str
+) -> None:
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
+    async with Player(session).connect() as player:
+        session.client.post.reset_mock()
+        session.client.post.return_value = response({"ack_id": ack_id})
+        pending = asyncio.create_task(player.command("pause", timeout=30))
+        async with asyncio.timeout(1):
+            while not player._waiters:
+                await asyncio.sleep(0)
+        failure = ConnectionError("Dealer lost") if event == "error" else None
+        callback = Socket.instances[-1].callbacks[event]
+        if failure is None:
+            await callback()
+        else:
+            await callback(failure)
+        async with asyncio.timeout(1):
+            with pytest.raises((RuntimeError, BaseClientError)) as caught:
+                await pending
+        if failure is not None:
+            assert caught.value.__cause__ is failure
+        assert not player.is_ready
+        assert not player._ready.is_set()
+        assert not player._waiters
+        session.client.post.assert_awaited_once()
+
+
+async def test_temporary_loss_of_active_device_does_not_discard_a_late_ack(
+    session: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
+    async with Player(session).connect() as player:
+        session.client.post.return_value = response({"ack_id": "late"})
+        pending = asyncio.create_task(player.command("pause", timeout=1))
+        async with asyncio.timeout(1):
+            while not player._waiters:
+                await asyncio.sleep(0)
+        before = set(player._waiters)
+        update = packet(2)
+        update["payloads"][0]["cluster"]["active_device_id"] = None
+        player.process_message(update)
+        async with asyncio.timeout(1):
+            while not pending.done() and not (player._waiters - before):
+                await asyncio.sleep(0)
+        assert not pending.done()
+        player.process_message({"payloads": [{"ack_id": "late"}]})
+        await pending
+        assert not player._waiters
+
+
+@pytest.mark.parametrize("event", ["close", "error"])
+async def test_dealer_disconnect_wakes_direct_ack_waiters(
+    session: Mock, monkeypatch: pytest.MonkeyPatch, event: str
+) -> None:
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
+    async with Player(session).connect() as player:
+        pending = asyncio.create_task(player.wait_for_ack("missing", timeout=30))
+        await asyncio.sleep(0)
+        callback = Socket.instances[-1].callbacks[event]
+        if event == "error":
+            await callback(ConnectionError("Dealer lost"))
+        else:
+            await callback()
+        async with asyncio.timeout(1):
+            with pytest.raises((RuntimeError, BaseClientError)):
+                await pending
+
+
+async def test_cancelling_command_confirmation_cleans_up_its_waiters(
+    session: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
+    async with Player(session).connect() as player:
+        session.client.post.return_value = response({"ack_id": "pending"})
+        pending = asyncio.create_task(player.command("pause", timeout=30))
+        async with asyncio.timeout(1):
+            while not player._waiters:
+                await asyncio.sleep(0)
+        pending.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await pending
+        assert not player._waiters
+
+
 async def test_unacknowledged_command_is_not_replayed(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -818,6 +912,41 @@ async def test_missing_ack_and_unchanged_state_fail_without_replaying(
         with pytest.raises(TimeoutError):
             await player.command("signal", signal_id="unknown", timeout=0.02)
         session.client.post.assert_awaited_once()
+
+
+@pytest.mark.parametrize("refresh_fails", [False, True])
+async def test_quiet_dealer_can_confirm_from_one_snapshot_or_a_later_ack(
+    session: Mock, monkeypatch: pytest.MonkeyPatch, refresh_fails: bool
+) -> None:
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
+    async with Player(session).connect() as player:
+        before = player.state
+        assert before is not None
+        requested = asyncio.Event()
+        cluster = packet(2)["payloads"][0]["cluster"]
+        cluster["timestamp"] = before.timestamp + 1
+        cluster["player_state"]["is_paused"] = True
+        cluster["player_state"]["is_playing"] = False
+
+        async def snapshot(*args: object, **kwargs: Any) -> Mock:
+            requested.set()
+            if refresh_fails:
+                raise HTTPError("Snapshot connection failed")
+            return response(cluster)
+
+        session.client.put.side_effect = snapshot
+        session.client.put.reset_mock()
+        session.client.post.return_value = response({"ack_id": "late"})
+        session.client.post.reset_mock()
+        async with asyncio.TaskGroup() as group:
+            pending = group.create_task(player.command("pause", timeout=1))
+            async with asyncio.timeout(2):
+                await requested.wait()
+            if refresh_fails:
+                player.process_message({"payloads": [{"ack_id": "late"}]})
+            await pending
+        session.client.post.assert_awaited_once()
+        session.client.put.assert_awaited_once()
         assert not player._waiters
 
 

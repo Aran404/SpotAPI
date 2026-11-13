@@ -1,0 +1,82 @@
+site_name: SpotAPI
+site_description: Build Spotify tools in Python. Typed async results, no developer API key for public data, and explicit account and player scopes.
+site_url: !ENV [READTHEDOCS_CANONICAL_URL, "https://spotapi.readthedocs.io/en/latest/"]
+repo_url: https://github.com/Aran404/SpotAPI
+repo_name: Aran404/SpotAPI
+edit_uri: edit/main/docs/
+copyright: SpotAPI is independent of Spotify. Metadata and media remain subject to their owners' rights.
+
+theme:
+  name: material
+  language: en
+  font: false
+  palette:
+    scheme: slate
+    primary: green
+    accent: light green
+  icon:
+    logo: material/music-note
+    repo: fontawesome/brands/github
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Start here:
+      - Overview: index.md
+      - First result: quickstart.md
+      - Coming from Spotipy: from-spotipy.md
+  - Build something:
+      - Catalogue and search: catalogue.md
+      - Discovery, previews and captions: discovery.md
+      - Accounts and playlists: account.md
+      - Player controls and events: player.md
+      - Studio: studio.md
+  - Reference:
+      - Python API: reference.md
+      - Request and retry policy: transport.md
+      - API layout: api-layout.md
+      - Verification boundaries: player-coverage.md
+      - Release checks: release-checks.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["."]
+          options:
+            show_root_heading: true
+            show_root_full_path: false
+            show_source: false
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            docstring_style: google
+            inherited_members: false
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+exclude_docs: |
+  /development/
+  /research/
+  /code-quality-review.md
+  /growth-and-coverage.md
+  /independent-review.md
+  /release-audit.md
+
+extra_css:
+  - stylesheets/extra.css
