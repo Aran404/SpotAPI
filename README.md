@@ -213,10 +213,10 @@ jump directly to a guide:
 
 [First result](https://spotapi.readthedocs.io/en/latest/quickstart/) ·
 [Coming from Spotipy](https://spotapi.readthedocs.io/en/latest/from-spotipy/) ·
+[Python API reference](https://spotapi.readthedocs.io/en/latest/reference/) ·
+[Design notes: five lessons from the async rewrite](https://dev.to/aran404/i-wrote-a-python-library-at-16-here-are-5-things-id-fix-in-the-async-rewrite-4p62)
+
 [Discovery, previews and captions](https://spotapi.readthedocs.io/en/latest/discovery/) ·
-[Python API reference](https://spotapi.readthedocs.io/en/latest/reference/)
-
-
 [Catalogue](https://spotapi.readthedocs.io/en/latest/catalogue/) ·
 [Account](https://spotapi.readthedocs.io/en/latest/account/) ·
 [Player](https://spotapi.readthedocs.io/en/latest/player/) ·
