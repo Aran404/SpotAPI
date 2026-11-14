@@ -224,24 +224,12 @@ jump directly to a guide:
 [API layout](https://spotapi.readthedocs.io/en/latest/api-layout/) ·
 [Migration from v1](https://github.com/Aran404/SpotAPI/blob/main/MIGRATION.md)
 
-## Sponsorship
-
-Support SpotAPI's maintenance, testing and documentation. Sponsors receive a
-clearly labeled placement here and, where useful, in a relevant guide.
-
-Choose a supporter listing, featured placement, README category exclusivity,
-or an optional integration partnership such as a CAPTCHA-provider adapter. Users keep their choice of provider; paid
-services are never required for ordinary public-data workflows.
-
-Contact [aran.inbox.personal@gmail.com](mailto:aran.inbox.personal@gmail.com)
-to discuss a placement and arrange payment directly through PayPal.
-See [sponsorship details](https://github.com/Aran404/SpotAPI/blob/main/SPONSORSHIP.md).
-
 ## Contributing
 
 [Contributing](https://github.com/Aran404/SpotAPI/blob/main/CONTRIBUTING.md) ·
 [Tests](https://github.com/Aran404/SpotAPI/blob/main/tests/README.md) ·
 [Release review](https://spotapi.readthedocs.io/en/latest/release-checks/) ·
+[Sponsorship](https://github.com/Aran404/SpotAPI/blob/main/SPONSORSHIP.md) ·
 [Legal notice](https://github.com/Aran404/SpotAPI/blob/main/LEGAL_NOTICE.md) ·
 [GPL-3.0](https://github.com/Aran404/SpotAPI/blob/main/LICENSE)
 

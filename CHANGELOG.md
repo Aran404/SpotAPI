@@ -2,6 +2,9 @@
 
 ## 2.1.0 - 2026-11-13
 
+Engineering notes: [I wrote a Python library at 16. Here are 5 things I'd fix
+in the async rewrite](https://dev.to/aran404/i-wrote-a-python-library-at-16-here-are-5-things-id-fix-in-the-async-rewrite-4p62).
+
 ### Added
 
 - Launch the packaged desktop application with `spotapi studio` after installing

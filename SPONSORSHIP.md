@@ -11,8 +11,8 @@ not promise clicks, leads or adoption.
 
 | Tier | What it includes |
 |---|---|
-| Supporter | A labeled text link in the README sponsorship section. |
-| Featured partner | A logo, one-line description and relevant guide mention where useful. |
+| Supporter | A labeled text link near the README footer. |
+| Featured partner | A compact labeled README placement, logo, one-line description and relevant guide mention where useful. |
 | README category exclusive | Featured placement and no competing paid README placement in the agreed category. |
 | Integration partner | README category exclusivity, a useful maintained optional integration and its guide. Development and maintenance are scoped separately. |
 
@@ -25,9 +25,10 @@ payment does not buy acceptance of arbitrary features.
 ## Placement and exclusivity
 
 We welcome developer services with a concrete use for SpotAPI users. Sponsor
-listings appear in the README's Sponsorship section near the bottom, after the
-installation and usage material. A relevant guide can include a labeled link
-beside the workflow the service supports. The first result stays the priority.
+listings appear near the bottom of the README, after the installation and usage
+material. Until a placement is active, the README links here without displaying
+an empty sponsor block. A relevant guide can include a labeled link beside the
+workflow the service supports. The first result stays the priority.
 
 Category exclusivity can include one officially maintained sponsored integration,
 not just a listing. For example, a CAPTCHA provider could sponsor an optional
