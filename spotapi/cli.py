@@ -33,6 +33,20 @@ def _limit(value: str) -> int:
     return number
 
 
+def _seek_position(value: str) -> int:
+    number = int(value)
+    if number < 0:
+        raise argparse.ArgumentTypeError("choose a non-negative number of milliseconds")
+    return number
+
+
+def _volume(value: str) -> int:
+    number = int(value)
+    if not 0 <= number <= 100:
+        raise argparse.ArgumentTypeError("choose a number from 0 to 100")
+    return number
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="spotapi", description=__doc__)
     parser.add_argument(
@@ -117,10 +131,10 @@ def _parser() -> argparse.ArgumentParser:
         playback.add_parser(action, help=f"{action} on the active device")
     playback.add_parser("play", help="play a Spotify resource").add_argument("resource")
     playback.add_parser("seek", help="seek to a position in milliseconds").add_argument(
-        "milliseconds", type=int
+        "milliseconds", type=_seek_position
     )
     playback.add_parser("volume", help="set volume from 0 to 100").add_argument(
-        "percent", type=int
+        "percent", type=_volume
     )
     playback.add_parser("queue", help="add a track to the queue").add_argument("track")
     return parser
