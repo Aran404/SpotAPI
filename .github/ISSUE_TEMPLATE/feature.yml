@@ -1,0 +1,66 @@
+name: Feature request
+description: Propose a focused workflow or API improvement for SpotAPI.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Start with the user problem. New surface area must earn its complexity and should reuse existing typed APIs where possible.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the workflow that is difficult or impossible today.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Show the command or Python API you would expect to use.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Public catalogue
+        - Account or library
+        - Playlists
+        - Player or live events
+        - Command-line interface
+        - Discover terminal UI
+        - Studio
+        - Documentation or examples
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Explain existing SpotAPI methods or external tools you tried.
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and tradeoffs
+      description: Note authentication, Premium, platform, dependency, or unofficial-endpoint requirements.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and discussions for this request.
+          required: true
+        - label: This request describes a user workflow, not only an endpoint or feature count.
+          required: true
+        - label: I understand Spotify may not expose or permit every requested operation.
+          required: true

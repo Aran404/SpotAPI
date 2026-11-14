@@ -1,0 +1,109 @@
+name: Bug report
+description: Report reproducible behavior that differs from SpotAPI's documented contract.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve SpotAPI. Do not include Spotify cookies, access tokens, passwords, or private playlist data.
+        Report security vulnerabilities privately using the repository's security policy.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and the user-visible effect.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the smallest script or command that reproduces the problem. Replace private IDs and credentials.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect SpotAPI to return or do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the complete exception type and message when applicable.
+    validations:
+      required: true
+
+  - type: input
+    id: spotapi-version
+    attributes:
+      label: SpotAPI version
+      description: Run `spotapi --version` in the same environment as your application.
+      placeholder: spotapi 2.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Run `python --version` in the same environment.
+      placeholder: Python 3.12.7
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Public catalogue
+        - Account or library
+        - Playlists
+        - Player or live events
+        - Command-line interface
+        - Discover terminal UI
+        - Studio
+        - Transport or authentication
+        - Models, typing, or serialization
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Optional. Remove credentials, cookies, tokens, and private identifiers before pasting output.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and discussions for this problem.
+          required: true
+        - label: I reproduced this on the latest SpotAPI release, or explained why I could not.
+          required: true
+        - label: I removed all credentials and private account data.
+          required: true

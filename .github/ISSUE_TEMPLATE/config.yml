@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and project ideas
+    url: https://github.com/Aran404/SpotAPI/discussions
+    about: Ask for help, share what you built, or discuss an idea before proposing an API change.
+  - name: Documentation
+    url: https://spotapi.readthedocs.io/
+    about: Read the quickstart, guides, migration notes, and Python API reference.
+  - name: Security vulnerability
+    url: https://github.com/Aran404/SpotAPI/security/policy
+    about: Follow the private reporting instructions instead of opening a public issue.
