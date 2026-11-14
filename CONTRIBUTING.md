@@ -46,6 +46,11 @@ Do not infer network speedups from the offline ownership comparison.
 See the [API layout](docs/api-layout.md) for module responsibilities and
 ownership. Follow the [code of conduct](CODE_OF_CONDUCT.md).
 
+## Picking up an issue
+
+Comment on the issue with a short note on how you plan to approach it, and wait for me to assign it before opening a PR. PRs for unassigned labeled issues may be closed.
+
+Every PR should include a test and a description of how you checked it. AI-assisted work is welcome, but you're responsible for understanding it and for running it.
 
 ## Documentation
 
