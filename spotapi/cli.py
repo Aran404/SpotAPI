@@ -166,8 +166,9 @@ def _json(value: object) -> None:
 
 async def _search(args: argparse.Namespace) -> None:
     kind: SearchKind = args.type
-    if sys.stderr.isatty():
-        print("Searching Spotify... First-time setup may take a moment.", file=sys.stderr)
+    if not args.json and sys.stderr.isatty():
+        print("Searching Spotify...", file=sys.stderr)
+
     results = await Public.search(args.query, types=kind, limit=args.limit)
     hits = results[kind]
     if args.json:

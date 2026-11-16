@@ -126,6 +126,19 @@ def test_cli_search_accepts_the_python_search_limit(monkeypatch: pytest.MonkeyPa
     search.assert_awaited_once_with("abc", types="track", limit=100)
 
 
+def test_cli_json_search_omits_progress_on_a_terminal(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("spotapi.cli.sys.stderr.isatty", lambda: True)
+    search = AsyncMock(return_value=SearchResults("Daft Punk", ("artist",)))
+    monkeypatch.setattr(Public, "search", search)
+
+    assert main(["search", "Daft Punk", "--type", "artist", "--json"]) == 0
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == []
+    assert captured.err == ""
+
+
 def test_cli_empty_search_keeps_stdout_clean(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
