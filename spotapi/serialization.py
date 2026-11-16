@@ -21,28 +21,50 @@ def to_dict(value: object) -> Any:
     export; personal account-model fields are included when explicitly passed.
     Exceptions export only their type and HTTP status, never message text.
     """
+    return export_json(value)
+
+
+def export_json(value: object, *, excluded_fields: frozenset[str] = frozenset()) -> Any:
     if isinstance(value, Exception):
         result: dict[str, Any] = {"type": type(value).__name__}
         if isinstance(value, HTTPError):
             result["status_code"] = value.status_code
         return result
+
     if isinstance(value, Enum):
-        return to_dict(value.value)
+        return export_json(value.value, excluded_fields=excluded_fields)
+
     if value is None or isinstance(value, (str, bool, int)):
         return value
+
     if isinstance(value, float):
         if not math.isfinite(value):
             raise TypeError("Non-finite numbers cannot be exported as JSON")
         return value
+
     if isinstance(value, (date, datetime)):
         return value.isoformat()
+
     if is_dataclass(value) and not isinstance(value, type):
-        return {field.name: to_dict(getattr(value, field.name)) for field in fields(value)}
+        return {
+            field.name: export_json(getattr(value, field.name), excluded_fields=excluded_fields)
+            for field in fields(value)
+            if field.name not in excluded_fields
+        }
+
     if isinstance(value, Mapping):
         items = cast(Mapping[object, object], value)
         if any(not isinstance(key, str) for key in items):
             raise TypeError("JSON object keys must be strings")
-        return {cast(str, key): to_dict(item) for key, item in items.items()}
+        return {
+            cast(str, key): export_json(item, excluded_fields=excluded_fields)
+            for key, item in items.items()
+        }
+
     if isinstance(value, (list, tuple)):
-        return [to_dict(item) for item in cast(list[object] | tuple[object, ...], value)]
+        return [
+            export_json(item, excluded_fields=excluded_fields)
+            for item in cast(list[object] | tuple[object, ...], value)
+        ]
+
     raise TypeError(f"Cannot export {type(value).__name__} as JSON")

@@ -72,6 +72,26 @@ def get_at_depth(data: ObjectDict, depth: int) -> ObjectDict | None:
 _DEFAULT_PAGE_CAP = 1000
 
 
+def _find_page(response: ObjectDict) -> ObjectDict:
+    if "items" in response or "_items" in response:
+        return response
+
+    pages = [
+        child
+        for parent in response.values()
+        if isinstance(parent, ObjectDict)
+        for child in parent.values()
+        if isinstance(child, ObjectDict) and ("items" in child or "_items" in child)
+    ]
+    if len(pages) == 1:
+        return pages[0]
+
+    if pages:
+        raise BaseClientError("Spotify returned multiple possible pagination collections")
+
+    raise BaseClientError("Spotify pagination response has no item collection")
+
+
 async def paginate(
     request: Callable[[dict[str, Any]], Awaitable[ObjectDict]],
     variables: dict[str, Any],
@@ -83,8 +103,9 @@ async def paginate(
     """Paginate using a page fetcher that owns only its individual request.
 
     The fetcher releases its lease before yielding each page. By default,
-    the response is unwrapped two levels; ``extract_page`` overrides this
-    with a caller-chosen shape. ``return_raw`` changes only the yielded
+    a direct collection or unique two-level collection is accepted.
+    ``extract_page`` specifies the exact operation-specific shape.
+    ``return_raw`` changes only the yielded
     object, not pagination termination.
     """
     offset = variables.get("offset", 0)
@@ -101,12 +122,7 @@ async def paginate(
     while offset < total_count:
         response = await request({**variables, "offset": offset})
 
-        # The caller may provide an extractor for a nonstandard response.
-        # Otherwise retain the historical two-level Pathfinder heuristic.
-        page = extract_page(response) if extract_page is not None else get_at_depth(response, 2)
-
-        if page is None:
-            page = response
+        page = extract_page(response) if extract_page is not None else _find_page(response)
 
         if obey_total_count:
             count = page.get("totalCount")
@@ -118,7 +134,10 @@ async def paginate(
         # False/zero values in other fields do not terminate a page.
         items = page["items"] if "items" in page else page.get("_items")
 
-        if isinstance(items, list) and not items:
+        if not isinstance(items, list):
+            raise BaseClientError("Spotify pagination response has an invalid item collection")
+
+        if not items:
             return
 
         yield response if return_raw else page
@@ -336,7 +355,7 @@ class QueryClient:
             return_raw: Yield whole response envelopes instead of extracted
                 pages. Page termination is checked in either mode.
             extract_page: Optional caller-supplied page extractor. Defaults to
-                the existing two-level Pathfinder unwrapping heuristic.
+                a direct or unique two-level collection.
 
         Yields:
             A single page of results.
@@ -414,7 +433,7 @@ class SharedQueryClient:
         self._factory = factory
         self._lock = asyncio.Lock()
         self._loop = asyncio.get_running_loop()
-        self._borrowers = 0
+        self._borrowers: dict[asyncio.Task[object] | None, int] = {}
         self._drained = asyncio.Event()
 
         self._drained.set()
@@ -434,7 +453,8 @@ class SharedQueryClient:
         if self._close_task is not None:
             raise RuntimeError("Query client is closed")
 
-        self._borrowers += 1
+        borrower = asyncio.current_task()
+        self._borrowers[borrower] = self._borrowers.get(borrower, 0) + 1
         self._drained.clear()
 
         try:
@@ -451,14 +471,18 @@ class SharedQueryClient:
 
             yield client
         finally:
-            self._borrowers -= 1
+            self._borrowers[borrower] -= 1
+            if self._borrowers[borrower] == 0:
+                del self._borrowers[borrower]
 
-            if self._borrowers == 0:
+            if not self._borrowers:
                 self._drained.set()
 
     async def close(self) -> None:
         """Reject new requests and finish cleanup even if a waiter is cancelled."""
         self._check_loop()
+        if asyncio.current_task() in self._borrowers:
+            raise RuntimeError("Release the query client lease before closing its owner")
 
         if self._close_task is None:
             self._close_task = asyncio.create_task(self._shutdown(), name="spotapi-query-close")

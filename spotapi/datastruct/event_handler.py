@@ -97,12 +97,17 @@ class EventDispatcher:
         Raises:
             RuntimeError: If listeners exist but no event loop is running.
         """
+        self._schedule(event, args, kwargs)
+
+    def _schedule(self, event: str, args: tuple[object, ...], kwargs: dict[str, object]) -> bool:
+        """Return whether at least one listener was scheduled."""
         listeners = self._listeners.get(event)
 
         if not listeners or self._closing:
-            return
+            return False
 
         loop = asyncio.get_running_loop()
+        scheduled = False
 
         for listener in tuple(listeners):
             if len(self._tasks) >= self._max_pending:
@@ -119,6 +124,9 @@ class EventDispatcher:
 
             self._tasks.add(task)
             task.add_done_callback(self._tasks.discard)
+            scheduled = True
+
+        return scheduled
 
     async def close(self) -> None:
         """Cancel and observe pending callbacks, preserving registrations.
@@ -158,10 +166,8 @@ class EventDispatcher:
         try:
             await coro(*args, **kwargs)
         except Exception as exc:
-            if event != "error" and self._listeners.get("error"):
-                self.dispatch("error", exc)
-            else:
+            if event == "error" or not self._schedule("error", (exc,), {}):
                 self._logger.error(
                     f"Unhandled exception in event handler: {event}",
-                    exception=str(exc),
+                    exception=type(exc).__name__,
                 )

@@ -19,6 +19,16 @@ from spotapi.session import QueryCache
 from spotapi.utils import timed_cache
 
 
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_decoder_rejects_nonfinite_float_at_its_field(value: float) -> None:
+    @dataclass
+    class Measurement:
+        score: float
+
+    with pytest.raises(TypeError, match="score.*finite float"):
+        from_dict(Measurement, {"score": value})
+
+
 @pytest.mark.parametrize("wrapped", [False, True])
 def test_decoder_reads_graphql_metadata_without_rewriting_keys(wrapped: bool) -> None:
     payload = {"__typename": "SquareCoverImage"}

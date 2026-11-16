@@ -49,6 +49,9 @@ async def studio_page() -> AsyncGenerator[tuple[Page, list[str]], None]:
             if action == "bootstrap":
                 data: object = {"signed_in": True, "name": "Studio", "actions": manifest()}
             elif action == "search":
+                if values.get("query") == "failed lookup":
+                    return {"ok": False, "error": "Search unavailable"}
+
                 data = {"tracks": [TRACK], "artists": [], "albums": [], "playlists": []}
             elif action == "top":
                 data = {"tracks": [TRACK], "artists": []}
@@ -114,6 +117,54 @@ async def test_discovery_detail_and_navigation_round_trip(
     assert await view.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
 
 
+async def test_top_tracks_keeps_the_most_recent_range(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, _ = studio_page
+    await view.get_by_role("button", name="Your rotation", exact=True).click()
+    await view.get_by_role("button", name="Six months", exact=True).wait_for()
+    await view.evaluate("""() => {
+        const request = window.pywebview.api.request;
+        const pending = new Map();
+        window.pywebview.api.request = (action, values) =>
+            action === 'top' && values.range
+                ? new Promise(resolve => pending.set(values.range, resolve))
+                : request(action, values);
+        window.resolveRange = (range, name) => pending.get(range)({
+            ok: true, data: {tracks: [{name, uri: 'spotify:track:test'}]}
+        });
+    }""")
+
+    await view.get_by_role("button", name="Four weeks", exact=True).click()
+    latest = view.get_by_role("button", name="All time", exact=True)
+    await latest.click()
+    await view.evaluate("window.resolveRange('long_term', 'All-time track')")
+    await view.get_by_text("All-time track", exact=True).wait_for()
+    await view.evaluate("window.resolveRange('short_term', 'Late four-week track')")
+
+    assert await latest.evaluate("button => button.classList.contains('active')")
+    assert await view.get_by_text("All-time track", exact=True).is_visible()
+
+
+async def test_failed_search_clears_previous_results(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, _ = studio_page
+    field = view.locator("#search-form input")
+    await field.fill("failed lookup")
+    await field.press("Enter")
+
+    await view.get_by_text("Search failed. Try again.", exact=True).wait_for()
+    await view.get_by_role("heading", name="One More Time", exact=True).wait_for(state="hidden")
+    await view.get_by_role("button", name="Albums", exact=True).click()
+    assert await view.locator("#view").inner_text() == ""
+
+    await field.fill("Daft Punk")
+    await field.press("Enter")
+    await view.get_by_role("button", name="Tracks", exact=True).click()
+    await view.get_by_role("heading", name="One More Time", exact=True).wait_for()
+
+
 async def test_minimum_window_keeps_results_and_account_controls_reachable(
     studio_page: tuple[Page, list[str]],
 ) -> None:
@@ -143,6 +194,28 @@ async def test_lab_cancel_never_sends_an_account_mutation(
     await view.get_by_role("button", name="Try it with SpotAPI", exact=True).click()
     await view.get_by_role("button", name="Keep things as they are", exact=True).click()
     assert "change_password" not in requests
+
+
+async def test_lab_result_stays_with_its_original_form(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, _ = studio_page
+    await view.get_by_role("button", name="Feature lab API", exact=True).click()
+    await view.get_by_role("button", name="Track details", exact=True).click()
+    await view.evaluate("""() => {
+        const request = window.pywebview.api.request;
+        window.pywebview.api.request = (action, values) =>
+            action === 'track'
+                ? new Promise(resolve => { window.resolveTrack = resolve; })
+                : request(action, values);
+    }""")
+    await view.get_by_label("uri", exact=True).fill("spotify:track:test")
+    await view.get_by_role("button", name="Try it with SpotAPI", exact=True).click()
+    await view.wait_for_function("Boolean(window.resolveTrack)")
+    await view.get_by_role("button", name="Song credits", exact=True).click()
+    await view.evaluate("window.resolveTrack({ok: true, data: {name: 'Late result'}})")
+
+    assert not await view.locator("#detail").evaluate("dialog => dialog.open")
 
 
 async def test_detail_links_follow_artist_and_album_with_local_back_navigation(

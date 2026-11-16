@@ -48,8 +48,10 @@ No account is needed. Paste a public Spotify link, inspect artwork and metadata,
 or copy typed results as JSON. The optional interface uses the same catalogue
 API as your Python application. Plain `spotapi search` needs no demo dependencies.
 
-Run `spotapi --version` if the available commands do not match this guide. An
-older executable on `PATH` can otherwise look like the current installation.
+If the terminal cannot find `spotapi`, check the installation with
+`python -m pip show spotapi`. Use `py -m pip show spotapi` on Windows if you
+installed with `py`. See the [Windows first-search instructions](https://github.com/Aran404/SpotAPI#first-search)
+for a way to call the executable without changing PATH.
 
 ## Reuse connections
 
@@ -82,6 +84,14 @@ with SyncCatalogue() as spotify:
 `SyncCatalogue` owns one event loop in its creating thread. Inside an existing
 async event loop, including many notebook environments, use `await Public.search`
 or `async with Catalogue()` instead. The sync facade reuses the async core.
+
+## Account commands
+
+The command line reads `SPOTIFY_COOKIE` from its process environment. Studio
+also reads a local `.env` from the directory you launch it from. The live test
+runner reads the repository's `.env` when you select a live mode. See
+[account and playlist access](account.md) before setting up a cookie. Public
+search, Discover, and catalogue lookups can run anonymously.
 
 ## JSON export
 

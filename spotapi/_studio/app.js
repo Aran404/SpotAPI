@@ -295,14 +295,23 @@ async function search(query) {
   $("#view-status").textContent = "Pulling a few records…";
   $("#section-tools").hidden = false;
   restoreSearchTabs();
-  const result = await api("search", { query });
-  if (request !== state.request) return;
-  $("#view-status").textContent = "";
-  if (!result) return;
-  state.results = result;
-  renderCards(result[state.kind]);
+
+  state.results = null;
+  $("#view").replaceChildren();
   const art = $("#hero-art");
   art.querySelectorAll("img").forEach((img) => img.remove());
+
+  const result = await api("search", { query }, true);
+  if (request !== state.request) return;
+
+  if (!result) {
+    $("#view-status").textContent = "Search failed. Try again.";
+    return;
+  }
+
+  $("#view-status").textContent = "";
+  state.results = result;
+  renderCards(result[state.kind]);
   (result.albums || []).slice(0, 3).forEach((album) => {
     const image = picture(album, "");
     if (image.tagName === "IMG") art.append(image);
@@ -377,15 +386,14 @@ async function navigate(view, offset = 0) {
         label,
         `chip${range === "medium_term" ? " active" : ""}`,
         async () => {
+          const request = ++state.request;
           const next = await api("top", { range });
-          if (next && state.view === "top") {
-            renderRows(next.tracks);
-            tools
-              .querySelectorAll("button")
-              .forEach((node) =>
-                node.classList.toggle("active", node === control),
-              );
-          }
+          if (!next || request !== state.request) return;
+
+          renderRows(next.tracks);
+          tools.querySelectorAll("button").forEach((node) => {
+            node.classList.toggle("active", node === control);
+          });
         },
       );
       tools.append(control);
@@ -741,7 +749,7 @@ function renderLab() {
       const result = await api(action.id, values);
       run.disabled = false;
       run.textContent = "Try it with SpotAPI";
-      if (result != null) {
+      if (result != null && fields.isConnected) {
         const target = document.createDocumentFragment();
         target.append(element("h2", "", action.title));
         if (Array.isArray(result)) {

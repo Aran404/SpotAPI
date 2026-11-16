@@ -20,6 +20,22 @@ from spotapi import (
 from spotapi.cli import main
 
 
+@pytest.mark.parametrize(
+    ("action", "value"), [("seek", "-1"), ("volume", "-1"), ("volume", "101")]
+)
+def test_cli_rejects_invalid_player_values_before_running(
+    action: str, value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr("spotapi.cli.asyncio.run", runner)
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(["player", action, value])
+
+    assert exit_info.value.code == 2
+    runner.assert_not_called()
+
+
 def test_cli_get_outputs_json(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -89,6 +105,25 @@ def test_cli_discover_launches_outside_the_async_runner(
     assert main(["discover", "Daft", "Punk"]) == 0
     launch.main.assert_called_once_with("Daft Punk")
     runner.assert_not_called()
+
+
+def test_cli_discovery_dispatches_to_its_declared_lookup(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    lookup = AsyncMock(return_value={"title": "Editorial chart"})
+    monkeypatch.setattr(Public, "get_chart", lookup)
+
+    assert main(["chart", "top"]) == 0
+    lookup.assert_awaited_once_with("top")
+    assert json.loads(capsys.readouterr().out) == {"title": "Editorial chart"}
+
+
+def test_cli_search_accepts_the_python_search_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    search = AsyncMock(return_value=SearchResults("abc", ("track",)))
+    monkeypatch.setattr(Public, "search", search)
+
+    assert main(["search", "abc", "--limit", "100"]) == 0
+    search.assert_awaited_once_with("abc", types="track", limit=100)
 
 
 def test_cli_empty_search_keeps_stdout_clean(

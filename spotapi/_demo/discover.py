@@ -29,7 +29,7 @@ from dataclasses import asdict, dataclass, field, is_dataclass
 from functools import partial
 from io import BytesIO
 from time import perf_counter
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, cast
 
 import httpx
 from PIL import Image as pil
@@ -117,9 +117,11 @@ class TrackView:
 
 
 async def lookup_track(uri: str, *, api: Catalogue) -> TrackView:
-    track, credits = await asyncio.gather(api.get_track(uri), api.get_track_credits(uri))
+    async with asyncio.TaskGroup() as group:
+        track = group.create_task(api.get_track(uri))
+        credits = group.create_task(api.get_track_credits(uri))
 
-    return TrackView(track, credits)
+    return TrackView(track.result(), credits.result())
 
 
 @dataclass(slots=True)
@@ -129,19 +131,19 @@ class ArtistView:
 
 
 async def lookup_artist(uri: str, *, api: Catalogue) -> ArtistView:
-    artist, releases = await asyncio.gather(
-        api.get_artist(uri), first(api.get_artist_releases(uri, limit=20))
-    )
+    async with asyncio.TaskGroup() as group:
+        artist = group.create_task(api.get_artist(uri))
+        releases = group.create_task(first(api.get_artist_releases(uri, limit=20)))
 
-    return ArtistView(artist, releases or ())
+    return ArtistView(artist.result(), releases.result() or ())
 
 
 async def lookup_playlist(uri: str, *, api: Catalogue) -> PlaylistView:
-    playlist, items = await asyncio.gather(
-        api.get_playlist(uri), first(api.get_playlist_items(uri, limit=25))
-    )
+    async with asyncio.TaskGroup() as group:
+        playlist = group.create_task(api.get_playlist(uri))
+        items = group.create_task(first(api.get_playlist_items(uri, limit=25)))
 
-    return PlaylistView(playlist, items or ())
+    return PlaylistView(playlist.result(), items.result() or ())
 
 
 @dataclass(frozen=True, slots=True)
@@ -286,9 +288,14 @@ class Facts(Vertical):
             yield Static("[dim]↑ ↓ pick a result · enter to dive in[/]")
 
     def show(self, hit: Hit, data: Any) -> None:
+        content = next(iter(self.query(Static)), None)
+        scroll = next(iter(self.query(VerticalScroll)), None)
+        if content is None or scroll is None:
+            return
+
         url = web_url(hit.uri)
 
-        self.query_one(Static).update(
+        content.update(
             Group(
                 Text(title(hit), style=f"bold {GREEN}"),
                 Text(url, style=f"underline link {url}"),
@@ -297,7 +304,7 @@ class Facts(Vertical):
                 Pretty(data, expand_all=True),
             )
         )
-        self.query_one(VerticalScroll).scroll_home(animate=False)
+        scroll.scroll_home(animate=False)
 
 
 class DeepDive(ModalScreen[None]):
@@ -459,7 +466,10 @@ class Discover(App[None]):
             try:
                 await self.close_feeds()
             finally:
-                await asyncio.gather(self.http.aclose(), self.catalogue.close())
+                try:
+                    await self.http.aclose()
+                finally:
+                    await self.catalogue.close()
         finally:
             for image in self.images.values():
                 image.close()
@@ -473,6 +483,9 @@ class Discover(App[None]):
         return self.tabs.active, self.tables[self.tabs.active]
 
     def report_error(self, what: str, exc: Exception) -> None:
+        while isinstance(exc, ExceptionGroup):
+            exc = cast(ExceptionGroup[Exception], exc).exceptions[0]
+
         self.notify(
             escape(f"{type(exc).__name__}: {exc}"),
             title=what,

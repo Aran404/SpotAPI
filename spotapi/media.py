@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import os
 import tempfile
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urlsplit
@@ -17,6 +19,26 @@ from .connection.http import response_headers
 from .embeds import Embed
 from .models.discovery import Canvas
 from .types import BaseClientError, HTTPError
+
+
+async def _finish_file_work(work: Callable[[], None]) -> None:
+    """Keep temporary files alive until their worker has stopped using them."""
+    task = asyncio.create_task(asyncio.to_thread(work))
+    try:
+        await asyncio.shield(task)
+    except asyncio.CancelledError:
+        while not task.done():
+            try:
+                await asyncio.shield(task)
+            except asyncio.CancelledError:
+                continue
+            except Exception:
+                break
+
+        with suppress(Exception):
+            task.result()
+
+        raise
 
 
 def _media_url(url: str) -> None:
@@ -39,7 +61,8 @@ class Media:
 
     No bearer headers are sent and redirects are disabled. Each download is
     bounded by max_bytes, including responses with no Content-Length. Existing
-    output files are never overwritten. This does not download full tracks.
+    output files are never overwritten. Atomic publication uses a rename
+    on Windows and requires hard-link support elsewhere.
     """
 
     __slots__ = ("max_bytes",)
@@ -72,17 +95,19 @@ class Media:
                         raise BaseClientError("Spotify media exceeds max_bytes")
                     data.extend(chunk)
 
-        # Bound memory before writing. Exclusive creation prevents accidental overwrites.
-        def save() -> None:
-            output = destination.open("xb")
-            try:
-                with output:
-                    output.write(data)
-            except BaseException:
-                destination.unlink(missing_ok=True)
-                raise
+        # Stage on the destination filesystem and publish without replacing an existing file.
+        with tempfile.TemporaryDirectory(prefix=".spotapi-", dir=destination.parent) as directory:
+            staged = Path(directory) / "download"
 
-        await asyncio.to_thread(save)
+            def save() -> None:
+                staged.write_bytes(data)
+
+            await _finish_file_work(save)
+            if os.name == "nt":
+                staged.rename(destination)
+            else:
+                os.link(staged, destination)
+
         return destination
 
     async def download_cover(self, source: Embed, destination: str | Path) -> Path:
@@ -132,7 +157,7 @@ class Media:
                     tags.add(id3.APIC(encoding=3, mime=mime, type=3, desc="Cover", data=artwork))
                     tags.save(target)
 
-                await asyncio.to_thread(tag)
+                await _finish_file_work(tag)
         return target
 
     async def download_canvas(self, source: Canvas, destination: str | Path) -> Path:

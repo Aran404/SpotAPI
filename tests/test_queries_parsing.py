@@ -10,6 +10,7 @@ import pytest
 from spotapi.datastruct import ObjectDict
 from spotapi.operations import Operations
 from spotapi.queries import Queries
+from spotapi.query import paginate
 from spotapi.types import BaseClientError
 
 
@@ -17,6 +18,33 @@ from spotapi.types import BaseClientError
 class _Sample:
     id: str
     name: str
+
+
+async def test_pagination_rejects_missing_items_before_fetching_again() -> None:
+    offsets: list[int] = []
+
+    async def request(variables: dict[str, Any]) -> ObjectDict:
+        offsets.append(variables["offset"])
+        return ObjectDict({"data": {"results": {"totalCount": 3}}})
+
+    with pytest.raises(BaseClientError, match="no item collection"):
+        await anext(paginate(request, {"limit": 1}))
+
+    assert offsets == [0]
+
+
+async def test_pagination_uses_the_collection_instead_of_the_widest_sibling() -> None:
+    async def request(variables: dict[str, Any]) -> ObjectDict:
+        return ObjectDict(
+            {
+                "search": {"tracks": {"items": ["track"], "totalCount": 1}},
+                "metadata": {"noise": {"a": 1}, "build": {}},
+            }
+        )
+
+    pages = [page async for page in paginate(request, {"limit": 1})]
+
+    assert [page["items"] for page in pages] == [["track"]]
 
 
 def _object(mapping: dict[str, Any]) -> ObjectDict:

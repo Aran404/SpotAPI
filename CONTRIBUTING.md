@@ -34,6 +34,18 @@ ownership, cancellation, partial payloads, and retry safety when changing
 network behavior. Keep optional metadata optional. A new background task
 needs an owner, a retained reference, observable failures, and shutdown.
 
+When a Spotify response changes, start at the operation name in
+`spotapi/operations.py`. Check its route and replay policy, then find the
+extractor used by its caller. For example, catalogue playlist items select
+`playlistV2.content` before decoding individual occurrences. Add a sanitized
+fixture with the original and changed envelope and run the narrow parser
+test before running live reads. Keep missing required fields separate
+from empty lists and omitted optional metadata.
+
+For readability, use a blank line between independent branches and between
+validation, I/O, and publication. Keep cleanup next to its owner. Preserve
+the order of validation and side effects when moving code.
+
 The package uses Hatch and `pyproject.toml` as its packaging source of truth.
 Keep `requirements.txt` consistent with the tested wreq pin. Check a wheel
 with `python -m pip wheel . --no-deps` when changing packaging.

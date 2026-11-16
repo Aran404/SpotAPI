@@ -15,6 +15,7 @@ import pytest
 import wreq
 
 from spotapi import AsyncClient, LyricsClient, Player, PlayerStatus
+from spotapi._protocol.user_agent import parse_user_agent
 from spotapi.command_state import command_applied
 from spotapi.connect import ConnectEndpoints
 from spotapi.connection import HTTPClient, Response
@@ -24,6 +25,25 @@ from spotapi.session import AccessToken, AuthSession
 from spotapi.types import BaseClientError, HTTPError
 
 FIXTURES = Path(__file__).parent / "fixtures" / "connect"
+
+
+async def test_controller_registration_uses_the_generated_browser_identifier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = Mock(spec=AuthSession, client=Mock())
+    session.resolve_user_agent = AsyncMock(
+        return_value=parse_user_agent("Windows NT 10.0 Firefox/149.0")
+    )
+    register = AsyncMock(return_value=Mock(keep_alive_seconds=0))
+    monkeypatch.setattr("spotapi.status.RegisteredDevice.create", register)
+    observer = PlayerStatus(session)
+    observer.connection_id = "connection"
+
+    await observer._register_controller()
+
+    assert register.call_args.kwargs["platform_identifier"] == (
+        "web_player windows 10;firefox 149.0;desktop"
+    )
 
 
 def test_reparsed_old_snapshot_is_not_command_confirmation() -> None:
@@ -65,6 +85,9 @@ def session() -> Mock:
         client=client,
         authorized_headers={"authorization": "Bearer test"},
         token=Mock(access_token="test-token"),
+        resolve_user_agent=AsyncMock(
+            return_value=parse_user_agent("Windows NT 10.0 Chrome/147.0")
+        ),
     )
 
 

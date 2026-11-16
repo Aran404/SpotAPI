@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import types
 from collections.abc import Mapping
 from dataclasses import MISSING, fields, is_dataclass
@@ -125,7 +126,16 @@ def _decode_scalar(annotation: Any, value: Any, path: str) -> Any:
     elif annotation is float:
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(f"{path}: expected float")
-        return float(value)
+
+        try:
+            number = float(value)
+        except OverflowError as error:
+            raise TypeError(f"{path}: expected a finite float") from error
+
+        if not math.isfinite(number):
+            raise TypeError(f"{path}: expected a finite float")
+
+        return number
     elif annotation is str and not isinstance(value, str):
         raise TypeError(f"{path}: expected str")
     return value

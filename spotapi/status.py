@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 import math
-import platform
 import secrets
 import time
 from collections import deque
@@ -530,13 +529,15 @@ class PlayerStatus:
         if self.connection_id is None:
             raise RuntimeError("Dealer handshake has not completed")
 
+        user_agent = await self.session.resolve_user_agent()
+
         self._controller = await RegisteredDevice.create(
             self.session,
             connection_id=self.connection_id,
             device_id=self.controller_id,
             name=self.name,
             client_version=_client_version,
-            platform_identifier=f"python {platform.python_version()}",
+            platform_identifier=user_agent.platform_identifier,
             capabilities={
                 "change_volume": False,
                 "enable_play_token": False,
@@ -717,53 +718,52 @@ class PlayerStatus:
             self._events.dispatch("state_update", previous, state)
 
         if previous is not None:
-            if previous.shuffle != state.shuffle:
-                self._events.dispatch("shuffle_change", previous.shuffle, state.shuffle)
+            self._dispatch_state_changes(previous, state)
 
-            if previous.repeat_mode != state.repeat_mode:
-                self._events.dispatch("repeat_change", previous.repeat_mode, state.repeat_mode)
+    def _dispatch_state_changes(self, previous: PlayerState, state: PlayerState) -> None:
+        """Dispatch changes between two observed playback snapshots in order."""
+        if previous.shuffle != state.shuffle:
+            self._events.dispatch("shuffle_change", previous.shuffle, state.shuffle)
 
-            if previous.playback_speed != state.playback_speed:
-                self._events.dispatch(
-                    "speed_change", previous.playback_speed, state.playback_speed
-                )
+        if previous.repeat_mode != state.repeat_mode:
+            self._events.dispatch("repeat_change", previous.repeat_mode, state.repeat_mode)
 
-            if previous.quality != state.quality:
-                self._events.dispatch("quality_change", previous.quality, state.quality)
+        if previous.playback_speed != state.playback_speed:
+            self._events.dispatch("speed_change", previous.playback_speed, state.playback_speed)
 
-            if previous.context_uri != state.context_uri:
-                self._events.dispatch("context_change", previous.context_uri, state.context_uri)
+        if previous.quality != state.quality:
+            self._events.dispatch("quality_change", previous.quality, state.quality)
 
-            if previous.position != state.position:
-                self._events.dispatch("position_change", previous.position, state.position)
+        if previous.context_uri != state.context_uri:
+            self._events.dispatch("context_change", previous.context_uri, state.context_uri)
 
-            if (
-                previous.next_tracks != state.next_tracks
-                or previous.prev_tracks != state.prev_tracks
-            ):
-                self._events.dispatch("queue_change", state)
+        if previous.position != state.position:
+            self._events.dispatch("position_change", previous.position, state.position)
 
-            if (previous.shuffle, previous.repeat_context, previous.repeat_track) != (
-                state.shuffle,
-                state.repeat_context,
-                state.repeat_track,
-            ):
-                self._events.dispatch("options_change", state)
+        if previous.next_tracks != state.next_tracks or previous.prev_tracks != state.prev_tracks:
+            self._events.dispatch("queue_change", state)
 
-            before, after = previous.track, state.track
-            before_uri = before.uri if before else None
-            after_uri = after.uri if after else None
-            occurrence_changed = bool(
-                before and after and before.uid and after.uid and before.uid != after.uid
+        if (previous.shuffle, previous.repeat_context, previous.repeat_track) != (
+            state.shuffle,
+            state.repeat_context,
+            state.repeat_track,
+        ):
+            self._events.dispatch("options_change", state)
+
+        before, after = previous.track, state.track
+        before_uri = before.uri if before else None
+        after_uri = after.uri if after else None
+        occurrence_changed = bool(
+            before and after and before.uid and after.uid and before.uid != after.uid
+        )
+
+        if before_uri != after_uri or occurrence_changed:
+            self._events.dispatch("track_change", before, after)
+
+        if previous.is_paused != state.is_paused:
+            self._events.dispatch("pause" if state.is_paused else "resume", state)
+
+        if previous.active_device_id != state.active_device_id:
+            self._events.dispatch(
+                "device_change", previous.active_device_id, state.active_device_id
             )
-
-            if before_uri != after_uri or occurrence_changed:
-                self._events.dispatch("track_change", before, after)
-
-            if previous.is_paused != state.is_paused:
-                self._events.dispatch("pause" if state.is_paused else "resume", state)
-
-            if previous.active_device_id != state.active_device_id:
-                self._events.dispatch(
-                    "device_change", previous.active_device_id, state.active_device_id
-                )

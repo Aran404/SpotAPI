@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -102,6 +103,22 @@ async def test_shared_close_waits_for_requests_and_rejects_new_leases(
     await shutdown
 
     assert closed.is_set()
+
+
+async def test_shared_owner_rejects_close_from_inside_its_lease(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = Mock(close=AsyncMock())
+    monkeypatch.setattr(query.QueryClient, "create", AsyncMock(return_value=client))
+    owner = SharedQueryClient()
+
+    async with owner.acquire(), owner.acquire():
+        async with asyncio.timeout(1):
+            with pytest.raises(RuntimeError, match="Release the query client lease"):
+                await owner.close()
+
+    await owner.close()
+    client.close.assert_awaited_once()
 
 
 async def test_cancelled_initialization_can_be_retried(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -256,6 +273,26 @@ async def test_pool_waiter_cancellation_and_idle_teardown_errors() -> None:
 
     assert len(raised.value.exceptions) == 1
     assert pool.closed
+
+
+async def test_saturated_event_dispatcher_logs_the_listener_failure() -> None:
+    logger = Mock()
+    events = EventDispatcher(logger, max_pending=1)
+    report_error = AsyncMock()
+
+    async def fail() -> None:
+        raise ValueError("private listener data")
+
+    events.register(fail, "message")
+    events.register(report_error, "error")
+    events.dispatch("message")
+    await asyncio.sleep(0)
+
+    report_error.assert_not_called()
+    logger.error.assert_called_once_with(
+        "Unhandled exception in event handler: message", exception="ValueError"
+    )
+    await events.close()
 
 
 async def test_event_tasks_are_bounded_and_drained() -> None:

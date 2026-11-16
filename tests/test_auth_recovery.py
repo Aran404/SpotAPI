@@ -223,6 +223,7 @@ def test_language_validation_and_switching_do_not_make_requests() -> None:
 
 async def test_client_token_grant_allows_bounded_transient_retries() -> None:
     client = Mock(spec=AsyncClient)
+    client.transport.profile_user_agent = AsyncMock(return_value="Windows NT 10.0 Chrome/147.0")
     client.post = AsyncMock(
         return_value=Mock(json=ObjectDict({"granted_token": {"token": "synthetic-token"}}))
     )
@@ -231,3 +232,20 @@ async def test_client_token_grant_allows_bounded_transient_retries() -> None:
     assert await session._fetch_client_token("client-id") == "synthetic-token"
     client.post.assert_awaited_once()
     assert client.post.call_args.kwargs["retry_safe"] is True
+
+
+async def test_client_token_uses_the_generated_user_agent_os() -> None:
+    client = Mock(spec=AsyncClient)
+    client.transport.profile_user_agent = AsyncMock(
+        return_value="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/147.0"
+    )
+    client.post = AsyncMock(
+        return_value=Mock(json=ObjectDict({"granted_token": {"token": "synthetic-token"}}))
+    )
+    session = AuthSession(client)
+    session.session = Mock(server_config=Mock(client_version="test"))
+
+    assert await session._fetch_client_token("client-id") == "synthetic-token"
+
+    device = client.post.call_args.kwargs["json"]["client_data"]["js_sdk_data"]
+    assert (device["os"], device["os_version"]) == ("macOS", "10.15.7")

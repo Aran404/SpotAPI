@@ -6,9 +6,8 @@ import asyncio
 from collections import OrderedDict, deque
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import aclosing
-from dataclasses import fields, is_dataclass, replace
+from dataclasses import replace
 from datetime import date, datetime
-from enum import Enum
 from typing import Any, Literal, TypeVar, cast
 
 from spotapi import (
@@ -22,6 +21,7 @@ from spotapi import (
     PlaylistHandler,
 )
 from spotapi.models import Lyrics, PlaybackTrack, PlayerState, TimeRange
+from spotapi.serialization import export_json
 from spotapi.types import HTTPError, SpotAPIError
 
 from .actions import ACTIONS, manifest
@@ -51,27 +51,12 @@ _OPERATIONS = _ACTIONS.keys() | {
 }
 
 
+_PRIVATE_FIELDS = frozenset({"session_id", "server_nonce", "client_nonce"})
+
+
 def serialize(value: object) -> Any:
-    """Convert display models into JSON values without serializing session objects."""
-    if value is None or isinstance(value, (str, int, float, bool)):
-        return value
-    if isinstance(value, (date, datetime)):
-        return value.isoformat()
-    if isinstance(value, Enum):
-        return serialize(value.value)
-    if is_dataclass(value) and not isinstance(value, type):
-        return {
-            field.name: serialize(getattr(value, field.name))
-            for field in fields(value)
-            if field.name not in {"session_id", "server_nonce", "client_nonce"}
-        }
-    if isinstance(value, Mapping):
-        return {
-            str(key): serialize(item) for key, item in cast(Mapping[object, object], value).items()
-        }
-    if isinstance(value, (tuple, list)):
-        return [serialize(item) for item in cast(list[object] | tuple[object, ...], value)]
-    raise TypeError(f"No display serializer for {type(value).__name__}")
+    """Export display data while omitting private session fields."""
+    return export_json(value, excluded_fields=_PRIVATE_FIELDS)
 
 
 async def first_page(pages: AsyncGenerator[T, None]) -> T | None:
@@ -231,14 +216,16 @@ class Studio:
             operation = _ACTIONS.get(action)
             if operation and operation.changes and values.get("confirmed") != "true":
                 raise ValueError("Confirm this action before sending it to Spotify")
-            async with self._lock:
-                async with asyncio.timeout(45):
-                    if self._closed:
-                        raise RuntimeError("Studio is closed")
-                    if not self._catalogue_started:
-                        await self.catalogue.__aenter__()
-                        self._catalogue_started = True
-                    data = await self._execute(action, values)
+            async with asyncio.timeout(45), self._lock:
+                if self._closed:
+                    raise RuntimeError("Studio is closed")
+
+                if not self._catalogue_started:
+                    await self.catalogue.__aenter__()
+                    self._catalogue_started = True
+
+                data = await self._execute(action, values)
+
             if data is None:
                 data = (
                     {"completed": True}

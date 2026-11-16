@@ -85,9 +85,13 @@ class Bridge:
 
     def request(self, action: object, values: object = None) -> dict[str, Any]:
         """Submit one command onto the library's owning asyncio loop."""
-        if not isinstance(action, str) or not isinstance(values or {}, dict):
+        if values is None:
+            values = {}
+
+        if not isinstance(action, str) or not isinstance(values, dict):
             return {"ok": False, "error": "Invalid application request"}
-        payload = cast(dict[object, object], values or {})
+
+        payload = cast(dict[object, object], values)
         if any(
             not isinstance(key, str) or not isinstance(value, str)
             for key, value in payload.items()

@@ -45,7 +45,7 @@ body:
     id: spotapi-version
     attributes:
       label: SpotAPI version
-      description: Run `spotapi --version` in the same environment as your application.
+      description: Run `python -m pip show spotapi` in the application's environment and paste the Version line. On Windows, use `py -m pip show spotapi` if you installed with `py`.
       placeholder: spotapi 2.1.0
     validations:
       required: true

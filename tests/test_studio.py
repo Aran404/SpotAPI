@@ -166,6 +166,18 @@ def test_native_bridge_exposes_only_requests_and_login() -> None:
     assert bridge.request(None)["ok"] is False
 
 
+@pytest.mark.parametrize("values", [False, 0, "", []])
+def test_native_bridge_rejects_non_mapping_values(values: object) -> None:
+    studio = Mock()
+    bridge = Bridge(studio, Mock(), Mock(), Mock())
+
+    assert bridge.request("search", values) == {
+        "ok": False,
+        "error": "Invalid application request",
+    }
+    studio.request.assert_not_called()
+
+
 async def test_login_imports_only_its_own_spotify_cookie_and_never_returns_it() -> None:
     studio = Mock(authenticate=AsyncMock())
     window = Mock()
@@ -254,6 +266,12 @@ def test_display_serializer_does_not_expose_challenge_secrets() -> None:
     assert set(data) == {"url"}
     with pytest.raises(TypeError):
         serialize(Studio())
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), {1: "invalid key"}])
+def test_display_serializer_rejects_values_outside_json(value: object) -> None:
+    with pytest.raises(TypeError):
+        serialize(value)
 
 
 def test_feature_identifiers_are_unique_and_changes_are_explicit() -> None:

@@ -78,7 +78,6 @@ DefaultOSList: tuple[EmulateOS, ...] = (
 )
 DefaultProfileList: tuple[EmulateBrowser, ...] = (
     EmulateBrowser("chrome", 120, 147, 67),
-    EmulateBrowser("edge", 122, 147, 6),
     EmulateBrowser("firefox", 117, 149, 3),
     EmulateBrowser("opera", 120, 130, 2),
 )

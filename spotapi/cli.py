@@ -9,7 +9,7 @@ import importlib.util
 import json
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from contextlib import aclosing
 from importlib.metadata import version as package_version
 
@@ -26,15 +26,33 @@ from .serialization import to_dict
 from .types import SpotAPIError
 
 
-def _limit(value: str) -> int:
+def _limit(value: str, *, maximum: int = 50) -> int:
     number = int(value)
-    if not 1 <= number <= 50:
-        raise argparse.ArgumentTypeError("choose a number from 1 to 50")
+    if not 1 <= number <= maximum:
+        raise argparse.ArgumentTypeError(f"choose a number from 1 to {maximum}")
+
     return number
+
+
+def _position(value: str) -> int:
+    milliseconds = int(value)
+    if milliseconds < 0:
+        raise argparse.ArgumentTypeError("choose a nonnegative position in milliseconds")
+
+    return milliseconds
+
+
+def _volume(value: str) -> int:
+    percent = int(value)
+    if not 0 <= percent <= 100:
+        raise argparse.ArgumentTypeError("choose a percentage from 0 to 100")
+
+    return percent
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="spotapi", description=__doc__)
+    parser.set_defaults(resource_lookup=None)
     parser.add_argument(
         "--version",
         action="version",
@@ -47,27 +65,41 @@ def _parser() -> argparse.ArgumentParser:
     search = commands.add_parser("search", help="search the public catalogue")
     search.add_argument("query", help="text to search for")
     search.add_argument("--type", choices=tuple(SEARCH_DESKTOP_SECTIONS), default="track")
-    search.add_argument("--limit", type=_limit, default=10)
+    search.add_argument("--limit", type=lambda value: _limit(value, maximum=100), default=10)
     search.add_argument("--json", action="store_true", help="print results as JSON")
     get = commands.add_parser("get", help="look up a Spotify URL or URI as JSON")
     get.add_argument("resource", help="Spotify URL or URI")
     credits = commands.add_parser("credits", help="show a track's contributors as JSON")
     credits.add_argument("track")
 
+    for name, help_text, lookup in (
+        ("chart", "read editorial chart metadata", Public.get_chart),
+        ("events", "read upcoming artist concerts", Public.get_artist_events),
+        ("similar-albums", "recommend albums from a track", Public.get_similar_albums),
+        ("colors", "extract a Spotify image palette", Public.get_colors),
+        ("embed", "read public embed metadata and preview URLs", get_embed),
+    ):
+        subcommand = commands.add_parser(name, help=help_text)
+        subcommand.add_argument("resource")
+        subcommand.set_defaults(resource_lookup=lookup)
+
     for name, help_text in (
-        ("chart", "read editorial chart metadata"),
-        ("events", "read upcoming artist concerts"),
-        ("similar-albums", "recommend albums from a track"),
-        ("colors", "extract a Spotify image palette"),
-        ("embed", "read public embed metadata and preview URLs"),
         ("transcript", "read episode captions using SPOTIFY_COOKIE"),
         ("lyrics", "read entitled lyrics using SPOTIFY_COOKIE"),
     ):
         commands.add_parser(name, help=help_text).add_argument("resource")
     commands.add_parser("charts", help="list editorial chart shortcuts")
-    download = commands.add_parser(
-        "download", help="save published preview, cover or Canvas assets"
+    _configure_download(
+        commands.add_parser("download", help="save published preview, cover or Canvas assets")
     )
+    _configure_playlist(commands.add_parser("playlist", help="list or edit playlist occurrences"))
+    _configure_library(commands.add_parser("library", help="read or change saved tracks"))
+    _configure_player(commands.add_parser("player", help="control an existing Spotify device"))
+
+    return parser
+
+
+def _configure_download(download: argparse.ArgumentParser) -> None:
     download.add_argument("kind", choices=("cover", "preview", "canvas"))
     download.add_argument("resource", help="Spotify resource URL or URI")
     download.add_argument(
@@ -80,7 +112,8 @@ def _parser() -> argparse.ArgumentParser:
         help="Tag a preview with artwork; requires spotapi[media]",
     )
 
-    playlist = commands.add_parser("playlist", help="list or edit playlist occurrences")
+
+def _configure_playlist(playlist: argparse.ArgumentParser) -> None:
     playlists = playlist.add_subparsers(dest="action", required=True)
     items = playlists.add_parser("items", help="list occurrences with their IDs")
     items.add_argument("playlist")
@@ -99,7 +132,8 @@ def _parser() -> argparse.ArgumentParser:
             position.add_argument("--before", metavar="UID")
             position.add_argument("--after", metavar="UID")
 
-    library = commands.add_parser("library", help="read or change saved tracks")
+
+def _configure_library(library: argparse.ArgumentParser) -> None:
     saved = library.add_subparsers(dest="action", required=True)
     saved.add_parser("list", help="list liked tracks").add_argument(
         "--limit", type=_limit, default=20
@@ -111,19 +145,19 @@ def _parser() -> argparse.ArgumentParser:
     ):
         saved.add_parser(action, help=label).add_argument("tracks", nargs="+")
 
-    player = commands.add_parser("player", help="control an existing Spotify device")
+
+def _configure_player(player: argparse.ArgumentParser) -> None:
     playback = player.add_subparsers(dest="action", required=True)
     for action in ("status", "pause", "resume", "next", "previous"):
         playback.add_parser(action, help=f"{action} on the active device")
     playback.add_parser("play", help="play a Spotify resource").add_argument("resource")
     playback.add_parser("seek", help="seek to a position in milliseconds").add_argument(
-        "milliseconds", type=int
+        "milliseconds", type=_position
     )
     playback.add_parser("volume", help="set volume from 0 to 100").add_argument(
-        "percent", type=int
+        "percent", type=_volume
     )
     playback.add_parser("queue", help="add a track to the queue").add_argument("track")
-    return parser
 
 
 def _json(value: object) -> None:
@@ -203,23 +237,6 @@ async def _run_player(player: Player, args: argparse.Namespace) -> None:
         }[action]()
 
 
-async def _run_discovery(args: argparse.Namespace) -> None:
-    command: str = args.command
-    if command == "charts":
-        result = Public.list_charts()
-    elif command == "chart":
-        result = await Public.get_chart(args.resource)
-    elif command == "events":
-        result = await Public.get_artist_events(args.resource)
-    elif command == "similar-albums":
-        result = await Public.get_similar_albums(args.resource)
-    elif command == "colors":
-        result = await Public.get_colors(args.resource)
-    else:
-        result = await get_embed(args.resource)
-    _json(result)
-
-
 async def _run_download(args: argparse.Namespace) -> None:
     media = Media()
     if args.kind == "canvas":
@@ -240,9 +257,16 @@ async def _run_download(args: argparse.Namespace) -> None:
 
 async def _run(args: argparse.Namespace) -> None:
     command: str = args.command
-    if command in {"charts", "chart", "events", "similar-albums", "colors", "embed"}:
-        await _run_discovery(args)
+    resource_lookup: Callable[[str], Awaitable[object]] | None = args.resource_lookup
+
+    if resource_lookup is not None:
+        _json(await resource_lookup(args.resource))
         return
+
+    if command == "charts":
+        _json(Public.list_charts())
+        return
+
     if command == "download":
         await _run_download(args)
         return

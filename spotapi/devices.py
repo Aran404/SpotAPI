@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from ._parsing import integer
 from ._protocol.routes import DEVICE, DEVICE_REGISTER, DEVICE_STATE, SPCLIENT
+from ._protocol.user_agent import WEB_PLAYER_MODEL
 from .session import AuthSession
 from .types import BaseClientError
 
@@ -72,7 +73,7 @@ class RegisteredDevice:
                 "device_id": registration.id,
                 "device_type": "computer",
                 "name": name,
-                "model": "web_player",
+                "model": WEB_PLAYER_MODEL,
                 "platform_identifier": platform_identifier,
                 "correlation_id": str(uuid4()),
                 "metadata": {},

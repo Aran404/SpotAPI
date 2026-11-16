@@ -38,6 +38,36 @@ jobs:
       - run: python -m ruff check .
       - run: python -m black --check .
 
+  installed-wheel:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build
+      - run: python -m build --wheel
+      - name: Install and smoke-test outside the checkout
+        shell: pwsh
+        run: |
+          $wheel = (Get-ChildItem dist/*.whl).FullName
+          python -m pip install $wheel
+          Set-Location $env:RUNNER_TEMP
+          spotapi --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -I -m spotapi --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -I -m spotapi discover --help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -I -m spotapi studio --help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -I -c "from importlib.resources import files; root = files('spotapi'); assert root.joinpath('py.typed').is_file(); assert root.joinpath('_studio', 'app.js').is_file()"
+
   public-api:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -48,7 +78,28 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install -e '.[dev]'
-      - run: python -m pytest --live=read -m live -vv
+      - name: Verify public Spotify contracts
+        run: python -m pytest --live=read -m "live and not authenticated" -vv -rs
+
+  account-api:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'Aran404/SpotAPI'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Verify authenticated read contracts
+        env:
+          SPOTIFY_COOKIE: ${{ secrets.SPOTIFY_CANARY_COOKIE }}
+        run: |
+          if [ -z "$SPOTIFY_COOKIE" ]; then
+            echo "::notice::Authenticated canary skipped because SPOTIFY_CANARY_COOKIE is not configured."
+            exit 0
+          fi
+          python -m pytest --live=read -m "live and authenticated and not mutates" -vv -rs
 
   studio-ui:
     runs-on: ubuntu-latest

@@ -6,6 +6,7 @@ import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from threading import Event
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock
@@ -107,6 +108,38 @@ async def test_media_download_does_not_replace_an_existing_file(
     with pytest.raises(FileExistsError):
         await Media().download_cover(asset(), path)
     assert path.read_bytes() == b"original"
+
+
+async def test_cancelled_download_does_not_publish_the_staged_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    install_transfer(monkeypatch, [b"data"])
+    started = asyncio.Event()
+    release = Event()
+    loop = asyncio.get_running_loop()
+    original_write = Path.write_bytes
+
+    def paused_write(path: Path, data: bytes) -> int:
+        loop.call_soon_threadsafe(started.set)
+        if not release.wait(timeout=5):
+            raise TimeoutError("Test did not release the staged write")
+        return original_write(path, data)
+
+    monkeypatch.setattr(Path, "write_bytes", paused_write)
+    destination = tmp_path / "cover.jpg"
+    download = asyncio.create_task(Media().download_cover(asset(), destination))
+    try:
+        await asyncio.wait_for(started.wait(), timeout=5)
+        download.cancel()
+        await asyncio.sleep(0)
+        assert not destination.exists()
+    finally:
+        release.set()
+
+    with pytest.raises(asyncio.CancelledError):
+        await download
+
+    assert list(tmp_path.iterdir()) == []
 
 
 async def test_media_rejects_wrong_content_type(

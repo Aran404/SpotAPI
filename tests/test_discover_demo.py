@@ -19,6 +19,32 @@ with patch("sys.__stdout__", StringIO()):
 from spotapi.models import Track
 
 
+async def test_failed_track_lookup_drains_its_other_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    credits_started = asyncio.Event()
+    credits_stopped = asyncio.Event()
+
+    async def get_track(self: discover.Catalogue, uri: str) -> None:
+        await credits_started.wait()
+        raise RuntimeError("track lookup failed")
+
+    async def get_credits(self: discover.Catalogue, uri: str) -> None:
+        credits_started.set()
+        try:
+            await asyncio.Future()
+        finally:
+            credits_stopped.set()
+
+    monkeypatch.setattr(discover.Catalogue, "get_track", get_track)
+    monkeypatch.setattr(discover.Catalogue, "get_track_credits", get_credits)
+
+    async with asyncio.timeout(2):
+        with pytest.raises(ExceptionGroup) as failure:
+            await discover.lookup_track("spotify:track:test", api=discover.Catalogue())
+
+    assert str(failure.value.exceptions[0]) == "track lookup failed"
+    assert credits_stopped.is_set()
+
+
 async def test_shutdown_releases_images_even_when_a_feed_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -40,6 +66,30 @@ async def test_shutdown_releases_images_even_when_a_feed_fails(
     assert not app.images
     assert not app.cache
     assert not app.expanded
+
+
+async def test_shutdown_waits_for_catalogue_when_http_close_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = discover.Discover("Example")
+    close_http = app.http.aclose
+    catalogue_closed = asyncio.Event()
+
+    async def fail_after_closing_http() -> None:
+        await close_http()
+        raise RuntimeError("HTTP close failed")
+
+    async def close_catalogue(self: discover.Catalogue) -> None:
+        await asyncio.sleep(0)
+        catalogue_closed.set()
+
+    monkeypatch.setattr(app.http, "aclose", fail_after_closing_http)
+    monkeypatch.setattr(discover.Catalogue, "close", close_catalogue)
+
+    with pytest.raises(RuntimeError, match="HTTP close failed"):
+        await app.on_unmount()
+
+    assert catalogue_closed.is_set()
 
 
 @pytest.fixture(autouse=True)

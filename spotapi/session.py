@@ -29,6 +29,7 @@ from ._protocol.bundles import (
 )
 from ._protocol.routes import CLIENT_TOKEN, TOKEN
 from ._protocol.totp import build_totp
+from ._protocol.user_agent import UserAgent, parse_user_agent
 from .client import AsyncClient
 from .types import HTTPError
 
@@ -87,6 +88,15 @@ def _parse_cookie_header(header: str) -> list[Mapping[str, Any]]:
     pairs = (part.strip().partition("=") for part in header.split(";"))
 
     return [{"name": name, "value": value} for name, sep, value in pairs if sep]
+
+
+class _ClientTokenDevice(TypedDict):
+    device_brand: str
+    device_model: str
+    os: str
+    os_version: str
+    device_id: str | None
+    device_type: str
 
 
 class _AppServerConfig(TypedDict):
@@ -631,6 +641,7 @@ class AuthSession:
         "_language",
         "_require_user",
         "_raw_http_client",
+        "_user_agent_info",
         "client",
         "session",
     )
@@ -644,6 +655,7 @@ class AuthSession:
         self.language = language
         self._require_user = False
         self._raw_http_client = client.transport
+        self._user_agent_info: UserAgent | None = None
 
         self.client = client
         self.session = BundleSession(client)
@@ -653,6 +665,23 @@ class AuthSession:
         refreshing = self._refresh_task is not None and not self._refresh_task.done()
 
         return f"<{type(self).__name__} token={self._token!r} auto_refresh={refreshing}>"
+
+    @property
+    def user_agent_info(self) -> UserAgent | None:
+        """Return the parsed wreq profile after authorization resolves it."""
+        return self._user_agent_info
+
+    async def resolve_user_agent(self) -> UserAgent:
+        """Resolve the browser metadata from the transport's generated header."""
+        if self._user_agent_info is None:
+            header = await self._raw_http_client.profile_user_agent()
+            user_agent = parse_user_agent(header)
+            if user_agent.browser.name not in {"Chrome", "Firefox", "Opera"}:
+                raise ValueError("SpotAPI requires a Chrome, Firefox, or Opera wreq profile")
+
+            self._user_agent_info = user_agent
+
+        return self._user_agent_info
 
     async def __aenter__(self) -> Self:
         """Enter this resource's asynchronous ownership scope."""
@@ -780,6 +809,7 @@ class AuthSession:
             The newly issued access token with its client token.
         """
         async with self._auth_lock:
+            await self.resolve_user_agent()
             await self.session.warm()
             self._device_id = self._raw_http_client.get_cookie("sp_t") or str(uuid.uuid4())
             return await self._renew()
@@ -888,18 +918,21 @@ class AuthSession:
 
     async def _fetch_client_token(self, client_id: str) -> str:
         """Request the client token associated with ``client_id``."""
-        payload: dict[str, object] = {
+        user_agent = await self.resolve_user_agent()
+
+        device: _ClientTokenDevice = {
+            "device_brand": "unknown",
+            "device_model": "unknown",
+            "os": user_agent.os.name,
+            "os_version": user_agent.os.version,
+            "device_id": self._device_id,
+            "device_type": "computer",
+        }
+        payload = {
             "client_data": {
                 "client_version": self.session.server_config.client_version,
                 "client_id": client_id,
-                "js_sdk_data": {
-                    "device_brand": "unknown",
-                    "device_model": "unknown",
-                    "os": "windows",
-                    "os_version": "NT 10.0",  # todo: make dynamic
-                    "device_id": self._device_id,
-                    "device_type": "computer",
-                },
+                "js_sdk_data": device,
             }
         }
 

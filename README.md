@@ -33,6 +33,22 @@ python -m pip install spotapi
 spotapi search "Daft Punk"
 ```
 
+If your terminal can't find `spotapi`, run it through the Python you used for
+installation. Starting with the next release, use
+`python -m spotapi search "Daft Punk"`. On Windows, if you installed with
+`py -m pip install spotapi`, use `py -m spotapi search "Daft Punk"`.
+To check which installation your terminal sees, run `python -m pip show spotapi`
+(or `py -m pip show spotapi` on Windows).
+
+For the published 2.1.0 release on Windows, you can run the executable directly
+from a virtual environment without changing PATH:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install spotapi==2.1.0
+.\.venv\Scripts\spotapi.exe search "Daft Punk"
+```
+
 No key, no login, no config. The first request discovers Spotify's current
 web-player queries; this can take longer on a cold cache. Later runs reuse
 queries cached for the same Spotify build.
