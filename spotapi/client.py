@@ -170,8 +170,12 @@ class AsyncClient:
 
         try:
             await AuthSession.from_cookies(cookies, client=client, language=language)
-        except BaseException:
-            await client.close()
+        except BaseException as error:
+            try:
+                await client.close()
+            except Exception as cleanup:
+                raise error from cleanup
+
             raise
 
         return client

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Add `Player.current_track_details()` for explicit current-track metadata.
+- Reconnect after transient grouped cleanup failures and report `disconnect`
+  on broken dealer connections.
+- Raise `LoginExpired` for missing or rejected Spotify cookie sessions.
+- Emit `library_change` for server collection notifications, including changes
+  from other clients, with local/server echoes deduplicated.
+- Add opt-in MCP playback and like tools through `--allow-player`.
+- Preserve authentication failures when cleanup also fails, and keep permanent
+  connection failures visible alongside transient cleanup errors.
+- Prevent late like confirmations from overriding newer collection events.
+- Expose public search locale selection through CLI `--language` (#88).
+
 - Send Connect commands from the registered controller to the selected player.
   This fixes accepted commands that left playback unchanged and then timed out
   when the active player was also used as the command source (#91).

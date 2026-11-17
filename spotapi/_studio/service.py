@@ -22,7 +22,7 @@ from spotapi import (
 )
 from spotapi.models import Lyrics, PlaybackTrack, PlayerState, TimeRange
 from spotapi.serialization import export_json
-from spotapi.types import HTTPError, SpotAPIError
+from spotapi.types import HTTPError, LoginExpired, SpotAPIError
 
 from .actions import ACTIONS, manifest
 from .lyrics import get_public_lyrics
@@ -238,6 +238,11 @@ class Studio:
                 "ok": False,
                 "error": "Spotify requires a fresh CAPTCHA token for this action. Supply one from your own provider.",
                 "challenge": serialize(error.challenge),
+            }
+        except LoginExpired:
+            return {
+                "ok": False,
+                "error": "Log in to Spotify again and update your session.",
             }
         except HTTPError as error:
             return {

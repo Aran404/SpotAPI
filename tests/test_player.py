@@ -994,3 +994,264 @@ async def test_disconnected_observer_stops_claiming_readiness_and_sending_comman
         with pytest.raises(RuntimeError, match="not connected"):
             await player.next()
         session.client.post.assert_not_awaited()
+
+
+@pytest.mark.parametrize(
+    ("error", "expected"),
+    [
+        (ExceptionGroup("offline", [ConnectionError("offline")]), True),
+        (ExceptionGroup("nested", [ExceptionGroup("timeout", [TimeoutError()])]), True),
+        (
+            ExceptionGroup(
+                "mixed", [ConnectionError(), HTTPError("Unauthorized", status_code=401)]
+            ),
+            False,
+        ),
+        (BaseExceptionGroup("cancelled", [ConnectionError(), asyncio.CancelledError()]), False),
+    ],
+)
+def test_reconnect_classifies_every_grouped_failure(error: BaseException, expected: bool) -> None:
+    assert PlayerStatus._transient(error) is expected
+
+
+async def test_managed_player_reconnects_after_network_cleanup_failure(
+    session: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
+    session.client.delete.side_effect = [
+        ConnectionError("offline cleanup"),
+        response(),
+        response(),
+        response(),
+    ]
+    player = Player(session)
+    connected = 0
+    disconnected: list[bool] = []
+
+    @player.event
+    async def on_ready() -> None:
+        nonlocal connected
+        connected += 1
+        if connected == 1:
+            await Socket.instances[-1].callbacks["error"](ConnectionError("dealer offline"))
+
+    @player.event
+    async def on_disconnect() -> None:
+        disconnected.append(True)
+
+    @player.event
+    async def on_reconnect() -> None:
+        await player.close()
+
+    await asyncio.wait_for(player.start(), 3)
+
+    assert connected == 2
+    assert disconnected == [True]
+    assert player.is_closed
+
+
+async def test_dealer_error_and_close_report_one_disconnect(session: Mock) -> None:
+    player = Player(session)
+    socket = player._create_websocket()
+    events: list[str] = []
+
+    @player.event
+    async def on_disconnect() -> None:
+        events.append("disconnect")
+
+    @player.event
+    async def on_error(error: Exception) -> None:
+        events.append("error")
+
+    socket._events.dispatch("error", ConnectionError("offline"))
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+    socket._events.dispatch("close")
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+
+    assert events == ["disconnect", "error"]
+    assert not player.is_ready
+    await socket.close()
+    await player.close()
+
+
+async def test_current_track_details_captures_uri_and_borrows_authentication(
+    session: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from spotapi.catalogue import Catalogue
+
+    player = Player(session)
+    player.state = PlayerState.from_cluster(packet(2)["payloads"][0]["cluster"])
+    assert player.state.track is not None
+    uri = player.state.track.uri
+    result = Mock()
+    started = asyncio.Event()
+    finish = asyncio.Event()
+
+    async def lookup(self: Catalogue, value: str) -> Any:
+        assert self._session is session
+        assert value == uri
+        started.set()
+        await finish.wait()
+        return result
+
+    monkeypatch.setattr(Catalogue, "get_track", lookup)
+    pending = asyncio.create_task(player.current_track_details())
+    await started.wait()
+    player.state = None
+    finish.set()
+
+    assert await pending is result
+    assert await player.current_track_details() is None
+    session.close.assert_not_called()
+
+
+async def test_server_and_local_library_changes_are_deduplicated(session: Mock) -> None:
+    player = Player(session)
+    observed: list[tuple[str, bool]] = []
+
+    @player.event
+    async def on_library_change(uri: str, saved: bool) -> None:
+        observed.append((uri, saved))
+
+    def notification(removed: bool) -> dict[str, Any]:
+        return {
+            "uri": "hm://collection/collection/test-user/json",
+            "payloads": [
+                json.dumps(
+                    {"items": [{"type": "track", "identifier": "track", "removed": removed}]}
+                )
+            ],
+        }
+
+    player.process_message(notification(False))
+    player._publish_library_change("spotify:track:track", True)
+    player.process_message(notification(True))
+    await asyncio.sleep(0)
+
+    assert observed == [("spotify:track:track", True), ("spotify:track:track", False)]
+    await player.close()
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        '{"items":[{"type":"track","identifier":"track","removed":"false"}]}',
+        '{"items":null}',
+        "invalid json",
+    ],
+)
+async def test_malformed_collection_notification_reports_error_without_losing_later_updates(
+    session: Mock, payload: str
+) -> None:
+    player = Player(session)
+    errors: list[Exception] = []
+    changes: list[bool] = []
+
+    @player.event
+    async def on_error(error: Exception) -> None:
+        errors.append(error)
+
+    @player.event
+    async def on_library_change(uri: str, saved: bool) -> None:
+        changes.append(saved)
+
+    player.process_message({"uri": "hm://collection/collection/user/json", "payloads": [payload]})
+    player.process_message(
+        {
+            "uri": "hm://collection/collection/user/json",
+            "payloads": ['{"items":[{"type":"track","identifier":"track","removed":false}]}'],
+        }
+    )
+    await asyncio.sleep(0)
+
+    assert len(errors) == 1
+    assert isinstance(errors[0], BaseClientError)
+    assert changes == [True]
+    await player.close()
+
+
+async def test_binary_collection_notification_is_not_interpreted_as_json(session: Mock) -> None:
+    player = Player(session)
+    errors: list[Exception] = []
+
+    @player.event
+    async def on_error(error: Exception) -> None:
+        errors.append(error)
+
+    player.process_message(
+        {
+            "uri": "hm://collection/collection/user",
+            "headers": {"Content-Type": "application/octet-stream"},
+            "payloads": ["ChgIABIQbinary"],
+        }
+    )
+    await asyncio.sleep(0)
+
+    assert errors == []
+    assert not player._library_state
+    await player.close()
+
+
+@pytest.mark.parametrize(
+    "failure", [ValueError("bad input"), HTTPError("unauthorized", status_code=401)]
+)
+async def test_cleanup_preserves_permanent_connection_errors(
+    session: Mock, monkeypatch: pytest.MonkeyPatch, failure: Exception
+) -> None:
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
+    session.client.delete.side_effect = ConnectionError("offline cleanup")
+    player = Player(session)
+
+    with pytest.raises(ExceptionGroup) as caught:
+        async with player.connect():
+            raise failure
+
+    assert caught.value.exceptions[0] is failure
+    assert not PlayerStatus._transient(caught.value)
+    assert player.is_closed
+
+
+async def test_resolver_failure_does_not_unregister_stale_endpoints(
+    session: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
+    player = Player(session)
+    async with player.connect():
+        pass
+
+    session.client.delete.reset_mock()
+    session.client.get.side_effect = HTTPError("Unauthorized", status_code=401)
+    with pytest.raises(HTTPError):
+        async with player.connect():
+            pass
+
+    session.client.delete.assert_not_called()
+    assert player.is_closed
+
+
+async def test_late_like_response_does_not_overwrite_a_newer_server_unlike(
+    session: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from spotapi.library import LikedTracks
+
+    player = Player(session)
+    observed: list[bool] = []
+
+    @player.event
+    async def on_library_change(uri: str, saved: bool) -> None:
+        observed.append(saved)
+
+    player._publish_library_change("spotify:track:track", False)
+
+    async def add(self: LikedTracks, tracks: list[str]) -> None:
+        player._publish_library_change(tracks[0], True)
+        player._publish_library_change(tracks[0], False)
+
+    monkeypatch.setattr(LikedTracks, "add", add)
+    await player.like("spotify:track:track")
+    await asyncio.sleep(0)
+
+    assert observed == [False, True, False]
+    await player.close()

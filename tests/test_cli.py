@@ -123,7 +123,7 @@ def test_cli_search_accepts_the_python_search_limit(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(Public, "search", search)
 
     assert main(["search", "abc", "--limit", "100"]) == 0
-    search.assert_awaited_once_with("abc", types="track", limit=100)
+    search.assert_awaited_once_with("abc", types="track", limit=100, language=None)
 
 
 def test_cli_json_search_omits_progress_on_a_terminal(
@@ -186,3 +186,12 @@ def test_cli_passes_the_exact_occurrence_to_playlist_move(
     assert main(["playlist", "move", "playlist", "second", "--before", "first"]) == 0
     move.assert_awaited_once_with("second", before="first", after=None)
     assert not capsys.readouterr().out
+
+
+@pytest.mark.parametrize("language", ["fr-CA", "de-DE"])
+def test_cli_forwards_search_language(language: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    search = AsyncMock(return_value=SearchResults("test", ("artist",)))
+    monkeypatch.setattr(Public, "search", search)
+
+    assert main(["search", "test", "--type", "artist", "--language", language, "--json"]) == 0
+    search.assert_awaited_once_with("test", types="artist", limit=10, language=language)

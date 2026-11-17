@@ -11,10 +11,13 @@ from contextlib import asynccontextmanager
 import wreq
 
 from spotapi.connection import HTTPClient, WebSocketClient
+from spotapi.status import PlayerStatus
 
 
 @asynccontextmanager
-async def silent_server() -> AsyncGenerator[tuple[str, asyncio.Future[bytes]], None]:
+async def silent_server(
+    *, disconnect: asyncio.Event | None = None
+) -> AsyncGenerator[tuple[str, asyncio.Future[bytes]], None]:
     received: asyncio.Future[bytes] = asyncio.get_running_loop().create_future()
     clients: set[asyncio.Task[None]] = set()
 
@@ -41,6 +44,10 @@ async def silent_server() -> AsyncGenerator[tuple[str, asyncio.Future[bytes]], N
                 b"Connection: Upgrade\r\nSec-WebSocket-Accept: " + accept + b"\r\n\r\n"
             )
             await writer.drain()
+
+            if disconnect is not None:
+                await disconnect.wait()
+                return
 
             while True:
                 header = await reader.readexactly(2)
@@ -107,3 +114,26 @@ async def test_explicit_native_close_is_safe_inside_connection_context() -> None
             await websocket.close()
 
             assert not websocket.is_connected
+
+
+async def test_actual_native_socket_drop_is_eligible_for_reconnection() -> None:
+    disconnect = asyncio.Event()
+    failed: asyncio.Future[Exception] = asyncio.get_running_loop().create_future()
+
+    async with (
+        asyncio.timeout(5),
+        silent_server(disconnect=disconnect) as (url, _),
+        HTTPClient() as http,
+    ):
+        websocket = WebSocketClient(http_client=http)
+
+        @websocket.event("error")
+        async def on_error(error: Exception) -> None:
+            if not failed.done():
+                failed.set_result(error)
+
+        async with websocket.connect(url):
+            disconnect.set()
+            error = await failed
+
+            assert PlayerStatus._transient(error)

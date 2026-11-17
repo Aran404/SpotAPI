@@ -10,10 +10,12 @@ from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from typing import Any, Literal
 
+from spotapi.models.catalogue.track_details import TrackDetails
 from spotapi.models.history import RecentItem
 from spotapi.models.playback import Device, PlaybackTrack, PlayerState
 
 from ._protocol.routes import CONNECT_OBSERVER, CONNECT_ROUTES
+from .catalogue import Catalogue
 from .client import AsyncClient
 from .command_state import command_applied
 from .connection import Response
@@ -534,6 +536,24 @@ class Player(PlayerStatus):
 
         return self.state.track.uri
 
+    async def current_track_details(self) -> TrackDetails | None:
+        """Fetch catalogue metadata for the music track observed at call time.
+
+        Return None when no music track is selected. The returned details
+        belong to that captured URI even if playback changes during the request.
+        This explicit read leaves playback snapshots and event timing intact.
+        """
+        state = self.state
+        if (
+            state is None
+            or state.track is None
+            or not state.track.uri.startswith("spotify:track:")
+        ):
+            return None
+
+        async with Catalogue(self.session) as catalogue:
+            return await catalogue.get_track(state.track.uri)
+
     async def is_liked(self, track: str | None = None) -> bool:
         """Check whether a supplied or currently playing track is saved."""
         flags = await self.library.contains([self._track_uri(track)])
@@ -542,17 +562,22 @@ class Player(PlayerStatus):
 
     async def like(self, track: str | None = None) -> None:
         """Save a supplied or currently playing music track."""
-        uri = self._track_uri(track)
-
-        await self.library.add([uri])
-        self._events.dispatch("library_change", uri, True)
+        await self._change_liked(self._track_uri(track), True)
 
     async def unlike(self, track: str | None = None) -> None:
         """Unsave a supplied or currently playing music track."""
-        uri = self._track_uri(track)
+        await self._change_liked(self._track_uri(track), False)
 
-        await self.library.remove([uri])
-        self._events.dispatch("library_change", uri, False)
+    async def _change_liked(self, uri: str, saved: bool) -> None:
+        """Keep a late local confirmation from overwriting newer server events."""
+        before = self._library_state.get(uri)
+        if saved:
+            await self.library.add([uri])
+        else:
+            await self.library.remove([uri])
+
+        if self._library_state.get(uri) is before:
+            self._publish_library_change(uri, saved)
 
     async def recents(self, *, limit: int = 20, offset: int = 0) -> tuple[RecentItem, ...]:
         """Read a bounded page of the account's recent activity."""

@@ -195,13 +195,31 @@ Configure your host to launch the Python interpreter where the extra is installe
 Tools cover public lookups, search, batches, discovery, chart shortcuts,
 first-page playlist occurrences and track visuals. The resource template is
 `spotify://resource/{kind}/{identifier}`. Metadata is untrusted external content,
-not an instruction to execute. No mutation or arbitrary file-download tool is
-exposed. Account cookies are not accepted as tool arguments.
+not an instruction to execute. Account cookies are supplied by the host process.
 
 To enable caption tools, explicitly launch with `--authenticated` and configure
 `SPOTIFY_COOKIE` in the host process environment. Do not share that configuration
 or put credentials in a repository. It enables account-backed reads for the
 connected host; only do so for a host you trust.
+
+To enable playback and likes, launch with `--allow-player` and set
+`SPOTIFY_COOKIE` in the host environment:
+
+```sh
+python -m spotapi.mcp --allow-player
+```
+
+This opt-in adds `now_playing`, `next`, `pause`, `resume`, `like`, and
+`transfer`. `now_playing` returns devices and current music metadata.
+`transfer` accepts a full device ID from that result and an optional `play`
+boolean. Each call owns and closes its authenticated client and player
+connection. Mutation tools are annotated as writes so the host can present
+its approval controls. Enabling this flag authorizes the connected host to
+change playback and Liked Songs. The default server continues to expose
+public reads, with captions added only when account access is enabled.
+Supplying a track to `like` works without an active playback device. If an
+operation completes but its connection cleanup fails, the tool reports that
+distinction. Check the observed state before repeating a change.
 
 Build a local container with `docker build -f Dockerfile.mcp -t spotapi-mcp .`,
 then launch `docker run --rm -i spotapi-mcp`. The Docker context excludes local

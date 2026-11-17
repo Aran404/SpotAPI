@@ -26,6 +26,27 @@ asyncio.run(show_favorites())
 
 `Private.from_cookies` also accepts `proxy` and `language` keyword arguments.
 
+Catch `LoginExpired` to ask the user for a fresh Spotify session:
+
+```python
+from spotapi import AsyncClient, LoginExpired
+
+try:
+    client = await AsyncClient.from_cookies(cookie)
+except LoginExpired:
+    print("Log in to Spotify again and update your sp_dc cookie.")
+else:
+    async with client:
+        # Use account helpers here.
+        pass
+```
+
+The exception covers a missing `sp_dc`, a 401 during login bootstrap or token
+issuance, and a cookie session downgraded to anonymous access. It subclasses `HTTPError`
+and retains its status and cause when present. Other HTTP failures, including
+400/403 responses that do not establish a rejected login, retain their
+original exception.
+
 `ListeningStats`, `Library`, `LikedTracks`, `Profiles`, `Notifications` and `Blends`
 also work independently with the same client. Helpers never close a borrowed client.
 Use `Catalogue(client)` for authenticated catalogue reads, including private playlists.

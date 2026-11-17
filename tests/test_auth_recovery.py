@@ -15,7 +15,7 @@ from spotapi.connection.types import Methods
 from spotapi.datastruct import ObjectDict
 from spotapi.query import QueryClient
 from spotapi.session import AccessToken, AuthSession
-from spotapi.types import HTTPError
+from spotapi.types import HTTPError, LoginExpired
 
 
 @pytest.mark.parametrize(
@@ -179,7 +179,7 @@ async def test_empty_cookie_factory_closes_even_before_session_construction(
     client = Mock(spec=AsyncClient, close=AsyncMock())
     monkeypatch.setattr(AsyncClient, "new", AsyncMock(return_value=client))
 
-    with pytest.raises(ValueError, match="sp_dc"):
+    with pytest.raises(LoginExpired, match="sp_dc"):
         await AsyncClient.from_cookies("")
     client.close.assert_awaited_once()
 
@@ -249,3 +249,67 @@ async def test_client_token_uses_the_generated_user_agent_os() -> None:
 
     device = client.post.call_args.kwargs["json"]["client_data"]["js_sdk_data"]
     assert (device["os"], device["os_version"]) == ("macOS", "10.15.7")
+
+
+@pytest.mark.parametrize("status", [400, 401, 403, 429, 503])
+async def test_login_error_only_classifies_rejected_authenticated_token_requests(
+    status: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    client = Mock(spec=AsyncClient)
+    original = HTTPError("Token rejected", status_code=status)
+    client.get = AsyncMock(side_effect=original)
+    session = AuthSession(client)
+    session._require_user = True
+    session.session = Mock(bundles={})
+    monkeypatch.setattr("spotapi.session.build_totp", Mock(return_value=(1, "123456")))
+
+    with pytest.raises(HTTPError) as raised:
+        await session._fetch_access_token()
+
+    assert isinstance(raised.value, LoginExpired) is (status == 401)
+    assert raised.value.status_code == status
+    if status == 401:
+        assert raised.value.__cause__ is original
+    else:
+        assert raised.value is original
+
+
+@pytest.mark.parametrize("status", [401, 403, 503])
+async def test_login_bootstrap_only_classifies_an_unauthorized_session(
+    status: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session = AuthSession(Mock(spec=AsyncClient))
+    session._require_user = True
+    session.session = Mock(
+        warm=AsyncMock(side_effect=HTTPError("Bootstrap failed", status_code=status))
+    )
+    monkeypatch.setattr(AuthSession, "resolve_user_agent", AsyncMock())
+
+    with pytest.raises(HTTPError) as raised:
+        await session.authorize()
+
+    assert isinstance(raised.value, LoginExpired) is (status == 401)
+    assert raised.value.status_code == status
+
+
+@pytest.mark.parametrize("client_factory", [False, True])
+async def test_login_rejection_is_preserved_when_failed_login_cleanup_also_fails(
+    client_factory: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rejected = LoginExpired("Log in again", status_code=401)
+    client = Mock(
+        spec=AsyncClient, close=AsyncMock(side_effect=ConnectionError("cleanup offline"))
+    )
+    monkeypatch.setattr(AuthSession, "authorize", AsyncMock(side_effect=rejected))
+    monkeypatch.setattr(AsyncClient, "new", AsyncMock(return_value=client))
+
+    with pytest.raises(LoginExpired) as caught:
+        if client_factory:
+            await AsyncClient.from_cookies("sp_dc=synthetic")
+        else:
+            await AuthSession.from_cookies("sp_dc=synthetic", client=client)
+
+    assert caught.value is rejected
+    assert caught.value.status_code == 401
+    assert isinstance(caught.value.__cause__, ConnectionError)
+    assert client.close.await_count >= 1

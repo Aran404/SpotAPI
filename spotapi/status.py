@@ -7,11 +7,11 @@ import json
 import math
 import secrets
 import time
-from collections import deque
+from collections import OrderedDict, deque
 from collections.abc import AsyncGenerator, Callable, Coroutine, Mapping
 from contextlib import asynccontextmanager
 from importlib.metadata import PackageNotFoundError, version
-from typing import Any, Literal, ParamSpec, Self, TypeVar, overload
+from typing import Any, Literal, ParamSpec, Self, TypeVar, cast, overload
 from urllib.parse import urlencode
 
 import wreq
@@ -19,6 +19,7 @@ import wreq
 from spotapi.models.playback import Device, PlaybackUpdate, PlayerState
 
 from ._parsing import integer, mapping, records
+from ._protocol.collection import collection_changes
 from ._protocol.routes import CONNECT_OBSERVER
 from .client import AsyncClient
 from .connect import ConnectEndpoints
@@ -90,6 +91,8 @@ class PlayerStatus:
         "_websocket",
         "_runner",
         "_error",
+        "_library_state",
+        "_library_revision",
     )
 
     def __init__(self, session: AuthSession | AsyncClient, *, name: str = "SpotAPI") -> None:
@@ -130,6 +133,8 @@ class PlayerStatus:
         self._websocket: WebSocketClient | None = None
         self._runner: asyncio.Task[Any] | None = None
         self._error: Exception | None = None
+        self._library_state: OrderedDict[str, tuple[bool, int]] = OrderedDict()
+        self._library_revision = 0
 
     def event(
         self, callback: Callable[P, Coroutine[Any, Any, R]]
@@ -343,6 +348,10 @@ class PlayerStatus:
         current: BaseException | None = error
 
         while current is not None:
+            if isinstance(current, BaseExceptionGroup):
+                group = cast(BaseExceptionGroup[BaseException], current)
+                return all(PlayerStatus._transient(child) for child in group.exceptions)
+
             if isinstance(current, HTTPError) and current.status_code is not None:
                 return current.status_code in {408, 429, 500, 502, 503, 504}
 
@@ -352,7 +361,11 @@ class PlayerStatus:
                     ConnectionError,
                     TimeoutError,
                     wreq.exceptions.ConnectionError,
+                    wreq.exceptions.ConnectionResetError,
+                    wreq.exceptions.ProxyConnectionError,
                     wreq.exceptions.TimeoutError,
+                    wreq.exceptions.BodyError,
+                    wreq.exceptions.WebSocketError,
                 ),
             ):
                 return True
@@ -398,14 +411,17 @@ class PlayerStatus:
         self._handshake.clear()
         self._snapshot.clear()
         self._disconnected.clear()
+        self._library_state.clear()
         self._ready.clear()
         self._acks.clear()
 
         self.connection_id = None
+        self.endpoints = None
         self._error = None
         self.state, self.devices, self.playback = None, (), None
         self._connecting = True
 
+        connection_error: BaseException | None = None
         try:
             websocket = self._create_websocket()
             self._websocket = websocket
@@ -440,17 +456,28 @@ class PlayerStatus:
                     error = exc
                     raise
                 finally:
-                    try:
-                        await self._shutdown()
-                    except Exception as cleanup:
-                        if error is not None:
-                            raise error from cleanup
-
-                        raise
+                    await self._finish_connection(error)
+        except BaseException as error:
+            connection_error = error
+            raise
         finally:
-            self._scope_active = False
+            try:
+                await self._finish_connection(connection_error)
+            finally:
+                self._scope_active = False
 
+    async def _finish_connection(self, error: BaseException | None) -> None:
+        """Preserve both connection and cleanup failures for retry classification."""
+        try:
             await self._shutdown()
+        except Exception as cleanup:
+            if isinstance(error, Exception):
+                raise ExceptionGroup("Connection and cleanup failed", [error, cleanup]) from None
+
+            if error is not None:
+                raise error from cleanup
+
+            raise
 
     async def _shutdown(self) -> None:
         """Cancel owned tasks and close the dealer before deregistration."""
@@ -508,21 +535,27 @@ class PlayerStatus:
         @websocket.event("close")
         async def disconnected() -> None:
             """Wake waiters and the connection supervisor after dealer disconnect."""
-            self._ready.clear()
-            self._disconnected.set()
-            self._ack_received.set()
-            self._events.dispatch("disconnect")
+            self._connection_lost()
 
         @websocket.event("error")
         async def failed(error: Exception) -> None:
             """Retain the connection failure and wake the connection supervisor."""
-            self._error = error
-            self._ready.clear()
-            self._disconnected.set()
-            self._ack_received.set()
-            self._events.dispatch("error", error)
+            self._connection_lost(error)
 
         return websocket
+
+    def _connection_lost(self, error: Exception | None = None) -> None:
+        """Schedule lifecycle notifications before waking the shutdown supervisor."""
+        self._ready.clear()
+        if not self._disconnected.is_set():
+            self._events.dispatch("disconnect")
+
+        if error is not None:
+            self._error = error
+            self._events.dispatch("error", error)
+
+        self._disconnected.set()
+        self._ack_received.set()
 
     async def _register_controller(self) -> None:
         """Register this controller against the active dealer connection."""
@@ -584,10 +617,7 @@ class PlayerStatus:
         if error is not None:
             failure = BaseClientError("Controller keep-alive failed")
             failure.__cause__ = error
-            self._error = failure
-
-            self._disconnected.set()
-            self._events.dispatch("error", failure)
+            self._connection_lost(failure)
 
     async def refresh(self) -> PlayerState | None:
         """Request a full snapshot; ordinary property reads never make requests."""
@@ -649,6 +679,12 @@ class PlayerStatus:
         if self._closing:
             return
 
+        try:
+            for uri, saved in collection_changes(packet):
+                self._publish_library_change(uri, saved)
+        except BaseClientError as error:
+            self._events.dispatch("error", error)
+
         for key, value in mapping(packet.get("headers")).items():
             if key.lower() == "spotify-connection-id" and isinstance(value, str):
                 self.connection_id = value
@@ -669,6 +705,18 @@ class PlayerStatus:
                 self._acks.append(ack_id)
                 self._ack_received.set()
                 self._events.dispatch("command_ack", ack_id)
+
+    def _publish_library_change(self, uri: str, saved: bool) -> None:
+        """Publish each observed transition once, including local/server echoes."""
+        previous = self._library_state.get(uri)
+        self._library_revision += 1
+        self._library_state[uri] = (saved, self._library_revision)
+        self._library_state.move_to_end(uri)
+        if len(self._library_state) > 256:
+            self._library_state.popitem(last=False)
+
+        if previous is None or previous[0] is not saved:
+            self._events.dispatch("library_change", uri, saved)
 
     def _update_cluster(self, cluster: Mapping[str, Any]) -> None:
         """Update typed snapshots and dispatch only the events that changed."""

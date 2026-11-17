@@ -7,6 +7,7 @@ import logging
 from .exceptions import (
     BaseClientError,
     HTTPError,
+    LoginExpired,
     PlaylistError,
     SpotAPIError,
     WebsocketError,
@@ -35,6 +36,7 @@ __all__ = (
     "LoggerColour",
     "LoggerMixin",
     "LoggerProtocol",
+    "LoginExpired",
     "MultiLogger",
     "NoopLogger",
     "PlaylistError",

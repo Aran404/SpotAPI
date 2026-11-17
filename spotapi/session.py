@@ -31,7 +31,7 @@ from ._protocol.routes import CLIENT_TOKEN, TOKEN
 from ._protocol.totp import build_totp
 from ._protocol.user_agent import UserAgent, parse_user_agent
 from .client import AsyncClient
-from .types import HTTPError
+from .types import HTTPError, LoginExpired
 
 __all__ = (
     "AccessToken",
@@ -727,7 +727,7 @@ class AuthSession:
             cookies = _parse_cookie_header(cookies)
 
         if not any(cookie.get("name") == "sp_dc" and cookie.get("value") for cookie in cookies):
-            raise ValueError("A nonempty sp_dc cookie is required")
+            raise LoginExpired("A nonempty sp_dc cookie is required; log in to Spotify again")
 
         if client is not None and proxy is not None:
             raise ValueError("Configure a proxy on the supplied client")
@@ -737,23 +737,23 @@ class AuthSession:
 
         session = cls(client, language=language)
         session._require_user = True
-        authorized = False
-
         try:
             client.transport.set_cookies(cookies)
 
             token = await session.authorize()
             if token.is_anonymous is True:
-                raise HTTPError(
+                raise LoginExpired(
                     "Spotify rejected the cookie session and returned guest credentials",
                     status_code=401,
                 )
 
-            authorized = True
-        finally:
-            # Cleanup must run even when authorization is cancelled.
-            if not authorized:
+        except BaseException as error:
+            try:
                 await session.close()
+            except Exception as cleanup:
+                raise error from cleanup
+
+            raise
 
         return session
 
@@ -810,7 +810,18 @@ class AuthSession:
         """
         async with self._auth_lock:
             await self.resolve_user_agent()
-            await self.session.warm()
+            try:
+                await self.session.warm()
+            except HTTPError as error:
+                if self._require_user and error.status_code == 401:
+                    raise LoginExpired(
+                        "Spotify rejected the login; obtain a fresh sp_dc cookie",
+                        status_code=error.status_code,
+                        response=error.response,
+                    ) from error
+
+                raise
+
             self._device_id = self._raw_http_client.get_cookie("sp_t") or str(uuid.uuid4())
             return await self._renew()
 
@@ -829,7 +840,7 @@ class AuthSession:
         """Replace tokens under the authentication lock without accepting a guest downgrade."""
         token = await self._issue_token()
         if self._require_user and token.is_anonymous is True:
-            raise HTTPError(
+            raise LoginExpired(
                 "Spotify rejected the cookie session and returned guest credentials",
                 status_code=401,
             )
@@ -881,16 +892,26 @@ class AuthSession:
         """Request a web-player access token using the current TOTP."""
         version, totp = await asyncio.to_thread(build_totp, self.session.bundles)
 
-        response = await self.client.get(
-            _TOKEN_URL,
-            query={
-                "reason": "init",
-                "productType": "web-player",
-                "totp": totp,
-                "totpServer": totp,
-                "totpVer": version,
-            },
-        )
+        try:
+            response = await self.client.get(
+                _TOKEN_URL,
+                query={
+                    "reason": "init",
+                    "productType": "web-player",
+                    "totp": totp,
+                    "totpServer": totp,
+                    "totpVer": version,
+                },
+            )
+        except HTTPError as error:
+            if self._require_user and error.status_code == 401:
+                raise LoginExpired(
+                    "Spotify rejected the login; obtain a fresh sp_dc cookie",
+                    status_code=error.status_code,
+                    response=error.response,
+                ) from error
+
+            raise
 
         body = response.json
 

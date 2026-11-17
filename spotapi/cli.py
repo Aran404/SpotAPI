@@ -67,6 +67,7 @@ def _parser() -> argparse.ArgumentParser:
     search.add_argument("--type", choices=tuple(SEARCH_DESKTOP_SECTIONS), default="track")
     search.add_argument("--limit", type=lambda value: _limit(value, maximum=100), default=10)
     search.add_argument("--json", action="store_true", help="print results as JSON")
+    search.add_argument("--language", help="Spotify language or locale, such as fr-CA")
     get = commands.add_parser("get", help="look up a Spotify URL or URI as JSON")
     get.add_argument("resource", help="Spotify URL or URI")
     credits = commands.add_parser("credits", help="show a track's contributors as JSON")
@@ -169,7 +170,7 @@ async def _search(args: argparse.Namespace) -> None:
     if not args.json and sys.stderr.isatty():
         print("Searching Spotify...", file=sys.stderr)
 
-    results = await Public.search(args.query, types=kind, limit=args.limit)
+    results = await Public.search(args.query, types=kind, limit=args.limit, language=args.language)
     hits = results[kind]
     if args.json:
         _json(hits)

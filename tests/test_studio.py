@@ -288,3 +288,19 @@ def test_feature_identifiers_are_unique_and_changes_are_explicit() -> None:
             "delete_playlist",
         }
     )
+
+
+async def test_studio_explains_a_missing_or_expired_login(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from spotapi import LoginExpired
+
+    monkeypatch.setattr(Catalogue, "__aenter__", AsyncMock())
+    monkeypatch.setattr(Catalogue, "close", AsyncMock())
+    monkeypatch.setattr(Studio, "_execute", AsyncMock(side_effect=LoginExpired("private details")))
+    studio = Studio()
+    try:
+        result = await studio.request("bootstrap", {})
+        assert result == {"ok": False, "error": "Log in to Spotify again and update your session."}
+    finally:
+        await studio.close()

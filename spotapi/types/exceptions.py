@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 __all__ = (
     "BaseClientError",
     "HTTPError",
+    "LoginExpired",
     "PlaylistError",
     "SpotAPIError",
     "WebsocketError",
@@ -34,6 +35,10 @@ class HTTPError(SpotAPIError):
         super().__init__(message)
         self.status_code = status_code
         self.response = response
+
+
+class LoginExpired(HTTPError):
+    """The Spotify login is missing or rejected; obtain a fresh session cookie."""
 
 
 class WebsocketError(SpotAPIError):

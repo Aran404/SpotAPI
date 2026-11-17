@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from .status import PlayerStatus
     from .sync import SyncCatalogue
     from .transcripts import Transcripts
-    from .types import SpotAPIError
+    from .types import LoginExpired, SpotAPIError
 
 __author__ = "Aran404"
 __license__ = "GPL 3.0"
@@ -68,6 +68,7 @@ _EXPORTS = {
     "ListeningHistory": ".history",
     "ListeningStats": ".stats",
     "LyricsClient": ".lyrics",
+    "LoginExpired": ".types",
     "Notifications": ".notifications",
     "PasswordReset": ".password",
     "Player": ".player",
@@ -98,6 +99,7 @@ __all__ = (
     "LikedTracks",
     "ListeningHistory",
     "ListeningStats",
+    "LoginExpired",
     "LyricsClient",
     "Media",
     "Notifications",

@@ -313,3 +313,122 @@ async def test_streaming_requests_publish_retry_after_without_replaying() -> Non
     client._rate_limiter.pause.assert_called_once_with("cdn.example", 5.0)
     client._wclient.request.assert_awaited_once()
     response.__aexit__.assert_awaited_once()
+
+
+async def test_mcp_player_tools_require_opt_in_and_declare_mutations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pytest.importorskip("mcp")
+    from spotapi.mcp import build_server
+
+    ordinary = build_server(cookie="synthetic-cookie")
+    assert "pause" not in {tool.name for tool in await ordinary.list_tools()}
+
+    with pytest.raises(ValueError, match="cookie"):
+        build_server(allow_player=True)
+
+    player = Mock(
+        state=None,
+        devices=(),
+        current_track_details=AsyncMock(return_value=None),
+        next=AsyncMock(),
+        pause=AsyncMock(),
+        resume=AsyncMock(),
+        like=AsyncMock(),
+        transfer=AsyncMock(),
+    )
+    closed: list[bool] = []
+
+    @asynccontextmanager
+    async def scope(cookie: str) -> AsyncGenerator[Mock, None]:
+        assert cookie == "synthetic-cookie"
+        try:
+            yield player
+        finally:
+            closed.append(True)
+
+    monkeypatch.setattr("spotapi.mcp._player_session", scope)
+    server = build_server(cookie="synthetic-cookie", allow_player=True)
+    tools = {tool.name: tool for tool in await server.list_tools()}
+    assert tools["now_playing"].annotations is not None
+    assert tools["now_playing"].annotations.readOnlyHint is True
+
+    arguments = {
+        "now_playing": {},
+        "pause": {},
+        "resume": {},
+        "next": {},
+        "like": {},
+        "transfer": {"device_id": "phone", "play": False},
+    }
+    for name, values in arguments.items():
+        if name != "now_playing":
+            assert tools[name].annotations is not None
+            assert tools[name].annotations.readOnlyHint is False
+        await server.call_tool(name, values)
+
+    player.like.assert_awaited_once_with()
+    player.transfer.assert_awaited_once_with("phone", play=False)
+    player.next.assert_awaited_once()
+    assert len(closed) == len(arguments)
+
+    player.pause.side_effect = RuntimeError("device disconnected")
+    with pytest.raises(Exception, match="device disconnected"):
+        await server.call_tool("pause", {})
+    assert len(closed) == len(arguments) + 1
+
+
+async def test_mcp_reports_when_cleanup_fails_after_an_operation_completed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from spotapi.mcp import _player_session
+
+    client = MagicMock()
+    client.__aenter__ = AsyncMock(return_value=client)
+    client.__aexit__ = AsyncMock(return_value=False)
+    player = Mock()
+
+    @asynccontextmanager
+    async def connection() -> AsyncGenerator[Mock, None]:
+        try:
+            yield player
+        finally:
+            raise ConnectionError("cleanup unavailable")
+
+    monkeypatch.setattr("spotapi.mcp.AsyncClient.from_cookies", AsyncMock(return_value=client))
+    monkeypatch.setattr("spotapi.mcp.Player", Mock(return_value=Mock(connect=connection)))
+
+    with pytest.raises(RuntimeError, match="operation completed") as caught:
+        async with _player_session("synthetic-cookie") as active:
+            assert active is player
+
+    assert isinstance(caught.value.__cause__, ConnectionError)
+    client.__aexit__.assert_awaited_once()
+
+
+async def test_mcp_can_like_a_supplied_track_without_a_player(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pytest.importorskip("mcp")
+    from spotapi.mcp import build_server
+
+    client = MagicMock()
+    client.__aenter__ = AsyncMock(return_value=client)
+    client.__aexit__ = AsyncMock(return_value=False)
+    login = AsyncMock(return_value=client)
+    add = AsyncMock()
+    connect = Mock(side_effect=AssertionError("A supplied track does not need a player"))
+    monkeypatch.setattr("spotapi.mcp.AsyncClient.from_cookies", login)
+    monkeypatch.setattr("spotapi.mcp.Player", connect)
+    monkeypatch.setattr("spotapi.mcp.LikedTracks", Mock(return_value=Mock(add=add)))
+    server = build_server(cookie="synthetic-cookie", allow_player=True)
+
+    await server.call_tool("like", {"track": "spotify:track:test"})
+    add.assert_awaited_once_with(["spotify:track:test"])
+    client.__aexit__.assert_awaited_once()
+    connect.assert_not_called()
+
+    login.reset_mock()
+    with pytest.raises(Exception, match="open.spotify.com"):
+        await server.call_tool("like", {"track": "https://example.com/track/test"})
+    login.assert_not_awaited()

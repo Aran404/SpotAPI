@@ -11,7 +11,9 @@ async with await AsyncClient.from_cookies(cookie) as client:
     @player.event
     async def on_track_change(before, after):
         if after:
-            print(after.artist, after.name)
+            details = await player.current_track_details()
+            if details and details.uri == after.uri:
+                print(details.name)
 
     async with player.connect():
         print(player.devices)
@@ -28,12 +30,24 @@ For a long-running integration, `await player.start()` reconnects after transien
 connection failures with bounded backoff. `await player.close()` stops it,
 including from a listener. Authentication failures propagate immediately.
 Use `is_ready`, `is_closed`, and `wait_until_ready()` to coordinate other tasks.
+`disconnect` fires for both clean closes and broken connections. Failures also
+emit `error`; `reconnect` fires after a replacement connection becomes ready.
+Temporary cleanup failures are eligible for reconnection, including grouped
+failures. Authentication and programming errors stop the listener.
 
 `state`, `devices` and `playback` are cached typed snapshots. Property reads
 never make requests; `await player.refresh()` does. `state.position_ms`,
 `remaining_ms` and `progress` advance locally while playing. `state.next_tracks` / `prev_tracks` are tuples
 of `PlaybackTrack`. Cluster snapshots and device `replace_state` messages
 remain separate. Media manifests and registration tokens are not retained.
+
+Spotify often omits display metadata from playback events. Call
+`await player.current_track_details()` to read a typed `TrackDetails` model for
+the music track observed when the call starts. It returns `None` for an empty
+player or an episode. This makes one explicit catalogue request through the
+borrowed authenticated session. If playback changes during the request, the
+result still belongs to the captured URI. Check the URI before updating a
+live display.
 
 Register one callback with `@player.event` and an `on_` name, or additional
 callbacks with `@player.listen("track_change")`. Manual registration uses
@@ -54,7 +68,7 @@ return a tuple; timeout, cancellation and shutdown remove temporary listeners.
 | `volume_change` | Device, previous percentage, new percentage |
 | `shuffle_change`, `repeat_change`, `speed_change`, `quality_change`, `context_change` | Previous value, new value |
 | `position_change` | Previous reported milliseconds, new reported milliseconds |
-| `library_change` | Track URI, saved flag; changes made through this Player |
+| `library_change` | Track URI, saved flag; local changes and server collection notifications |
 | `command_ack` | Dealer acknowledgement ID |
 | `error` | Transport, timer or listener exception |
 
@@ -99,6 +113,11 @@ Passing `None` cancels it. Timers belong to the connection and stop on exit.
 
 `await player.is_liked()`, `like()` and `unlike()` use the current music track
 by default. For batching, use `player.library` or `LikedTracks(client)` directly.
+Collection notifications update `library_change` when another device adds or
+removes a liked track. Local changes and their server echoes are deduplicated
+within a bounded recent history. Notifications missed while disconnected
+are not replayed by SpotAPI; re-read `is_liked()` after `ready` or `reconnect`
+to synchronize the current track.
 `await player.recents()` and `ListeningHistory(client)` return typed, dated
 recents. These are Spotify's grouped played contexts and saved items, not an
 exact timestamped stream history. Each item identifies its activity explicitly.
