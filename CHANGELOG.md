@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Send Connect commands from the registered controller to the selected player.
+  This fixes accepted commands that left playback unchanged and then timed out
+  when the active player was also used as the command source (#91).
+
 ## 2.1.0 - 2026-11-13
 
 Engineering notes: [I wrote a Python library at 16. Here are 5 things I'd fix

@@ -879,18 +879,25 @@ async def test_video_signals_use_advertised_player_capabilities(
             await player.switch_to_audio()
 
 
-async def test_default_command_source_is_the_existing_active_player(
+@pytest.mark.parametrize("operation", ["player/command", "connect/volume", "connect/transfer"])
+@pytest.mark.parametrize("target", [None, "selected-device"])
+async def test_default_command_source_is_the_registered_controller(
     session: Mock,
     monkeypatch: pytest.MonkeyPatch,
+    operation: str,
+    target: str | None,
 ) -> None:
     monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
-    player = Player(session)
+    player = Player(session, device=target)
     async with player.connect():
         assert player.state is not None and player.state.active_device_id
-        await player.command("resume")
-        url = session.client.post.call_args.args[0]
-        active = player.state.active_device_id
-        assert url.endswith(f"/player/command/from/{active}/to/{active}")
+        destination = target or player.state.active_device_id
+        url = player._route(operation)
+        assert url.endswith(f"/{operation}/from/{player.controller_id}/to/{destination}")
+
+        if operation == "player/command":
+            await player.command("resume")
+            assert session.client.post.call_args.args[0] == url
 
 
 @pytest.mark.parametrize("body", [{"ack_id": "not-delivered"}, {}, {"ack_id": ""}])

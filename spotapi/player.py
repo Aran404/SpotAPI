@@ -136,7 +136,7 @@ class Player(PlayerStatus):
 
         active = self.state.active_device_id if self.state is not None else None
         destination = target or self.target_device_id or active
-        source = self.source_device_id or active or self.controller_id
+        source = self.source_device_id or self.controller_id
 
         if destination is None:
             raise ValueError("No active player; select an existing playback device")

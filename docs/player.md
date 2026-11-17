@@ -65,7 +65,8 @@ announce the same song again. `state.quality`, `modes`, `restrictions` and
 
 Inside the connection scope, `player.select(device)` chooses a target. The
 active device is the default. `Player(client, device=..., source=...)` also
-accepts explicit full playback IDs.
+accepts explicit full device IDs. Commands originate from SpotAPI's registered
+controller unless you supply `source`; the playback device receives them.
 Pin a device for a multi-step workflow so an active-device change cannot
 redirect later commands to another player.
 
