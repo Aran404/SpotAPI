@@ -17,7 +17,7 @@ from spotapi import (
     SearchResults,
     SpotAPIError,
 )
-from spotapi.cli import main
+from spotapi.cli import _parser, main
 
 
 @pytest.mark.parametrize(
@@ -34,6 +34,16 @@ def test_cli_rejects_invalid_player_values_before_running(
 
     assert exit_info.value.code == 2
     runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("action", "value", "field"),
+    [("seek", "0", "milliseconds"), ("volume", "0", "percent"), ("volume", "100", "percent")],
+)
+def test_cli_accepts_player_range_boundaries(action: str, value: str, field: str) -> None:
+    args = _parser().parse_args(["player", action, value])
+
+    assert getattr(args, field) == int(value)
 
 
 def test_cli_get_outputs_json(
