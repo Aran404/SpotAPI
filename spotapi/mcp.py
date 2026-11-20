@@ -76,20 +76,21 @@ def build_server(*, cookie: str | None = None, allow_player: bool = False) -> An
     ) -> Any:
         """Read a discovery surface. Colors accepts a Spotify image identity."""
         async with Catalogue() as spotify:
-            if kind == "related_artists":
-                result = await spotify.get_related_artists(value)
-            elif kind == "similar_albums":
-                result = await spotify.get_similar_albums(value)
-            elif kind == "concerts":
-                result = await spotify.get_artist_events(value)
-            elif kind == "credits":
-                result = await spotify.get_track_credits(value)
-            elif kind == "radio":
-                result = await spotify.get_radio(value)
-            elif kind == "canvas":
-                result = await spotify.get_canvas(value)
-            else:
-                result = await spotify.get_colors(value)
+            match kind:
+                case "related_artists":
+                    result = await spotify.get_related_artists(value)
+                case "similar_albums":
+                    result = await spotify.get_similar_albums(value)
+                case "concerts":
+                    result = await spotify.get_artist_events(value)
+                case "credits":
+                    result = await spotify.get_track_credits(value)
+                case "radio":
+                    result = await spotify.get_radio(value)
+                case "canvas":
+                    result = await spotify.get_canvas(value)
+                case "colors":
+                    result = await spotify.get_colors(value)
             return to_dict(result)
 
     @server.tool()

@@ -180,7 +180,10 @@ class Studio:
                     await runner
                     raise RuntimeError("Player disconnected; use the refresh button to reconnect")
                 if not done:
-                    raise TimeoutError("Waiting for Spotify's player connection")
+                    raise TimeoutError(
+                        "Spotify player state is not available yet. Open Spotify on a "
+                        "playback device, then refresh the player."
+                    )
                 await ready
             finally:
                 if not ready.done():

@@ -1,129 +1,77 @@
-# SpotAPI 2 release checks
+---
+description: How SpotAPI validates releases and what each class of test proves.
+---
 
-The async API lives under `spotapi`. The synchronous release is available on
-PyPI as `spotapi==1.2.8`.
+# Release quality and verification
 
-## What ships
+SpotAPI validates a release in three layers: **offline contracts**, **installed
+artifacts**, and **optional live checks**. Passing one layer does not imply the
+others passed. This is the process used to make changes without accidentally
+breaking applications.
 
-Typed async catalogue access, the `spotapi search` and `spotapi get` commands,
-managed cookie sessions through `Private`, playlist occurrence editing,
-existing-player controls and events, and optional Studio and
-terminal examples. The core keeps one runtime dependency. See the
-[changelog](https://github.com/Aran404/SpotAPI/blob/main/CHANGELOG.md) and [migration guide](https://github.com/Aran404/SpotAPI/blob/main/MIGRATION.md) for the
-public API and compatibility changes.
+## Before publishing
 
-Studio includes linked track, artist, and album views, typed response inspectors,
-and public lyrics via LRCLIB. A connected player can seek from synchronized lines.
+From a checkout with the development extras installed:
 
-Release cleanup fixed mutation error payloads being mistaken for success,
-incorrect event subscriptions, missing-ACK confirmation, account-switch response
-races and timed-out sign-in tasks. Studio action lookup and CSS overrides were
-simplified. Release CI now verifies an installed wheel rather than potentially
-importing an editable checkout.
+```sh
+python -m pip install -e ".[dev,demo]"
+python -m pytest -m "not live" -q
+python -m pyright
+python -m ruff check .
+python -m black --check .
+python -m mkdocs build --strict
+```
 
-Library save/remove and pin/unpin success contracts were checked live. Their
-wrappers now reject missing or failed confirmations. Follow/unfollow confirmation
-uses Spotify's deployed client contract and offline tests; no social mutation was
-sent to another user. Batch operations can partially apply before failure: inspect
-current state before retrying. Mutations are not silently replayed.
+Build the wheel/source distribution and install the wheel in a **clean environment
+outside the source tree**. Check the commands below against the installed package,
+not an editable import:
 
-## Verification
+```sh
+python -m spotapi --version
+python -m spotapi search --help
+python -m spotapi discover --help
+python -m spotapi studio --help
+```
 
-### Current working tree: November 13, 2026
+The [CI workflows](https://github.com/Aran404/SpotAPI/tree/main/.github/workflows)
+exercise offline contracts across Python 3.11-3.13 and supported desktop OSes,
+plus wheel installation checks and frontend browser tests.
 
-On Windows with Python 3.12, 440 offline tests passed, with 29 live cases
-deselected. Strict Pyright, Ruff and Black passed. Live anonymous search returned
-tracks, artists and albums; a typed track lookup also passed. These checks used
-an explicitly configured environment proxy, not a change to transport defaults.
-Authenticated authorization, profile and plan reads also passed. A broader
-read-only run completed six public cases but exceeded its four-minute limit;
-it is not recorded as a passing full live suite.
-The separate artist-discovered-on live contract also passed. Its first call
-required full route discovery and took 107.5 seconds through this proxy;
-uncommon operations can still have substantial cold-discovery cost.
+## Live checks
 
-The longer read-only run passed seven account/catalogue cases, then failed
-to discover the related-artists hash in this proxied environment. A separate
-live request verified the last observed hash and returned 40 typed artists;
-that value is now a fallback after current-bundle discovery. Incomplete bundle
-downloads no longer permanently suppress subsequent discovery attempts.
+Most tests run without a Spotify account or a network connection. The opt-in
+live suite is different: it requires Spotify to respond, and authenticated
+checks require credentials supplied only in your own environment.
 
-Playback regression tests cover dealer disconnects with and without ACK IDs,
-late ACKs during temporary device loss, cancellation and failed-seek cleanup.
-One deadline-bound snapshot read can confirm a quiet dealer's command; it
-never resends the mutation and cannot use an old snapshot as proof.
-The targeted live playback rerun skipped because no active music player was
-available; these fixes are not recorded as live playback verification.
+```sh
+python -m pytest --live=read -m "live and not authenticated" -vv
+```
 
-Cold search now loads the main and search-route bundles, discovering other
-routes only when an operation needs them. One traced run made two bundle
-requests and completed search in 21.3 seconds, compared with an earlier run's
-168 bundle requests and 80.9 seconds. These are individual network observations,
-not a latency guarantee. Regression tests cover build invalidation, shared
-discovery and the eight-worker concurrency bound. Broad live verification and
-hosted cross-platform CI remain release gates.
+Playback-changing tests are **not** part of scheduled public CI. To verify
+controls on your own device, see the procedure in [Player controls](player.md).
+Those tests may temporarily change your active playback and should be run only
+when you intend to exercise those operations.
 
-The strict MkDocs build and wheel/source builds passed. An isolated environment
-using the installed wheel outside the checkout imported the package, found the
-packaged terminal demo and displayed CLI help. Artifact inspection found no
-`.env` credential file or internal development plans. Offline combined
-statement/branch coverage is 72.3% with the packaged Studio now included in
-the measurement (the earlier library-only baseline was 74.5%); this is not exhaustive
-endpoint coverage.
+## What passing tests means
 
-The final dependency range requires `wreq>=0.12.3,<0.13`. The offline suite and
-three live anonymous search cases passed against 0.12.3. A clean environment
-resolved that version from the built wheel, exercised the CLI entry points and
-found Studio's packaged frontend and native icons.
-
-### Distribution and documentation review
-
-Version `2.1.0` is prepared for release; PyPI remains on `2.0.0` until the
-release tag is published. Studio ships as an optional
-application behind `spotapi studio`, with its frontend and native icons in the
-wheel. The example module remains a compatibility launcher. Browser checks cover
-the minimum native window size, including visible results and reachable sign-in.
-Native launch failure and normal shutdown have deterministic ownership tests.
-
-Read the Docs uses its version-2 MkDocs configuration with pinned documentation
-dependencies and strict builds. The hosted `latest` site loaded successfully;
-all 13 navigation pages rendered with headings, non-empty code blocks, valid
-same-page anchors and no replacement characters. The Spotipy migration guide
-also renders as ordinary Markdown on GitHub. Main-branch integration still
-requires the hosted platform matrix to pass; a source push is not a PyPI release.
-
-The published 2.0.0 page demonstrates why the 2.1.0 README now uses canonical
-Read the Docs and GitHub destinations: PyPI rewrites relative links under the
-project URL. The 2.1.0 wheel metadata contains no relative Markdown targets, and
-its long description passes Twine's renderer check.
-
-### Earlier release-candidate observations
-
-- Offline tests run on Python 3.11, 3.12 and 3.13. Browser checks run against
-  isolated local fixtures.
-- The full opt-in live suite exercises
-  authenticated account, library, lyrics and Studio reads; temporary-playlist
-  metadata/UID editing and pin/unpin; and track save/remove with original unsaved
-  state restored. Temporary playlists were removed from the library.
-- An existing player was tested live for pause, resume, queue entry add/remove,
-  options, the pause timer and seek. On that device, resume repeatedly timed out
-  after seeking while paused. Restoring play/pause before seeking passed the
-  same scenario and verified the final playback state.
-- Strict Pyright, Ruff, Black and whitespace checks passed. The wheel and source
-  archive built and passed Twine metadata checks. A fresh virtual environment
-  imported the installed wheel outside the checkout and ran both CLI commands
-  against Spotify. Neither artifact included `.env`, local planning, exploratory
-  captures, or the configured cookie.
-
-Python 3.11's optional terminal image dependency emits a Pillow deprecation warning;
-Pillow remains bounded below version 14. No warning was suppressed. Python 3.13
-was verified in a fresh environment with current optional development/demo
-dependencies. Hosted GitHub Actions jobs remain pending until the branch is pushed.
+| Evidence | What it establishes | What it doesn't |
+|---|---|---|
+| Offline unit tests | Expected parsing, lifecycle, errors and request contracts for captured cases | That Spotify still accepts live requests |
+| Installed-wheel smoke test | Packaging, imports and command availability on tested machines | That optional GUI engines run on every host |
+| Browser UI tests | Deterministic interaction with the bundled Studio frontend | Live authentication or playback |
+| Read-only live tests | Current response compatibility for the exercised operations | Unexercised endpoints or write operations |
+| Playback live tests | Device-specific behavior for the exercised actions | Universal Free/Premium or device compatibility |
 
 ## Boundaries
 
-Jam, signup/password login, creator/family/billing features, audio rendering and
-automated browser challenges are outside the current API. Canvas availability and
-live video switching remain unverified. Some account, password, and social writes
-have offline or source coverage only. See [account boundaries](account.md),
-[player coverage](player-coverage.md) and [Studio setup](studio.md).
+SpotAPI uses unofficial web-player interfaces that Spotify can change. A
+successful HTTP response or Connect acknowledgement is not necessarily proof
+that a remote player changed state; tests check fresh playback state where
+possible. Some player devices and account entitlements may reject actions.
+See [player capability boundaries](player-coverage.md), the
+[request policy](transport.md), and [troubleshooting](troubleshooting.md).
+
+The dated results from the November 13, 2026 hardening run are preserved in the
+[maintainer verification snapshot](https://github.com/Aran404/SpotAPI/blob/main/docs/development/release-verification-2026-11-13.md).
+They are historical observations, not the current release status or a substitute
+for the CI result on a new commit.

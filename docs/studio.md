@@ -65,28 +65,12 @@ Account changes require explicit confirmation, and password/token inputs clear
 after completion. Profile/password changes can require a caller-supplied CAPTCHA
 token; no solver vendor is bundled.
 
-## What this example tests
+## Scope and verification
 
-Browser tests exercise bundled assets, navigation, detail views, mutation
-cancellation and compact layouts with an isolated local bridge. Native-window
-checks and real backend reads are separate evidence; mocked browser tests do not
-prove Spotify endpoint behavior. User-driven login has a tested cookie-import
-contract, not an automated end-to-end login claim.
+Studio is a desktop workbench for exploring Spotify data and controlling
+existing players. It does not decode or stream full-track audio or replace
+Spotify account signup, billing and subscription management.
 
-```bash
-python -m pip install -e ".[dev,demo,studio]"
-python -m playwright install chromium
-python -m pytest -q
-python -m pytest --live=read -q
-python -m pytest --live=all -q
-```
-
-The final command also permits playback changes and temporary-playlist mutations.
-Run it only against your own prepared account. Ordinary tests are offline.
-Missing cookies skip authenticated integration checks; missing browser binaries
-skip browser UI tests with an installation hint.
-
-Studio is a Spotify workbench example, not complete Spotify client parity. Account
-signup, billing, family enrollment, audio rendering, and automatic browser-challenge
-completion are outside its implemented scope. Advanced renderer registration and
-transport primitives remain available programmatically in the library.
+For frontend tests, live API checks and their limitations, see
+[release quality and verification](release-checks.md). Advanced player and
+renderer interfaces are documented in [Player and status](player.md).

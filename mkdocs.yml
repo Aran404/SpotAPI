@@ -29,6 +29,7 @@ nav:
       - Overview: index.md
       - First result: quickstart.md
       - Coming from Spotipy: from-spotipy.md
+      - Troubleshooting: troubleshooting.md
   - Build something:
       - Catalogue and search: catalogue.md
       - Discovery, previews and captions: discovery.md
@@ -39,8 +40,8 @@ nav:
       - Python API: reference.md
       - Request and retry policy: transport.md
       - API layout: api-layout.md
-      - Verification boundaries: player-coverage.md
-      - Release checks: release-checks.md
+      - Player capabilities: player-coverage.md
+      - Release quality: release-checks.md
 
 plugins:
   - search

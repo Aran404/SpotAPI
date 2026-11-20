@@ -447,7 +447,7 @@ class PlayerStatus:
                 try:
                     await self._register_controller()
                     await self.refresh()
-                    await asyncio.wait_for(self._snapshot.wait(), timeout)
+                    await self._wait_for_initial_snapshot(timeout)
                     self._ready.set()
                     self._events.dispatch("ready")
 
@@ -465,6 +465,34 @@ class PlayerStatus:
                 await self._finish_connection(connection_error)
             finally:
                 self._scope_active = False
+
+    async def _wait_for_initial_snapshot(self, timeout: float) -> None:
+        """Wait for a playback snapshot or fail immediately if the dealer closes."""
+        if self._snapshot.is_set():
+            return
+
+        snapshot = asyncio.create_task(self._snapshot.wait())
+        disconnected = asyncio.create_task(self._disconnected.wait())
+        try:
+            await asyncio.wait(
+                (snapshot, disconnected), timeout=timeout, return_when=asyncio.FIRST_COMPLETED
+            )
+            if self._disconnected.is_set():
+                if self._error is not None:
+                    raise ConnectionError(
+                        "Spotify dealer disconnected before its initial snapshot"
+                    ) from self._error
+                raise ConnectionError("Spotify dealer closed before its initial snapshot")
+            if not self._snapshot.is_set():
+                raise TimeoutError(
+                    "Spotify Connect did not provide an initial playback snapshot "
+                    f"within {timeout:g} seconds. Check that a Spotify player is open "
+                    "on this account; if it is, the Connect state subscription may be failing."
+                )
+        finally:
+            snapshot.cancel()
+            disconnected.cancel()
+            await asyncio.gather(snapshot, disconnected, return_exceptions=True)
 
     async def _finish_connection(self, error: BaseException | None) -> None:
         """Preserve both connection and cleanup failures for retry classification."""

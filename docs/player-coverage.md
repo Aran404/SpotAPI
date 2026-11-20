@@ -1,103 +1,54 @@
-# Player coverage
+---
+description: Supported Spotify Connect controls, verification and device boundaries.
+---
 
-Reviewed against Spotify's [Web API player reference](https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback),
-[Web Playback SDK reference](https://developer.spotify.com/documentation/web-playback-sdk/reference),
-the supplied dealer captures and live Web Player requests on 2026-11-10.
-The event interface follows the decorator and predicate patterns documented by
-[discord.py](https://discordpy.readthedocs.io/en/stable/api.html#discord.Client.wait_for).
+# Player capabilities
 
-## Existing players
+SpotAPI is a **remote controller** for an existing Spotify player. It can read
+current playback, respond to changes and send controls to a selected device.
+It cannot decode protected music, replace a Spotify audio player or synchronize
+speakers. A Spotify account and a supported active device are required for
+player commands; availability varies by account and device.
 
-| Capability | SpotAPI | Verification |
-| --- | --- | --- |
-| Current playback and available devices | `state`, `devices`, `refresh()` | Live snapshots and capture replay |
-| Play a link or context | `play(value, position_ms=..., offset=..., track=...)` | Direct track and context restoration live; offsets validated offline |
-| Pause, resume, toggle, restart, seek | `pause`, `resume`, `toggle`, `restart`, `seek` | Pause/resume events, seek/restart live; toggle delegates tested controls |
-| Next / previous | `next`, `previous` | Both live; previous may restart the current song according to Spotify |
-| Shuffle and three repeat modes | `shuffle`, `repeat` | Live controls and resulting dealer state |
-| Volume | `volume(percent)`, `Device.volume_percent` | Live change and restoration |
-| Select and transfer | `select`, `transfer` | Transfer between existing players live; original device restored |
-| Read / append / replace queue | `state.next_tracks`, `add_to_queue`, `set_queue` | Live append and occurrence removal |
-| Remove one / reorder / clear manual queue | `remove_from_queue`, `set_queue`, `clear_queue` | UID/revision preservation offline; removal live |
-| Liked tracks | `is_liked`, `like`, `unlike`, `LikedTracks` | Live save/check/remove with original saved status restored |
-| Dated recents | `recents`, `ListeningHistory` | Typed live response; identity/date parsing offline |
-| Premium lyrics | `LyricsClient.get`, `Lyrics.at` | Live availability and typed timing; duplicate timestamps offline |
-| Sleep timer | `sleep_timer`, `sleep_timer_remaining` | Real timer-driven pause event live; expiration and cleanup offline |
+## Existing-player controls
 
-Playback commands accept a matching dealer acknowledgement or a fresh state proving
-the requested result. Hidden/browser controllers can omit ACKs. Mutations are never
-replayed, and actions restricted by the current context are rejected locally. Volume and transfer return after HTTP acceptance. Observe dealer state to
-confirm the resulting behavior and wait for a loaded track after play requests.
-Raw `command(..., wait=False)` can opt out explicitly.
-Queue revisions can become stale after another command or another app changes
-the queue. Mutations are never replayed automatically after an ambiguous failure.
-The live control regression confirms shuffle/repeat changes, a duplicate queue
-occurrence's insertion/removal, timer-driven pause, and restoration. Seek sends
-both position fields with an absolute origin for Web Player compatibility.
-Position projection uses Spotify's server time and position anchor before
-advancing with the local monotonic clock.
-The desktop passed the queue/options/timer regression twice consecutively.
-Browser validation was intermittent: some acknowledged commands did not converge
-to the requested state. The cause remains unresolved; browser control should be
-treated as experimental. Next/previous, loaded direct
-play, context/track restoration and volume were subsequently verified on desktop;
-the original browser device was restored, paused, after those checks.
-A transfer back returned HTTP 502 during validation; a fresh snapshot was used
-to reconcile and restore the original device. Exact listening history is not
-reversible when testing next/previous or playing another context.
+| Capability | API | Important behavior |
+|---|---|---|
+| State and devices | `Player.state`, `devices`, `refresh()` | State is cached; `refresh()` fetches a new snapshot |
+| Play and transport | `play()`, `pause()`, `resume()`, `next()`, `previous()` | Controls an existing Spotify device; does not render audio |
+| Position and volume | `seek()`, `restart()`, `volume()` | Actions can be restricted by the current context |
+| Playback settings | `shuffle()`, `repeat()` | Device and content determine which operations are allowed |
+| Device routing | `select()`, `transfer()` | `select()` only changes the local target; `transfer()` requests an actual transfer |
+| Queue | `add_to_queue()`, `set_queue()`, `remove_from_queue()`, `clear_queue()` | Some edits require an observed queue revision |
+| Personal controls | `like()`, `unlike()`, `is_liked()`, `recents()` | Requires account access; recents are not an exact listening timeline |
+| Lyrics | `LyricsClient.get()`, `Lyrics.at()` | Entitlement and per-track availability apply |
+| Events | `listen()`, `event()`, `wait_for()` | State, track, device, queue and error events are available |
 
-Recents contain grouped contexts and saved actions with calendar dates, rather
-than an exact timestamp for every play. Lyrics remain dependent on entitlement,
-market and track availability. Existing playback must run on a real Spotify
-device; SpotAPI is a controller, not an audio decoder.
+See [Player and status](player.md) for runnable examples, method arguments,
+resource ownership and event names.
 
-## Events and ownership
+## Reliability and confirmation
 
-`event`, `listen`, `add_listener`, `remove_listener` and `wait_for` support
-reactive integrations. Events cover readiness, disconnection/reconnection,
-state, track occurrence, queue, active device, device list, volume, shuffle,
-repeat, speed, quality, context, reported position, local library changes and
-sleep timer completion. The [guide](player.md) lists exact arguments.
+Commands do not silently retry after ambiguous errors. SpotAPI accepts a dealer
+acknowledgement or a newly observed state proving supported actions. An
+acknowledgement can arrive before audio is actually loaded; observe the player
+state before depending on the next song. The client handles reconnects, but
+notifications missed while disconnected are not replayed.
 
-`connect()` owns one connection scope. `start()` reconnects on transient failures;
-authentication errors stop immediately. Shutdown cancels owned callbacks,
-waiters, keep-alives and timers, removes the owned observer and control-only
-registration, and closes the socket. The supplied authenticated client remains
-the caller's responsibility. A native silent-WebSocket regression test covers
-idle reads blocking send/close in wreq's serialized command actor.
+Playback validation has covered desktop scenarios and captured Web Player
+requests. Browser-based playback has occasionally accepted commands without
+reaching the requested state. **Do not advertise identical behavior for every
+device or Free-account setup without testing it.**
 
-Advanced integrations can use `RegisteredDevice` from `spotapi.devices`
-directly or the Player registration/report helpers with their renderer's actual
-capabilities. Playback and HOBS observer IDs remain separate. Automatic cleanup
-only removes registrations created by the instance.
+## Boundaries
 
-## Deliberate limits
+Spotify Connect is not an audio decoding engine. Audio playback, DRM,
+normalization, crossfade and speaker synchronization are outside SpotAPI's
+scope. Features such as Smart Shuffle, device renaming and podcast playback
+speed do not have verified wrappers. Public catalogue data requires no developer
+key; authenticated playback can still have account and device restrictions.
 
-Browser `activateElement`, browser audio decoding and DRM initialization belong
-to the Web Playback SDK. Audio quality is observed, not remotely forced.
-Crossfade, normalization, equalizer, remote device renaming, Smart Shuffle,
-autoplay configuration and podcast speed controls have no verified wrapper here.
-The raw `command()` escape hatch does not imply these operations are supported.
-
-Official OAuth Web API methods are not interchangeable with cookie-authenticated
-Web Player endpoints. The initial official device-list probe returned HTTP 429;
-probing that route stopped. SpotAPI uses the verified Connect/Pathfinder routes
-described here, without promising that unofficial clients are undetectable.
-
-## Useful next examples
-
-The best next hooks use the existing typed APIs: a live lyrics companion with
-album artwork, a queue editor that preserves duplicate occurrences, and a
-playlist discovery game that queues a choice and saves favorites. Keep these
-optional examples so the core library retains its single transport dependency.
-These are product ideas, not shipped features or a prediction of star growth.
-
-## Studio follow-up
-
-The 2026-11-10 release pass also checked the current Spotify SDK implementation at
-[its deployed embedded client](https://sdk.scdn.co/embedded/index.js). Hidden
-controllers can omit dealer ACKs, so known commands may complete on a fresh snapshot
-proving their result. Unsupported context actions are rejected locally; an autoplay
-or radio context can explicitly disable shuffle and repeat. The current live control
-suite verifies queue changes and a timer-driven pause, and changes shuffle/repeat
-only when Spotify permits them. See the [release checks](release-checks.md).
+For the exact dated observations behind these statements, see the
+[maintainer playback snapshot](https://github.com/Aran404/SpotAPI/blob/main/docs/development/player-verification-2026-11-10.md).
+For a clean environment or missing playback device, use
+[troubleshooting](troubleshooting.md).

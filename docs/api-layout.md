@@ -27,9 +27,8 @@ They are available to expert integrations without crowding the normal entry poin
 
 The internal `_protocol` package owns endpoint templates, protobuf wire
 helpers, bundle-source parsing and web-player TOTP handling. Feature modules
-keep request payloads and response semantics. `Route` only substitutes and
-escapes path segments; it does not implement a second HTTP client or Discord's
-rate-limit buckets. Regional hosts remain explicit overrides.
+keep request payloads and response semantics. `Route` substitutes and escapes path segments without taking over HTTP
+transport or authorization. Regional hosts remain explicit overrides.
 
 `spotapi.models` is a package of small domain modules. It contains result data
 and parsing, without importing account/player clients. Its `catalogue`

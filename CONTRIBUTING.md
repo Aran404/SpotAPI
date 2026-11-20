@@ -76,8 +76,5 @@ python -m mkdocs build --strict
 python -m mkdocs serve
 ```
 
-Local research, captured metadata and audit notes under `docs/research` are
-excluded from the site and Git. Do not add credentials to examples or screenshots.
-To activate hosting, import the public repository in Read the Docs, select main,
-and confirm the actual project slug before advertising its public URL. The
-configuration alone does not create an account, project, webhook or hosted site.
+Keep exploratory captures and personal audit notes outside the repository.
+Do not add credentials or account identifiers to examples, logs or screenshots.

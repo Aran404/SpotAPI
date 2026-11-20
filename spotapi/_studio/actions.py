@@ -93,7 +93,7 @@ ACTIONS = (
     Action("lyrics", "Lyrics", "Player", ("uri",), authenticated=False),
     Action("play", "Play a Spotify link", "Player", ("uri",), True),
     Action("seek", "Seek in milliseconds", "Player", ("position_ms",), True),
-    Action("volume", "Set volume · 0–100", "Player", ("percent",), True),
+    Action("volume", "Set volume · 0-100", "Player", ("percent",), True),
     Action("transfer", "Transfer playback", "Player", ("device",), True),
     Action("queue_add", "Add a track or episode to queue", "Player", ("uri",), True),
     Action("queue_remove", "Remove a queued occurrence", "Player", ("uid",), True),

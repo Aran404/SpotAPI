@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import importlib
+import difflib
 import importlib.util
 import json
 import os
@@ -24,6 +25,172 @@ from .playlist import Playlist
 from .public import Public
 from .serialization import to_dict
 from .types import SpotAPIError
+
+# CLI presentation is kept here rather than introducing a dependency on Rich or
+# Textual for commands that only need the base installation.
+_COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
+    (
+        "Start here",
+        (
+            ("connect", "Live terminal controller"),
+            ("discover", "Interactive music browser"),
+            ("studio", "Desktop workbench"),
+        ),
+    ),
+    (
+        "Explore",
+        (
+            ("search", "Search tracks, albums, artists"),
+            ("get", "Look up a Spotify URL or URI"),
+            ("credits", "Track credits"),
+            ("lyrics", "Lyrics (account required)"),
+            ("transcript", "Episode transcripts"),
+        ),
+    ),
+    (
+        "Your Spotify",
+        (
+            ("player", "Control an existing player"),
+            ("library", "Manage liked tracks"),
+            ("playlist", "Manage playlist entries"),
+        ),
+    ),
+    (
+        "More tools",
+        (
+            ("charts", "Browse charts"),
+            ("chart", "Chart details"),
+            ("events", "Artist events"),
+            ("similar-albums", "Album recommendations"),
+            ("colors", "Artwork colors"),
+            ("embed", "Embed metadata"),
+            ("download", "Download published assets"),
+        ),
+    ),
+)
+_ALL_COMMANDS = tuple(name for _, entries in _COMMAND_GROUPS for name, _ in entries)
+
+
+class _CommandParser(argparse.ArgumentParser):
+    """Compact errors with guidance, without changing argparse's exit codes."""
+
+    def error(self, message: str) -> None:
+        if "invalid choice:" in message and (
+            message.startswith("argument command:") or message.startswith("argument action:")
+        ):
+            invalid = message.partition("invalid choice: ")[2].split(" (choose from", 1)[0]
+            command = invalid.strip().strip("'\"")
+            choices = (
+                tuple(
+                    name
+                    for action in self._actions
+                    if isinstance(action, argparse._SubParsersAction)
+                    for name in action.choices
+                )
+                or _ALL_COMMANDS
+            )
+            candidate = difflib.get_close_matches(command, choices, n=1, cutoff=0.6)
+            if candidate:
+                message = f"Unknown command {command!r}. Did you mean {candidate[0]!r}?"
+            elif command and not command.startswith("-"):
+                message = f"Unknown command {command!r}."
+        self.exit(2, f"spotapi: {message}\nRun 'spotapi --help' to see available commands.\n")
+
+
+class _RootParser(_CommandParser):
+    """Show a short grouped landing page rather than argparse's huge choice list."""
+
+    def format_help(self) -> str:
+        lines = [
+            "SpotAPI — explore Spotify and control your existing player",
+            "",
+            "Usage: spotapi <command> [options]",
+            "",
+        ]
+        for heading, commands in _COMMAND_GROUPS:
+            lines.append(heading)
+            lines.extend(f"  {name:<17} {description}" for name, description in commands)
+            lines.append("")
+        lines.extend(
+            (
+                "Examples",
+                "  spotapi connect                 Interactive player terminal",
+                "  spotapi search 'Daft Punk'     Search the catalogue",
+                "  spotapi player pause           Pause the current player",
+                "  spotapi get <spotify-url>      Inspect a resource",
+                "",
+                "Run 'spotapi <command> --help' for command-specific options.",
+                "Use --json after a command for machine-readable output.",
+                "Default output remains JSON when redirected or piped.",
+                "",
+            )
+        )
+        return "\n".join(lines)
+
+
+def _add_output_options(parser: argparse.ArgumentParser) -> None:
+    """Offer --json after every leaf command, including nested player actions."""
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for child in action.choices.values():
+                _add_output_options(child)
+            return
+    if parser.prog.split()[-1] in {"studio", "discover", "connect"}:
+        return
+    if not any("--json" in action.option_strings for action in parser._actions):
+        parser.add_argument("--json", action="store_true", help="output raw JSON for scripts")
+
+
+def _human(value: object) -> str:
+    """Simple lossless hierarchy for a terminal, with no external UI package."""
+    data = to_dict(value)
+    lines: list[str] = []
+
+    def visit(item: object, depth: int = 0, label: str = "") -> None:
+        indent = "  " * depth
+        if isinstance(item, dict):
+            if label:
+                lines.append(f"{indent}{label}:")
+                depth += 1
+            if not item:
+                lines.append("  " * depth + "(empty)")
+            for key, subvalue in item.items():
+                visit(subvalue, depth, str(key).replace("_", " "))
+        elif isinstance(item, list):
+            if label:
+                lines.append(f"{indent}{label} ({len(item)}):")
+                depth += 1
+            if not item:
+                lines.append("  " * depth + "(none)")
+            for number, entry in enumerate(item, 1):
+                if isinstance(entry, dict):
+                    title = entry.get("name") or entry.get("title") or entry.get("uri")
+                    lines.append("  " * depth + f"{number}. {title or 'Item'}")
+                    for key, subvalue in entry.items():
+                        if title is not None and key in {"name", "title"}:
+                            continue
+                        visit(subvalue, depth + 1, str(key).replace("_", " "))
+                else:
+                    visit(entry, depth, str(number))
+        else:
+            text = "—" if item is None else str(item)
+            lines.append(f"{indent}{label}: {text}" if label else f"{indent}{text}")
+
+    visit(data)
+    return "\n".join(lines)
+
+
+def _display(value: object, args: argparse.Namespace) -> None:
+    if getattr(args, "json", False) or not sys.stdout.isatty():
+        _json(value)
+    else:
+        print(_human(value))
+
+
+def _acknowledge(message: str) -> None:
+    # Machine-oriented commands previously produced no output upon mutation.
+    if sys.stdout.isatty():
+        print(message)
 
 
 def _limit(value: str, *, maximum: int = 50) -> int:
@@ -51,22 +218,38 @@ def _volume(value: str) -> int:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="spotapi", description=__doc__)
+    parser = _RootParser(prog="spotapi", description=__doc__, add_help=False)
+    parser.add_argument("-h", "--help", action="help", help="show this help message")
     parser.set_defaults(resource_lookup=None)
     parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {package_version('spotapi')}",
     )
-    commands = parser.add_subparsers(dest="command", required=True)
+    commands = parser.add_subparsers(
+        dest="command", required=True, metavar="<command>", parser_class=_CommandParser
+    )
     commands.add_parser("studio", help="open the desktop application (studio extra)")
+    connect = commands.add_parser(
+        "connect", help="interactive, persistent Spotify Connect terminal"
+    )
+    connect.add_argument(
+        "--profile",
+        default="default",
+        metavar="NAME",
+        help="saved OS-keyring account (default: default)",
+    )
+    connect.add_argument(
+        "--force",
+        action="store_true",
+        help="open a fresh login window and replace this saved account",
+    )
     discover = commands.add_parser("discover", help="browse Spotify in your terminal (demo extra)")
     discover.add_argument("query", nargs="*", help="search words or a Spotify link")
     search = commands.add_parser("search", help="search the public catalogue")
     search.add_argument("query", help="text to search for")
     search.add_argument("--type", choices=tuple(SEARCH_DESKTOP_SECTIONS), default="track")
     search.add_argument("--limit", type=lambda value: _limit(value, maximum=100), default=10)
-    search.add_argument("--json", action="store_true", help="print results as JSON")
     search.add_argument("--language", help="Spotify language or locale, such as fr-CA")
     get = commands.add_parser("get", help="look up a Spotify URL or URI as JSON")
     get.add_argument("resource", help="Spotify URL or URI")
@@ -97,6 +280,7 @@ def _parser() -> argparse.ArgumentParser:
     _configure_library(commands.add_parser("library", help="read or change saved tracks"))
     _configure_player(commands.add_parser("player", help="control an existing Spotify device"))
 
+    _add_output_options(parser)
     return parser
 
 
@@ -173,70 +357,95 @@ async def _search(args: argparse.Namespace) -> None:
     results = await Public.search(args.query, types=kind, limit=args.limit, language=args.language)
     hits = results[kind]
     if args.json:
-        _json(hits)
+        _display(hits, args)
         return
 
     for hit in hits:
-        print(f"{hit.name}\t{hit.uri}")
+        artists = hit.artists.items if hit.artists else ()
+        names = ", ".join(artist.profile.name for artist in artists if artist.profile)
+        print(f"{hit.name} — {names}" if names else hit.name)
+        print(f"  {hit.uri}")
     if not hits:
         print(f"No {kind}s found.", file=sys.stderr)
 
 
 async def _run_library(liked: LikedTracks, args: argparse.Namespace) -> None:
     action: str = args.action
-    if action == "list":
-        _json(await liked.get(limit=args.limit))
-    elif action == "contains":
-        flags = await liked.contains(args.tracks)
-        _json(
-            [
-                {"track": track, "liked": flag}
-                for track, flag in zip(args.tracks, flags, strict=True)
-            ]
-        )
-    elif action == "add":
-        await liked.add(args.tracks)
-    else:
-        await liked.remove(args.tracks)
+    match action:
+        case "list":
+            _display(await liked.get(limit=args.limit), args)
+        case "contains":
+            flags = await liked.contains(args.tracks)
+            _display(
+                [
+                    {"track": track, "liked": flag}
+                    for track, flag in zip(args.tracks, flags, strict=True)
+                ],
+                args,
+            )
+        case "add":
+            await liked.add(args.tracks)
+            _acknowledge(f"Added {len(args.tracks)} track(s) to your library (request completed).")
+        case "remove":
+            await liked.remove(args.tracks)
+            _acknowledge(
+                f"Removed {len(args.tracks)} track(s) from your library (request completed)."
+            )
+        case _:
+            raise ValueError(f"Unsupported library action: {action}")
 
 
 async def _run_playlist(playlist: Playlist, args: argparse.Namespace) -> None:
     action: str = args.action
-    if action == "items":
-        items: list[PlaylistEntry] = []
-        async with aclosing(playlist.items(limit=args.limit)) as entries:
-            async for entry in entries:
-                items.append(entry)
-                if len(items) == args.limit:
-                    break
-        _json(items)
-    elif action == "add":
-        await playlist.add_tracks(*args.tracks)
-    elif action == "remove":
-        await playlist.remove_occurrences(*args.uids)
-    else:
-        await playlist.move_occurrences(*args.uids, before=args.before, after=args.after)
+    match action:
+        case "items":
+            items: list[PlaylistEntry] = []
+            async with aclosing(playlist.items(limit=args.limit)) as entries:
+                async for entry in entries:
+                    items.append(entry)
+                    if len(items) == args.limit:
+                        break
+            _display(items, args)
+        case "add":
+            await playlist.add_tracks(*args.tracks)
+            _acknowledge(f"Added {len(args.tracks)} track(s) to the playlist.")
+        case "remove":
+            await playlist.remove_occurrences(*args.uids)
+            _acknowledge(f"Removed {len(args.uids)} playlist occurrence(s).")
+        case "move":
+            await playlist.move_occurrences(*args.uids, before=args.before, after=args.after)
+            _acknowledge(f"Move requested for {len(args.uids)} playlist occurrence(s).")
+        case _:
+            raise ValueError(f"Unsupported playlist action: {action}")
 
 
 async def _run_player(player: Player, args: argparse.Namespace) -> None:
     action: str = args.action
-    if action == "status":
-        _json({"state": player.state, "devices": player.devices})
-    elif action == "play":
-        await player.play(args.resource)
-    elif action == "seek":
-        await player.seek(args.milliseconds)
-    elif action == "volume":
-        await player.volume(args.percent)
-    elif action == "queue":
-        await player.add_to_queue(args.track)
-    else:
-        await {
-            "pause": player.pause,
-            "resume": player.resume,
-            "next": player.next,
-            "previous": player.previous,
-        }[action]()
+    match action:
+        case "status":
+            _display({"state": player.state, "devices": player.devices}, args)
+        case "play":
+            await player.play(args.resource)
+        case "seek":
+            await player.seek(args.milliseconds)
+        case "volume":
+            await player.volume(args.percent)
+        case "queue":
+            await player.add_to_queue(args.track)
+        case "pause":
+            await player.pause()
+        case "resume":
+            await player.resume()
+        case "next":
+            await player.next()
+        case "previous":
+            await player.previous()
+        case _:
+            raise ValueError(f"Unsupported player action: {action}")
+    if action != "status":
+        _acknowledge(
+            f"{action.capitalize()} request completed; confirm playback state on Spotify."
+        )
 
 
 async def _run_download(args: argparse.Namespace) -> None:
@@ -254,7 +463,10 @@ async def _run_download(args: argparse.Namespace) -> None:
             destination = await media.download_preview(
                 source, args.output, embed_cover=args.embed_cover
             )
-    _json({"path": str(destination)})
+    if getattr(args, "json", False) or not sys.stdout.isatty():
+        _json({"path": str(destination)})
+    else:
+        print(f"Saved to {destination}")
 
 
 async def _run(args: argparse.Namespace) -> None:
@@ -262,11 +474,11 @@ async def _run(args: argparse.Namespace) -> None:
     resource_lookup: Callable[[str], Awaitable[object]] | None = args.resource_lookup
 
     if resource_lookup is not None:
-        _json(await resource_lookup(args.resource))
+        _display(await resource_lookup(args.resource), args)
         return
 
     if command == "charts":
-        _json(Public.list_charts())
+        _display(Public.list_charts(), args)
         return
 
     if command == "download":
@@ -276,55 +488,69 @@ async def _run(args: argparse.Namespace) -> None:
         await _search(args)
         return
     if command == "get":
-        _json(await Public.get(args.resource))
+        _display(await Public.get(args.resource), args)
         return
     if command == "credits":
-        _json(await Public.get_track_credits(args.track))
+        _display(await Public.get_track_credits(args.track), args)
         return
     if command == "playlist" and args.action == "items" and not args.private:
         async with aclosing(Public.get_playlist_items(args.playlist, limit=args.limit)) as pages:
-            _json((await anext(pages, ()))[: args.limit])
+            _display((await anext(pages, ()))[: args.limit], args)
         return
 
     cookie = os.environ.get("SPOTIFY_COOKIE", "").strip()
     if not cookie:
-        raise ValueError("Set SPOTIFY_COOKIE to use your Spotify account.")
+        raise ValueError(
+            "This command needs a Spotify session. Set SPOTIFY_COOKIE, or run spotapi connect --force for browser login."
+        )
 
     if command in {"transcript", "lyrics"}:
         async with Private.from_cookies(cookie) as account:
             helper = account.transcripts if command == "transcript" else account.lyrics
-            _json(await helper.get(args.resource))
+            _display(await helper.get(args.resource), args)
         return
 
     async with Private.from_cookies(cookie) as account:
-        if command == "library":
-            await _run_library(account.liked_tracks, args)
-        elif command == "playlist":
-            await _run_playlist(Playlist(account.session, args.playlist), args)
-        else:
-            async with Player(account.session).connect() as player:
-                await _run_player(player, args)
+        match command:
+            case "library":
+                await _run_library(account.liked_tracks, args)
+            case "playlist":
+                await _run_playlist(Playlist(account.session, args.playlist), args)
+            case _:
+                async with Player(account.session).connect() as player:
+                    await _run_player(player, args)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the requested command and return a process exit code."""
     args = _parser().parse_args(argv)
     try:
-        if args.command == "studio":
-            if any(importlib.util.find_spec(name) is None for name in ("webview", "dotenv")):
-                raise RuntimeError('Install Studio with: pip install "spotapi[studio]"')
-            desktop = importlib.import_module("spotapi._studio.desktop")
-            desktop.main()
-        elif args.command == "discover":
-            dependencies = ("textual", "textual_image", "PIL", "httpx")
-            if any(importlib.util.find_spec(name) is None for name in dependencies):
-                raise RuntimeError(
-                    'Install the terminal browser with: pip install "spotapi[demo]"'
-                )
-            browser = importlib.import_module("spotapi._demo.discover")
-            browser.main(" ".join(args.query))
-        else:
-            asyncio.run(_run(args))
+        match args.command:
+            case "studio":
+                if any(importlib.util.find_spec(name) is None for name in ("webview", "dotenv")):
+                    raise RuntimeError('Install Studio with: pip install "spotapi[studio]"')
+                desktop = importlib.import_module("spotapi._studio.desktop")
+                desktop.main()
+            case "connect":
+                if importlib.util.find_spec("textual") is None:
+                    raise RuntimeError(
+                        'Connect requires its optional interface. Install with: python -m pip install -e ".[connect]" (from the repository), or python -m pip install "spotapi[connect]"'
+                    )
+                from ._connect.commands import profile_name
+
+                profile_name(args.profile)
+                controller = importlib.import_module("spotapi._connect.app")
+                asyncio.run(controller.run_connect(args.profile, force=args.force))
+            case "discover":
+                dependencies = ("textual", "textual_image", "PIL", "httpx")
+                if any(importlib.util.find_spec(name) is None for name in dependencies):
+                    raise RuntimeError(
+                        'Install the terminal browser with: pip install "spotapi[demo]"'
+                    )
+                browser = importlib.import_module("spotapi._demo.discover")
+                browser.main(" ".join(args.query))
+            case _:
+                asyncio.run(_run(args))
     except (SpotAPIError, ValueError, RuntimeError, TimeoutError, OSError) as error:
         print(f"spotapi: {str(error) or 'Request timed out.'}", file=sys.stderr)
         return 1

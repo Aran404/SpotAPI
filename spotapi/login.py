@@ -62,7 +62,9 @@ class SavedSession:
         return await AsyncClient.from_cookies(f"sp_dc={cookie}", **options)
 
 
-async def browser_login(*, saved: SavedSession | None = None, timeout: float = 180) -> AsyncClient:
+async def browser_login(
+    *, saved: SavedSession | None = None, timeout: float = 180, force: bool = False
+) -> AsyncClient:
     """Open Spotify's login in a browser and return an authorized managed client.
 
     Requires ``spotapi[browser]`` and a Playwright Chromium installation. The
@@ -70,10 +72,17 @@ async def browser_login(*, saved: SavedSession | None = None, timeout: float = 1
     the captured Spotify sp_dc cookie is retained, and only when saved is
     explicitly supplied. Reuse a valid saved session before opening a browser.
     Close the returned client after use. Closing the browser or timeout aborts.
+    ``force=True`` always opens a fresh isolated login window, even if saved
+    credentials exist, and replaces the selected saved entry only on success.
     """
     if isinstance(timeout, bool) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("timeout must be positive")
-    if saved is not None and (await asyncio.to_thread(saved.info)).present:
+    if type(force) is not bool:
+        raise TypeError("force must be a boolean")
+    if saved is not None and force:
+        # Fail before opening a browser if secure persistence is unavailable.
+        await asyncio.to_thread(saved.info)
+    if saved is not None and not force and (await asyncio.to_thread(saved.info)).present:
         try:
             return await saved.open()
         except HTTPError as error:
@@ -83,7 +92,8 @@ async def browser_login(*, saved: SavedSession | None = None, timeout: float = 1
         module: Any = importlib.import_module("playwright.async_api")
     except ImportError as error:
         raise RuntimeError(
-            "Install browser login with pip install 'spotapi[browser]' and playwright install chromium"
+            "Install browser login with pip install 'spotapi[browser]' "
+            "and playwright install chromium"
         ) from error
     async with module.async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=False)

@@ -329,3 +329,121 @@ async def test_account_switch_discards_pending_details_and_player_responses(
     assert not await view.locator("#detail").evaluate("dialog => dialog.open")
     assert "Previous account" not in await view.locator("body").inner_text()
     assert await view.locator("#now-name").inner_text() == "No active track"
+
+
+async def test_studio_hides_playback_actions_for_nonplayable_catalogue_items(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, requests = studio_page
+    await view.evaluate("""() => {
+            renderCards([
+                {name: 'Browse this podcast', uri: 'spotify:show:example'},
+                {name: 'Play this track', uri: 'spotify:track:example'},
+            ]);
+        }""")
+    assert await view.get_by_role("button", name="Play Play this track").count() == 1
+    assert await view.get_by_role("button", name="Play Browse this podcast").count() == 0
+
+    await view.evaluate("""() => {
+            renderRows([
+                {name: 'Browse this podcast', uri: 'spotify:show:example'},
+                {name: 'Play this track', uri: 'spotify:track:example'},
+            ]);
+        }""")
+    assert await view.get_by_role("button", name="Play Play this track").count() == 1
+    assert await view.get_by_role("button", name="Play Browse this podcast").count() == 0
+    assert "play" not in requests
+
+
+async def test_heart_reflects_saved_state_and_toggles_without_duplicate_writes(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, _ = studio_page
+    await view.evaluate("""() => {
+          state.polling = true;
+          window.pywebview.api.request = async (action, values) => {
+            window.likeCalls = window.likeCalls || [];
+            window.likeCalls.push(action);
+            if (action === 'saved_contains') return {ok: true, data: [true]};
+            if (action === 'saved_remove' || action === 'saved_add')
+              return {ok: true, data: {completed: true}};
+            return {ok: true, data: {}};
+          };
+          updatePlayer({state: {track: {uri: 'spotify:track:test', name: 'One More Time'}}, devices: []});
+        }""")
+    heart = view.locator("#like-current")
+    await view.wait_for_function(
+        "document.querySelector('#like-current').getAttribute('aria-pressed') === 'true'"
+    )
+    await view.wait_for_function(
+        "getComputedStyle(document.querySelector('#like-current svg')).fill === 'rgb(251, 99, 121)'"
+    )
+
+    await heart.click()
+    await view.wait_for_function(
+        "document.querySelector('#like-current').getAttribute('aria-pressed') === 'false'"
+    )
+    await heart.click()
+    await view.wait_for_function(
+        "document.querySelector('#like-current').getAttribute('aria-pressed') === 'true'"
+    )
+    assert await view.evaluate("window.likeCalls") == [
+        "saved_contains",
+        "saved_remove",
+        "saved_add",
+    ]
+
+
+async def test_heart_ignores_a_late_lookup_for_the_previous_track(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, _ = studio_page
+    await view.evaluate("""() => {
+          window.likes = new Map();
+          state.polling = true;
+          window.pywebview.api.request = (action, values) => {
+            if (action === 'saved_contains')
+              return new Promise(resolve => window.likes.set(values.uris, resolve));
+            return Promise.resolve({ok: true, data: {completed: true}});
+          };
+          updatePlayer({state: {track: {uri: 'spotify:track:first'}}, devices: []});
+        }""")
+    await view.wait_for_function("window.likes.has('spotify:track:first')")
+    await view.evaluate(
+        "updatePlayer({state: {track: {uri: 'spotify:track:second'}}, devices: []})"
+    )
+    await view.wait_for_function("window.likes.has('spotify:track:second')")
+    await view.evaluate("window.likes.get('spotify:track:first')({ok: true, data: [true]})")
+    assert await view.locator("#like-current").is_disabled()
+    await view.evaluate("window.likes.get('spotify:track:second')({ok: true, data: [false]})")
+    await view.locator("#like-current").wait_for(state="visible")
+    await view.wait_for_function("!document.querySelector('#like-current').disabled")
+    assert await view.locator("#like-current").get_attribute("aria-pressed") == "false"
+
+
+async def test_heart_rechecks_library_after_failed_mutation(
+    studio_page: tuple[Page, list[str]],
+) -> None:
+    view, _ = studio_page
+    await view.evaluate("""() => {
+          state.polling = true;
+          window.likeCalls = [];
+          window.pywebview.api.request = async (action) => {
+            window.likeCalls.push(action);
+            if (action === 'saved_contains') return {ok: true, data: [false]};
+            if (action === 'saved_add') return {ok: false, error: 'Save was not confirmed'};
+            return {ok: true, data: {}};
+          };
+          updatePlayer({state: {track: {uri: 'spotify:track:test'}}, devices: []});
+        }""")
+    heart = view.locator("#like-current")
+    await view.wait_for_function("!document.querySelector('#like-current').disabled")
+    await heart.click()
+    await view.wait_for_function("window.likeCalls.length === 3")
+    await view.wait_for_function("!document.querySelector('#like-current').disabled")
+    assert await heart.get_attribute("aria-pressed") == "false"
+    assert await view.evaluate("window.likeCalls") == [
+        "saved_contains",
+        "saved_add",
+        "saved_contains",
+    ]

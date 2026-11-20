@@ -26,6 +26,26 @@ connection ID, registers a control-only device, subscribes a hidden observer
 and obtains a full snapshot. Exiting drains callbacks and timers, removes both
 owned registrations, and closes the WebSocket. Your existing players remain.
 
+### If the player never becomes ready
+
+`Player.connect()` waits for Spotify's initial Connect snapshot before exposing
+playback state or enabling commands. If no snapshot arrives, it raises a timeout
+rather than guessing that an empty response represents a ready player.
+
+First, open Spotify's desktop app or web player with the same account and check
+that the intended device appears in Spotify Connect. A paused track is fine;
+SpotAPI observes the existing player without playing anything. Retry the
+connection after the device is visible. A working account login alone does not
+prove that Spotify supplied a usable Connect playback snapshot.
+
+If the problem persists with an active device, treat it as a Connect observation
+failure rather than extending the timeout indefinitely. Investigate whether the
+dealer connection closed, whether the observer-registration HTTP response
+included `player_state`, and whether dealer messages supplied a `cluster`.
+Log only response status codes and structural field names: never log the dealer
+URL (which contains an access token), cookies, authorization headers, or raw
+playback payloads.
+
 For a long-running integration, `await player.start()` reconnects after transient
 connection failures with bounded backoff. `await player.close()` stops it,
 including from a listener. Authentication failures propagate immediately.

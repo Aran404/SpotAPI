@@ -16,6 +16,10 @@ const state = {
   request: 0,
   session: 0,
   selectedAction: null,
+  likedUri: null,
+  liked: null,
+  likePending: false,
+  likeRequest: 0,
 };
 const icons = (name) => {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -192,6 +196,10 @@ function trackOf(value) {
   return value?.track || value?.item || value;
 }
 
+function isPlayable(uri) {
+  return typeof uri === "string" && /^spotify:(track|episode|album|playlist|artist):/.test(uri);
+}
+
 function renderCards(items) {
   const view = $("#view");
   view.className = "cards";
@@ -221,13 +229,15 @@ function renderCards(items) {
     const album = albumLine(item);
     if (album) card.append(album);
     card.append(element("div", "card-tag", item.uri?.split(":")[1] || "Spotify"));
-    const play = button("", "card-play", (event) => {
-      event.stopPropagation();
-      command("play", { uri: item.uri });
-    });
-    play.setAttribute("aria-label", `Play ${titleOf(item)}`);
-    play.append(icons("play"));
-    card.append(play);
+    if (isPlayable(item.uri)) {
+      const play = button("", "card-play", (event) => {
+        event.stopPropagation();
+        command("play", { uri: item.uri });
+      });
+      play.setAttribute("aria-label", `Play ${titleOf(item)}`);
+      play.append(icons("play"));
+      card.append(play);
+    }
     view.append(card);
   }
 }
@@ -263,18 +273,18 @@ function renderRows(items, target = $("#view")) {
       item.duration_ms;
     if (duration)
       row.append(element("span", "row-duration", minutes(duration)));
-    if (item.uri) {
+    if (isPlayable(item.uri)) {
       const actions = element("div", "row-actions");
       const play = button("", "icon", () => command("play", { uri: item.uri }));
       play.append(icons("play"));
       play.setAttribute("aria-label", `Play ${titleOf(item)}`);
-      const queue = button("", "icon", () =>
-        command("queue_add", { uri: item.uri }),
-      );
-      queue.append(icons("plus"));
-      queue.setAttribute("aria-label", `Queue ${titleOf(item)}`);
       actions.append(play);
-      if (/^spotify:(track|episode):/.test(item.uri)) actions.append(queue);
+      if (/^spotify:(track|episode):/.test(item.uri)) {
+        const queue = button("", "icon", () => command("queue_add", { uri: item.uri }));
+        queue.append(icons("plus"));
+        queue.setAttribute("aria-label", `Queue ${titleOf(item)}`);
+        actions.append(queue);
+      }
       row.append(actions);
     }
     target.append(row);
@@ -544,9 +554,11 @@ async function inspect(uri, action = "detail") {
   hero.append(copy);
   target.append(hero);
   const controls = element("div", "detail-actions");
-  controls.append(
-    button("Play on Spotify", "primary", () => command("play", { uri })),
-  );
+  if (isPlayable(uri)) {
+    controls.append(
+      button("Play on Spotify", "primary", () => command("play", { uri })),
+    );
+  }
   if (/^spotify:(track|episode):/.test(uri))
     controls.append(button("Add to queue", "chip", () => command("queue_add", { uri })));
   if (uri.includes(":track:"))
@@ -819,8 +831,72 @@ async function pollPlayer() {
   }
 }
 
+function renderLike() {
+  const control = $("#like-current");
+  const uri = state.player?.state?.track?.uri;
+  const known = uri === state.likedUri && typeof state.liked === "boolean";
+  const liked = known && state.liked;
+  control.disabled = !state.signedIn || !known || state.likePending;
+  control.classList.toggle("liked", liked);
+  const label = liked ? "Remove from liked songs" : "Like current track";
+  control.setAttribute("aria-pressed", String(liked));
+  control.setAttribute("aria-label", label);
+  control.title = known
+    ? label
+    : uri && state.signedIn
+      ? "Checking saved status; refresh the player if this persists"
+      : "Play a track to like it";
+}
+
+async function checkCurrentLike(uri) {
+  const request = ++state.likeRequest;
+  const session = state.session;
+  state.likedUri = uri;
+  state.liked = null;
+  state.likePending = false;
+  renderLike();
+  if (!state.signedIn || !/^spotify:track:[^:]+$/.test(uri || "")) return;
+
+  const result = await api("saved_contains", { uris: uri });
+  if (request !== state.likeRequest || session !== state.session) return;
+  if (state.player?.state?.track?.uri !== uri) return;
+  if (Array.isArray(result) && typeof result[0] === "boolean") {
+    state.liked = result[0];
+  }
+  renderLike();
+}
+
+async function toggleCurrentLike() {
+  const uri = state.player?.state?.track?.uri;
+  if (!uri || uri !== state.likedUri || typeof state.liked !== "boolean" || state.likePending)
+    return;
+
+  const session = state.session;
+  const request = state.likeRequest;
+  const wasLiked = state.liked;
+  state.likePending = true;
+  renderLike();
+  const result = await api(wasLiked ? "saved_remove" : "saved_add", {
+    uris: uri,
+    confirmed: "true",
+  });
+  if (session !== state.session || request !== state.likeRequest) return;
+  if (state.player?.state?.track?.uri !== uri) return;
+
+  state.likePending = false;
+  if (result === null) {
+    // A failed response is not evidence the mutation was rejected by Spotify.
+    void checkCurrentLike(uri);
+  } else {
+    state.liked = !wasLiked;
+    renderLike();
+  }
+}
+
 function updatePlayer(data) {
   state.player = data;
+  const uri = data.state?.track?.uri || null;
+  if (uri !== state.likedUri) void checkCurrentLike(uri);
   const track = data.state?.track,
     name = track?.name || track?.metadata?.title || "No active track",
     artist = artistsOf(track);
@@ -1039,7 +1115,12 @@ $("#login").addEventListener("click", async () => {
 $("#account-button").addEventListener("click", () => navigate("account"));
 $("#refresh-player").addEventListener("click", async () => {
   const result = await api("refresh_player");
-  if (result) updatePlayer(result);
+  if (!result) return;
+  const previousUri = state.likedUri;
+  updatePlayer(result);
+  const uri = result.state?.track?.uri;
+  if (uri && previousUri === uri && state.liked === null && !state.likePending)
+    void checkCurrentLike(uri);
 });
 $("#lyrics").addEventListener("click", () =>
   state.player?.state?.track?.uri
@@ -1068,10 +1149,7 @@ $("#volume").addEventListener("change", () =>
 $("#devices").addEventListener("change", () =>
   command("transfer", { device: $("#devices").value }),
 );
-$("#like-current").addEventListener("click", () => {
-  const uri = state.player?.state?.track?.uri;
-  if (uri) command("saved_add", { uris: uri });
-});
+$("#like-current").addEventListener("click", toggleCurrentLike);
 function clearDetailNavigation() {
   detailRequest++;
   detailHistory.length = 0;

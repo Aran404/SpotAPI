@@ -64,8 +64,9 @@ official API contract, unlimited access, or a legal exemption. Endpoint behavior
 rate limits, availability and entitlement can change. Official Web API clients
 such as Spotipy remain useful when that integration is the right fit.
 
-Read the [request policy](transport.md), [verification boundaries](player-coverage.md)
-and [legal notice](https://github.com/Aran404/SpotAPI/blob/main/LEGAL_NOTICE.md).
+See [player capabilities](player-coverage.md), [troubleshooting](troubleshooting.md),
+[request policy](transport.md) and the
+[legal notice](https://github.com/Aran404/SpotAPI/blob/main/LEGAL_NOTICE.md).
 
 If SpotAPI helped you get a useful result, [star the repository](https://github.com/Aran404/SpotAPI)
 or share what you built in its Discussions. Specific bug reports and small

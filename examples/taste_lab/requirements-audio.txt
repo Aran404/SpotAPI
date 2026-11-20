@@ -1,0 +1,7 @@
+# Optional example dependencies. SpotAPI itself does not depend on this stack.
+torch>=2.6,<3
+transformers>=4.57,<5
+soundfile>=0.13,<0.14
+scipy>=1.15,<2
+yt-dlp>=2026.10.26
+imageio-ffmpeg>=0.6,<1

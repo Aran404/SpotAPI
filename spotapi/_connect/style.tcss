@@ -1,0 +1,290 @@
+/* SpotAPI Connect: a dark shell with one focused green accent.
+   Layout IDs deliberately match app.compose(): no orphaned legacy selectors. */
+Screen {
+    background: #0b1110;
+    color: #dce9df;
+}
+
+#workspace {
+    width: 100%;
+    height: 100%;
+}
+
+#header {
+    height: 3;
+    padding: 0 2;
+    background: #101a16;
+    border-bottom: solid #25382d;
+    content-align: left middle;
+}
+#brand {
+    width: auto;
+    color: #9bf2a7;
+    text-style: bold;
+}
+#mode {
+    width: 1fr;
+    padding: 0 0 0 2;
+    color: #788c80;
+}
+#connection {
+    width: auto;
+    text-align: right;
+    color: #a0e8af;
+    text-style: bold;
+}
+
+#account-strip {
+    height: 1;
+    padding: 0 2;
+    color: #849b8b;
+}
+#account { width: 1fr; }
+#device {
+    width: auto;
+    max-width: 50%;
+    text-align: right;
+    color: #a9c5b0;
+}
+
+/* The playback workspace and event stream are two peers, not stacked cards. */
+#split {
+    height: 1fr;
+    min-height: 9;
+    margin: 0 2;
+}
+#player-pane {
+    width: 57%;
+    height: 100%;
+    margin-right: 1;
+    padding: 1 2;
+    background: #101c16;
+    border: solid #243a2b;
+}
+#activity-pane {
+    width: 1fr;
+    height: 100%;
+    padding: 1 1;
+    background: #0d1713;
+    border: solid #24382b;
+}
+#eyebrow {
+    height: 1;
+    color: #83d794;
+    text-style: bold;
+}
+#track {
+    height: 2;
+    color: #f2fff5;
+    text-style: bold;
+    text-overflow: ellipsis;
+}
+#artist {
+    height: 1;
+    color: #afc4b1;
+    text-overflow: ellipsis;
+}
+#progress {
+    height: 1;
+    color: #77d98c;
+}
+#details {
+    height: 1;
+    color: #8ba992;
+}
+#transport {
+    height: 3;
+    margin-bottom: 0;
+}
+.transport-link {
+    width: 1fr;
+    min-width: 8;
+    height: 3;
+    margin-right: 1;
+    background: #213226;
+    border: none;
+    color: #dcebdc;
+}
+.transport-link.primary {
+    background: #2e5938;
+    color: #ecffed;
+    text-style: bold;
+}
+.transport-link:hover { background: #3b6b44; }
+.transport-link:focus { border: solid #95f7a9; }
+.transport-link:disabled {
+    background: #18231b;
+    color: #657967;
+}
+
+#context-tabs {
+    height: 3;
+    margin-top: 0;
+    border-bottom: solid #2b4132;
+}
+.tab-button {
+    width: auto;
+    min-width: 7;
+    height: 3;
+    margin-right: 1;
+    padding: 0 1;
+    background: transparent;
+    color: #839f8b;
+    border: none;
+}
+.tab-button:hover { color: #f1fff1; background: #253929; }
+.tab-button:focus { text-style: bold; }
+.tab-button.active { color: #9bf2a7; text-style: bold; }
+#context-label {
+    height: 1;
+    padding-top: 0;
+    color: #90db9c;
+    text-style: bold;
+}
+#context-content {
+    height: 1fr;
+    padding: 0 0 0 1;
+    color: #bdd3c0;
+    overflow-y: auto;
+}
+#context-options {
+    height: 1fr;
+    min-height: 2;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: #bdd3c0;
+    scrollbar-color: #476650;
+    scrollbar-background: #102016;
+}
+#context-options > .option-list--option { color: #b7d4bf; }
+#context-options:focus { background: #13251b; }
+#context-options > .option-list--option-highlighted {
+    background: #274331;
+    color: #effff1;
+    text-style: bold;
+}
+#context-options > .option-list--option-hover {
+    background: #30513b;
+    color: #ffffff;
+}
+#context-options:focus > .option-list--option-highlighted {
+    background: #335b40;
+    color: #ffffff;
+}
+
+#activity-header {
+    height: 2;
+    padding: 0 1;
+}
+#channel-label {
+    width: 1fr;
+    color: #8fe1a0;
+    text-style: bold;
+}
+.subtle-link {
+    width: auto;
+    height: 1;
+    min-width: 9;
+    padding: 0 1;
+    background: transparent;
+    color: #b3c8b7;
+    border: none;
+}
+.subtle-link:hover { background: #213b28; color: #ecfff0; }
+.subtle-link:focus { text-style: bold; }
+#activity-subtitle {
+    height: 1;
+    padding: 0 1;
+    color: #657f6b;
+}
+#activity, #diagnostics {
+    height: 1fr;
+    padding: 0 1;
+    background: transparent;
+    color: #c1d2c3;
+    scrollbar-color: #476650;
+    scrollbar-color-hover: #679975;
+    scrollbar-background: #102016;
+}
+
+#shortcut-hint {
+    height: 1;
+    padding: 0 3;
+    color: #90aa96;
+}
+#suggestions {
+    height: auto;
+    max-height: 8;
+    margin: 0 2;
+    background: #15261b;
+    border: solid #3a6944;
+    color: #eff8ee;
+}
+#suggestions:focus { border: solid #82e79b; }
+#suggestions > .option-list--option-highlighted {
+    background: #274631;
+    color: #eaffec;
+}
+#suggestions > .option-list--option-hover {
+    background: #30513b;
+    color: #ffffff;
+}
+#composer {
+    height: 3;
+    margin: 0 2 1 2;
+    padding: 0 1;
+    background: #15231a;
+    border: solid #426e4b;
+    content-align: left middle;
+}
+#composer:focus-within { border: solid #96f7a9; }
+#prompt {
+    width: auto;
+    height: 1;
+    color: #9cf1ae;
+    text-style: bold;
+}
+#command {
+    width: 1fr;
+    height: 1;
+    margin-left: 1;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: #f1fff2;
+}
+#command:focus { border: none; }
+#command.-disabled { color: #6e8874; }
+
+/* Adaptive workspaces: a narrow IDE terminal still has a usable composer. */
+.narrow #split { layout: vertical; }
+.narrow #player-pane {
+    width: 100%;
+    height: 17;
+    margin: 0 0 1 0;
+}
+.narrow #activity-pane { width: 100%; height: 1fr; }
+.narrow #context-content { max-height: 4; }
+.narrow #context-options { min-height: 2; }
+.narrow #artist, .narrow #details { height: 1; }
+.narrow #progress { height: 1; }
+.narrow #context-tabs { margin-top: 0; }
+.narrow #transport { margin-bottom: 0; }
+.short #account-strip { height: 2; padding-top: 0; }
+.short #shortcut-hint { height: 1; padding-top: 0; }
+.short #suggestions { max-height: 5; }
+.short #artist { height: 1; }
+.short #details { height: 1; }
+.short #progress { height: 1; }
+.short #eyebrow { height: 1; }
+.short #player-pane { padding: 0 1; }
+.short #activity-pane { padding: 0 1; }
+.narrow.short #player-pane { height: 13; }
+.short #context-content { min-height: 1; }
+.tiny #account-strip { display: none; }
+.tiny #shortcut-hint { display: none; }
+.tiny #context-content, .tiny #context-label, .tiny #context-tabs { display: none; }
+.tiny #artist, .tiny #details { display: none; }
+.narrow.tiny #player-pane { height: 7; }
+.tiny #activity-subtitle { display: none; }

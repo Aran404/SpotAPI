@@ -204,6 +204,53 @@ async def test_connection_subscribes_and_cleans_only_its_observer(
     session.client.close.assert_not_called()
 
 
+async def test_initial_snapshot_wait_ends_when_snapshot_arrives(session: Mock) -> None:
+    status = PlayerStatus(session)
+    waiter = asyncio.create_task(status._wait_for_initial_snapshot(1))
+    await asyncio.sleep(0)
+
+    status._snapshot.set()
+    await asyncio.wait_for(waiter, 1)
+
+
+async def test_initial_snapshot_wait_explains_missing_state(session: Mock) -> None:
+    status = PlayerStatus(session)
+
+    with pytest.raises(TimeoutError, match="did not provide an initial playback snapshot"):
+        await status._wait_for_initial_snapshot(0.01)
+
+
+async def test_initial_snapshot_wait_ends_on_dealer_failure(session: Mock) -> None:
+    status = PlayerStatus(session)
+    waiter = asyncio.create_task(status._wait_for_initial_snapshot(1))
+    await asyncio.sleep(0)
+
+    original = OSError("connection lost")
+    status._error = original
+    status._disconnected.set()
+
+    with pytest.raises(ConnectionError, match="disconnected before its initial snapshot") as info:
+        await asyncio.wait_for(waiter, 0.5)
+
+    assert info.value.__cause__ is original
+
+
+async def test_empty_observer_response_is_not_treated_as_ready(
+    session: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("spotapi.status.WebSocketClient", Socket)
+    session.client.put.return_value = response({"ack_id": "observer"})
+    status = PlayerStatus(session)
+
+    with pytest.raises(TimeoutError, match="initial playback snapshot"):
+        async with status.connect(timeout=0.02):
+            pytest.fail("A missing state must not report readiness")
+
+    assert status.is_closed
+    assert status.state is None
+    assert session.client.delete.await_count == 2
+
+
 async def test_commands_transfer_and_volume_are_single_attempt(
     session: Mock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
