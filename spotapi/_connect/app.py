@@ -321,7 +321,7 @@ class ConnectApp(App[None]):
         self._entry("#diagnostics", message, "#a8baa9")
 
     def _render_state(self) -> None:
-        if not self._ui_ready or not self.is_mounted():
+        if not self._ui_ready:
             return
         state = self.player.state
         target = self.player.target_device_id
