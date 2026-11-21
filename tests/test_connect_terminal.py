@@ -203,7 +203,6 @@ async def test_connect_auth_uses_shell_cookie_without_force(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import spotapi
-
     from spotapi._connect.auth import open_account
 
     fake_client = SimpleNamespace(from_cookies=AsyncMock(return_value="session"))
@@ -218,7 +217,6 @@ async def test_connect_auth_force_uses_fresh_named_browser(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import spotapi
-
     from spotapi._connect.auth import open_account
 
     class FakeSavedSession:
@@ -243,8 +241,9 @@ async def test_connect_ui_mounts_and_exits_in_headless_terminal(
 ) -> None:
     """Optional Textual smoke test; runs when the Connect extra is installed."""
     pytest.importorskip("textual")
-    from spotapi._connect import app as connect_ui
     from textual.widgets import Input
+
+    from spotapi._connect import app as connect_ui
 
     class FakeCatalogue:
         def __init__(self, client: object) -> None:
