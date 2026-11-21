@@ -17,7 +17,7 @@ from contextlib import aclosing
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from spotapi import Public
 from spotapi.models.catalogue.playlist_details import PlaylistEntry
