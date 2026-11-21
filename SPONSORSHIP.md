@@ -22,12 +22,14 @@ All prices are in **USD** for **30 consecutive days**, beginning when the agreed
 
 | Package | Price | Included |
 |---|---:|---|
-| **Supporter** | **$100** | A labeled text link in the README's **Support SpotAPI** section. |
-| **Featured Partner** · recommended | **$250** | A compact, labeled sponsor placement with your logo, a one-sentence description, and one link in the README's **Support SpotAPI** section. |
-| **Category Exclusive** | **$400** | Everything in Featured Partner, plus no competing **paid README placements** in the mutually agreed product category during your 30-day term. |
+| **Supporter** | **$50** | A labeled text link in the README's **Support SpotAPI** section. |
+| **Featured Partner** · recommended | **$200** | A compact, labeled sponsor placement with your logo, a one-sentence description, and one link in the README's **Support SpotAPI** section. |
+| **Category Exclusive** | **$300** | Everything in Featured Partner, plus no competing **paid README placements** in the mutually agreed product category during your 30-day term. |
 | **Exclusive Integration Partner** | **Custom quote** | Featured README placement, category exclusivity across agreed sponsored surfaces, and one officially maintained optional provider adapter with setup documentation. One-time engineering and ongoing exclusivity/maintenance are priced separately. |
 
 Featured placements are limited to **four concurrent sponsors**, including any category-exclusive partners. Supporters appear as compact text links rather than competing with featured logos. Placement content and order are agreed before payment; no sponsor is presented as a recommendation purely because they paid.
+
+**Introductory pricing:** These rates are for new 30-day bookings while we establish our first partnerships. We may revise prices for future bookings as the audience and measurable sponsor results grow. Any rate already agreed in writing remains valid for its booked term. Renewals use a newly agreed rate; no indefinite price lock is implied.
 
 If you prefer a first-month pilot, a longer engagement, an affiliate arrangement, or a more narrowly scoped placement, mention that in your email. Affiliate commissions and discounts are negotiated separately and **are not required** to buy a README sponsorship.
 
