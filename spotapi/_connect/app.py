@@ -16,6 +16,7 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.css.query import NoMatches
 from textual.events import Key, MouseMove, Resize
 from textual.message import Message
 from textual.timer import Timer
@@ -338,7 +339,17 @@ class ConnectApp(App[None]):
         )
         if self._player_task is not None and self._player_task.done():
             status = "○ offline"
-        self.query_one("#connection", Static).update(status)
+        try:
+            connection = self.query_one("#connection", Static)
+        except NoMatches:
+            # Textual may detach the screen before dispatching Shutdown,
+            # notably when run_test exits on Windows.
+            self._ui_ready = False
+            if self._refresh_timer is not None:
+                self._refresh_timer.stop()
+                self._refresh_timer = None
+            return
+        connection.update(status)
         self.query_one("#account", Static).update(
             f"account  /  {self.identity.label}    ·    profile {self.profile}"
         )
