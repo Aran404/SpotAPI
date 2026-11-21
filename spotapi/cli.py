@@ -11,6 +11,7 @@ import json
 import os
 import sys
 from collections.abc import Awaitable, Callable, Sequence
+from typing import NoReturn, cast
 from contextlib import aclosing
 from importlib.metadata import version as package_version
 
@@ -18,7 +19,7 @@ from .account import Private
 from .embeds import get_embed
 from .library import LikedTracks
 from .media import Media
-from .models import PlaylistEntry
+from .models import Album, PlaylistEntry, Track
 from .operations import SEARCH_DESKTOP_SECTIONS, SearchKind
 from .player import Player
 from .playlist import Playlist
@@ -71,24 +72,29 @@ _COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
 _ALL_COMMANDS = tuple(name for _, entries in _COMMAND_GROUPS for name, _ in entries)
 
 
+def _subcommands(parser: argparse.ArgumentParser) -> dict[str, argparse.ArgumentParser]:
+    """Find child parsers via the public Action.choices interface."""
+    children: dict[str, argparse.ArgumentParser] = {}
+    for action in parser._actions:
+        choices: object = action.choices
+        if not isinstance(choices, dict):
+            continue
+        for name, child in cast("dict[object, object]", choices).items():
+            if isinstance(name, str) and isinstance(child, argparse.ArgumentParser):
+                children[name] = child
+    return children
+
+
 class _CommandParser(argparse.ArgumentParser):
     """Compact errors with guidance, without changing argparse's exit codes."""
 
-    def error(self, message: str) -> None:
+    def error(self, message: str) -> NoReturn:
         if "invalid choice:" in message and (
             message.startswith("argument command:") or message.startswith("argument action:")
         ):
             invalid = message.partition("invalid choice: ")[2].split(" (choose from", 1)[0]
             command = invalid.strip().strip("'\"")
-            choices = (
-                tuple(
-                    name
-                    for action in self._actions
-                    if isinstance(action, argparse._SubParsersAction)
-                    for name in action.choices
-                )
-                or _ALL_COMMANDS
-            )
+            choices = tuple(_subcommands(self)) or _ALL_COMMANDS
             candidate = difflib.get_close_matches(command, choices, n=1, cutoff=0.6)
             if candidate:
                 message = f"Unknown command {command!r}. Did you mean {candidate[0]!r}?"
@@ -130,11 +136,11 @@ class _RootParser(_CommandParser):
 
 def _add_output_options(parser: argparse.ArgumentParser) -> None:
     """Offer --json after every leaf command, including nested player actions."""
-    for action in parser._actions:
-        if isinstance(action, argparse._SubParsersAction):
-            for child in action.choices.values():
-                _add_output_options(child)
-            return
+    children = _subcommands(parser)
+    if children:
+        for child in children.values():
+            _add_output_options(child)
+        return
     if parser.prog.split()[-1] in {"studio", "discover", "connect"}:
         return
     if not any("--json" in action.option_strings for action in parser._actions):
@@ -143,33 +149,36 @@ def _add_output_options(parser: argparse.ArgumentParser) -> None:
 
 def _human(value: object) -> str:
     """Simple lossless hierarchy for a terminal, with no external UI package."""
-    data = to_dict(value)
+    data: object = to_dict(value)
     lines: list[str] = []
 
     def visit(item: object, depth: int = 0, label: str = "") -> None:
         indent = "  " * depth
         if isinstance(item, dict):
+            entries = cast("dict[str, object]", item)
             if label:
                 lines.append(f"{indent}{label}:")
                 depth += 1
-            if not item:
+            if not entries:
                 lines.append("  " * depth + "(empty)")
-            for key, subvalue in item.items():
-                visit(subvalue, depth, str(key).replace("_", " "))
+            for key, subvalue in entries.items():
+                visit(subvalue, depth, key.replace("_", " "))
         elif isinstance(item, list):
+            entries = cast("list[object]", item)
             if label:
-                lines.append(f"{indent}{label} ({len(item)}):")
+                lines.append(f"{indent}{label} ({len(entries)}):")
                 depth += 1
-            if not item:
+            if not entries:
                 lines.append("  " * depth + "(none)")
-            for number, entry in enumerate(item, 1):
+            for number, entry in enumerate(entries, 1):
                 if isinstance(entry, dict):
-                    title = entry.get("name") or entry.get("title") or entry.get("uri")
+                    fields = cast("dict[str, object]", entry)
+                    title = fields.get("name") or fields.get("title") or fields.get("uri")
                     lines.append("  " * depth + f"{number}. {title or 'Item'}")
-                    for key, subvalue in entry.items():
+                    for key, subvalue in fields.items():
                         if title is not None and key in {"name", "title"}:
                             continue
-                        visit(subvalue, depth + 1, str(key).replace("_", " "))
+                        visit(subvalue, depth + 1, key.replace("_", " "))
                 else:
                     visit(entry, depth, str(number))
         else:
@@ -178,7 +187,6 @@ def _human(value: object) -> str:
 
     visit(data)
     return "\n".join(lines)
-
 
 def _display(value: object, args: argparse.Namespace) -> None:
     if getattr(args, "json", False) or not sys.stdout.isatty():
@@ -361,8 +369,10 @@ async def _search(args: argparse.Namespace) -> None:
         return
 
     for hit in hits:
-        artists = hit.artists.items if hit.artists else ()
-        names = ", ".join(artist.profile.name for artist in artists if artist.profile)
+        names = ""
+        if isinstance(hit, (Track, Album)):
+            artists = hit.artists.items if hit.artists else ()
+            names = ", ".join(artist.profile.name for artist in artists if artist.profile)
         print(f"{hit.name} — {names}" if names else hit.name)
         print(f"  {hit.uri}")
     if not hits:
