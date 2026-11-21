@@ -28,7 +28,7 @@ All prices are **USD** for **30 consecutive days**, starting only when the agree
 | **Category Exclusive** | **$199** | A featured placement plus no competing **paid README placements** in one agreed product category during the term. |
 | **Exclusive Integration Partner** | **Custom quote** | A separately scoped, optional provider adapter and documentation, plus any agreed advertising and limited-term exclusivity. Engineering and ongoing maintenance are priced separately. |
 
-Only **two founding-rate slots** are available, allocated when scope is agreed and payment is received; they are not a recurring discount. Availability and agreed placements are confirmed before invoicing. No invented scarcity or guaranteed audience size: we will update the availability once those two bookings exist. No fee is charged for asking about a slot.
+The **$79 founding rate** applies to the first two paid featured partners' initial 30-day bookings only. Slots are reserved after scope and payment are agreed, not by sending an inquiry. Once those slots are booked, the $149 standard rate applies. We will update this page when availability changes.
 
 We keep at most **three featured logos** in the README at once to preserve readability; Supporters use text links. All paid listings remain below the product introduction and working examples. Sponsor content is reviewed for relevance; payment never changes core library behavior or implies endorsement.
 
