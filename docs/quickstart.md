@@ -87,8 +87,15 @@ or `async with Catalogue()` instead. The sync facade reuses the async core.
 
 ## Account commands
 
-The command line reads `SPOTIFY_COOKIE` from its process environment. Studio
-also reads a local `.env` from the directory you launch it from. The live test
+For authenticated CLI commands, use `SPOTIFY_COOKIE` in the process environment
+or reuse a saved Connect login. For first-time sign-in, install `spotapi[connect,browser]`, run `python -m playwright install chromium`, then run `spotapi connect`
+to save the default profile in your OS keyring. Then use `spotapi player status`
+or `spotapi library list` without copying cookies again. Add `--profile personal`
+after an authenticated command to select the named Connect account. An explicit
+`--profile` overrides `SPOTIFY_COOKIE`; otherwise the environment variable wins.
+A missing profile returns an actionable error; CLI commands never launch a browser.
+
+Studio also reads a local `.env` from the directory you launch it from. The live test
 runner reads the repository's `.env` when you select a live mode. See
 [account and playlist access](account.md) before setting up a cookie. Public
 search, Discover, and catalogue lookups can run anonymously.

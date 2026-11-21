@@ -25,10 +25,6 @@
   <strong>言語:</strong> <a href="README.md">English</a> · <a href="README.pt-BR.md">Português (Brasil)</a> · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a> · 日本語
 </p>
 
-![ターミナルから実際の Spotify プレーヤーを操作する SpotAPI Connect](assets/cli-connect-demo.gif)
-
-<p align="center"><sub>Connect · ターミナルから既存の Spotify プレーヤーで検索、ナビゲート、操作ができます。音声を再生するのは Spotify で、SpotAPI は操作コマンドを送信します。</sub></p>
-
 ## はじめに
 
 Python 3.11 以上が必要です。まずは実際に検索してみましょう。Spotify へのログイン、Client ID、設定は一切不要です。
@@ -37,6 +33,10 @@ Python 3.11 以上が必要です。まずは実際に検索してみましょ�
 python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
+
+![ターミナルから実際の Spotify プレーヤーを操作する SpotAPI Connect](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · ターミナルから既存の Spotify プレーヤーで検索、ナビゲート、操作ができます。音声を再生するのは Spotify で、SpotAPI は操作コマンドを送信します。</sub></p>
 
 これが公開カタログです。Spotify 開発者アプリケーションを用意しなくても、検索、Spotify リンクの解決、クレジットの確認、公開プレイリストのメタデータの読み取りができます。最初のリクエストは SpotAPI が現在の Web プレーヤーのクエリを検出するため時間がかかることがありますが、以降のリクエストではキャッシュされた結果が再利用されます。
 
@@ -84,11 +84,12 @@ Connect は、検索、デバイス選択、次に再生する曲、再生操作
 オプションのターミナルインターフェースで Connect を起動します:
 
 ```bash
-python -m pip install "spotapi[connect]"
+python -m pip install "spotapi[connect,browser]"
+python -m playwright install chromium
 python -m spotapi connect
 ```
 
-pip が `connect` extra が存在しないと警告する場合、その PyPI リリースは extra の追加より前のものです。次のリリースまでは、リポジトリをクローンし、そのルートで `python -m pip install -e ".[connect]"` を実行してください。
+これらのコマンドで初回のブラウザサインインを準備できます。すでに `SPOTIFY_COOKIE` または保存済みの Connect プロファイルがある場合は、`spotapi[connect]` のみをインストールし、ブラウザのダウンロードを省略できます。
 
 `search Daft Punk` で音楽を検索し、`queue 1` で結果をキューに追加し、`pause`、`next`、`seek 1:30` で再生を操作します。`/devices` を開くと利用可能なプレーヤーを一覧できます。`/use 2` は再生を移さずにプレーヤーを選択し、`/transfer 2` は再生を移します。`Ctrl+P` でコマンドパレットが開きます。
 

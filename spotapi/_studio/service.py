@@ -80,6 +80,10 @@ class Studio:
         self._lyrics_cache: OrderedDict[str, Lyrics] = OrderedDict()
         self._player_task: asyncio.Task[None] | None = None
         self._lock = asyncio.Lock()
+        self._read_limit = asyncio.Semaphore(4)
+        self._active_reads = 0
+        self._reads_drained = asyncio.Event()
+        self._reads_drained.set()
         self._closed = False
 
     async def authenticate(self, cookie: str) -> None:
@@ -93,6 +97,9 @@ class Studio:
             async with self._lock:
                 if self._closed:
                     raise RuntimeError("Studio closed during sign-in")
+                # A catalogue read may have released the request mutex while
+                # still borrowing this session. Do not close its HTTP client.
+                await self._reads_drained.wait()
                 await self._disconnect()
                 self.client = client
                 self.account = account
@@ -106,6 +113,7 @@ class Studio:
         """Close the player before its borrowed authentication and native HTTP transport."""
         self._closed = True
         async with self._lock:
+            await self._reads_drained.wait()
             await self._disconnect()
 
     async def _disconnect(self) -> None:
@@ -219,15 +227,41 @@ class Studio:
             operation = _ACTIONS.get(action)
             if operation and operation.changes and values.get("confirmed") != "true":
                 raise ValueError("Confirm this action before sending it to Spotify")
-            async with asyncio.timeout(45), self._lock:
-                if self._closed:
-                    raise RuntimeError("Studio is closed")
-
-                if not self._catalogue_started:
-                    await self.catalogue.__aenter__()
-                    self._catalogue_started = True
-
-                data = await self._execute(action, values)
+            public_read = action in {"bootstrap", "search", "detail", "profile"} or (
+                operation is not None and operation.group == "Catalogue" and not operation.changes
+            )
+            async with asyncio.timeout(45):
+                if public_read:
+                    # Bound concurrent catalogue reads. Each borrower keeps the
+                    # current session alive while account switching waits for
+                    # the last read to finish. Playback does not wait for search.
+                    async with self._read_limit:
+                        async with self._lock:
+                            if self._closed:
+                                raise RuntimeError("Studio is closed")
+                            if not self._catalogue_started:
+                                await self.catalogue.__aenter__()
+                                self._catalogue_started = True
+                            self._active_reads += 1
+                            self._reads_drained.clear()
+                        try:
+                            data = await self._execute(action, values)
+                        finally:
+                            self._active_reads -= 1
+                            if self._active_reads == 0:
+                                self._reads_drained.set()
+                else:
+                    async with self._lock:
+                        if self._closed:
+                            raise RuntimeError("Studio is closed")
+                        # Logging out closes the currently borrowed session;
+                        # let in-flight catalogue readers finish first.
+                        if action == "logout_everywhere":
+                            await self._reads_drained.wait()
+                        if not self._catalogue_started:
+                            await self.catalogue.__aenter__()
+                            self._catalogue_started = True
+                        data = await self._execute(action, values)
 
             if data is None:
                 data = (

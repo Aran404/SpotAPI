@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from datetime import timedelta
+from importlib.metadata import version as package_version
 from typing import cast
 
 import wreq
@@ -12,6 +13,11 @@ import wreq
 from spotapi.models import LyricLine, Lyrics, TrackDetails
 
 _STAMP = re.compile(r"\[(\d{1,3}):([0-5]\d)(?:\.(\d{1,3}))?\]")
+
+
+def _studio_user_agent() -> str:
+    """Identify the installed release instead of a stale hard-coded version."""
+    return f"SpotAPI Studio v{package_version('spotapi')} (https://github.com/Aran404/SpotAPI)"
 
 
 def parse_lyrics(record: Mapping[str, object]) -> Lyrics | None:
@@ -58,7 +64,7 @@ async def get_public_lyrics(track: TrackDetails) -> Lyrics | None:
     client = wreq.Client(
         timeout=timedelta(seconds=5),
         redirect=wreq.redirect.Policy.none(),
-        user_agent="SpotAPI Studio v2.0.0 (https://github.com/Aran404/SpotAPI)",
+        user_agent=_studio_user_agent(),
     )
     query = {
         "track_name": track.name,

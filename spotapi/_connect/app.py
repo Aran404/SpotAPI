@@ -262,8 +262,8 @@ class ConnectApp(App[None]):
             self._activity(
                 "Catalogue unavailable · searches will not work this session", "#e8a49c"
             )
-            self.query_one("#command", CommandInput).focus()
-            return
+            # Search can fail independently of the live Connect controller.
+            # Still start the playback supervisor, devices and command input.
         self._activity(f"Session started · profile {self.profile}")
         self._activity("Spotify Connect is listening for playback updates")
         self._activity("Type / for commands · click the controls to interact")

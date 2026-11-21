@@ -117,7 +117,11 @@ async def paginate(
     if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:
         raise ValueError("offset must be a non-negative integer")
 
-    total_count = offset + _DEFAULT_PAGE_CAP
+    # Bound responses with no advertised total, but never silently claim the
+    # first 1,000 results are the entire collection.
+    unknown_total_cap = offset + _DEFAULT_PAGE_CAP
+    total_count = unknown_total_cap
+    has_total_count = False
 
     while offset < total_count:
         response = await request({**variables, "offset": offset})
@@ -129,6 +133,7 @@ async def paginate(
 
             if type(count) is int and count >= 0:
                 total_count = count
+                has_total_count = True
 
         # Inspect the result collection even when yielding raw envelopes.
         # False/zero values in other fields do not terminate a page.
@@ -157,9 +162,19 @@ async def paginate(
                     return
 
                 offset = next_offset
+                if not has_total_count and offset >= unknown_total_cap:
+                    raise BaseClientError(
+                        "Spotify pagination reached its safety limit without a totalCount; "
+                        "results may be incomplete"
+                    )
                 continue
 
         offset += limit
+        if not has_total_count and offset >= unknown_total_cap:
+            raise BaseClientError(
+                "Spotify pagination reached its safety limit without a totalCount; "
+                "results may be incomplete"
+            )
 
 
 class QueryClient:

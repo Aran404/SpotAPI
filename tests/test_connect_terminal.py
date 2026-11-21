@@ -339,3 +339,55 @@ async def test_clear_and_quit_do_not_mutate_spotify() -> None:
         assert result.message
     player.next.assert_not_awaited()
     player.pause.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_connect_playback_starts_when_catalogue_entry_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An unavailable catalogue must not prevent playback controls from starting."""
+    pytest.importorskip("textual")
+    from spotapi._connect import app as connect_ui
+
+    started = asyncio.Event()
+
+    class FailedCatalogue:
+        def __init__(self, client: object) -> None:
+            self.client = client
+
+        async def __aenter__(self) -> FailedCatalogue:
+            raise OSError("Synthetic catalogue failure")
+
+        async def close(self) -> None:
+            return None
+
+    class FakePlayer:
+        state = None
+        devices: tuple[()] = ()
+        target_device_id = None
+        is_ready = False
+
+        def __init__(self, client: object, *, name: str) -> None:
+            self.client = client
+            self.name = name
+
+        def listen(self, name: str) -> Callable[[Callback], Callback]:
+            def register(callback: Callback) -> Callback:
+                return callback
+
+            return register
+
+        async def start(self) -> None:
+            started.set()
+            await asyncio.Event().wait()
+
+        async def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(connect_ui, "Catalogue", FailedCatalogue)
+    monkeypatch.setattr(connect_ui, "Player", FakePlayer)
+    application = connect_ui.ConnectApp(cast("AsyncClient", SimpleNamespace()))
+    async with application.run_test(size=(110, 32)) as pilot:
+        await asyncio.wait_for(started.wait(), timeout=3)
+        await pilot.pause()
+        assert application._player_task is not None

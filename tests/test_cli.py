@@ -18,6 +18,7 @@ from spotapi import (
     SpotAPIError,
 )
 from spotapi.cli import _parser, main
+from spotapi.login import SavedSession
 
 
 @pytest.mark.parametrize(
@@ -205,3 +206,79 @@ def test_cli_forwards_search_language(language: str, monkeypatch: pytest.MonkeyP
 
     assert main(["search", "test", "--type", "artist", "--language", language, "--json"]) == 0
     search.assert_awaited_once_with("test", types="artist", limit=10, language=language)
+
+
+def test_cli_reuses_saved_connect_profile_without_reauthenticating(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A saved Connect login works for ordinary CLI commands without an env cookie."""
+    monkeypatch.delenv("SPOTIFY_COOKIE", raising=False)
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
+    client = AsyncMock()
+    client.__aenter__.return_value = client
+    open_saved = AsyncMock(return_value=client)
+    monkeypatch.setattr(SavedSession, "open", open_saved)
+    liked = SimpleNamespace(get=AsyncMock(return_value=()))
+    account = SimpleNamespace(liked_tracks=liked)
+    construct_account = Mock(return_value=account)
+    monkeypatch.setattr("spotapi.cli.Private", construct_account)
+
+    assert main(["library", "list"]) == 0
+
+    open_saved.assert_awaited_once_with()
+    construct_account.assert_called_once_with(client)
+    liked.get.assert_awaited_once_with(limit=20)
+    client.__aexit__.assert_awaited_once()
+    assert not capsys.readouterr().err
+
+
+def test_cli_explicit_profile_overrides_environment_cookie(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SPOTIFY_COOKIE", "different-account-cookie")
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
+    client = AsyncMock()
+    client.__aenter__.return_value = client
+    open_saved = AsyncMock(return_value=client)
+    monkeypatch.setattr(SavedSession, "open", open_saved)
+    liked = SimpleNamespace(get=AsyncMock(return_value=()))
+    monkeypatch.setattr(
+        "spotapi.cli.Private", Mock(return_value=SimpleNamespace(liked_tracks=liked))
+    )
+
+    assert main(["library", "list", "--profile", "personal"]) == 0
+
+    open_saved.assert_awaited_once_with()
+    liked.get.assert_awaited_once_with(limit=20)
+
+
+def test_cli_rejects_invalid_profile_before_keyring_access(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
+    open_saved = AsyncMock()
+    monkeypatch.setattr(SavedSession, "open", open_saved)
+
+    assert main(["player", "status", "--profile", "../bad"]) == 1
+    assert "Profile must be" in capsys.readouterr().err
+    open_saved.assert_not_awaited()
+
+
+def test_cli_says_how_to_recover_when_named_profile_is_absent(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from spotapi.types import BaseClientError
+
+    monkeypatch.delenv("SPOTIFY_COOKIE", raising=False)
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
+    monkeypatch.setattr(
+        SavedSession, "open", AsyncMock(side_effect=BaseClientError("Missing saved profile"))
+    )
+
+    assert main(["library", "list", "--profile", "missing"]) == 1
+    error = capsys.readouterr().err
+    assert "spotapi connect" in error
+    assert "Set SPOTIFY_COOKIE" in error
+    assert "Missing saved profile" not in error

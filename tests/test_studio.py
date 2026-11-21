@@ -12,7 +12,7 @@ import pytest
 from spotapi import AsyncClient, Catalogue, Player
 from spotapi._studio.actions import ACTIONS
 from spotapi._studio.desktop import Bridge, _authenticate, page
-from spotapi._studio.lyrics import parse_lyrics
+from spotapi._studio.lyrics import _studio_user_agent, parse_lyrics
 from spotapi._studio.service import Studio, first_page, serialize
 from spotapi.models import AccountChallenge
 
@@ -304,3 +304,83 @@ async def test_studio_explains_a_missing_or_expired_login(
         assert result == {"ok": False, "error": "Log in to Spotify again and update your session."}
     finally:
         await studio.close()
+
+
+async def test_studio_overlaps_public_reads_without_blocking_each_other(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Two unrelated searches must progress independently of the request mutex."""
+    both_started = asyncio.Event()
+    release = asyncio.Event()
+
+    class CatalogueStub:
+        calls = 0
+
+        async def __aenter__(self) -> CatalogueStub:
+            return self
+
+        async def close(self) -> None:
+            return None
+
+        async def search(
+            self, query: str, *, types: tuple[str, ...], limit: int
+        ) -> dict[str, str]:
+            assert types and limit == 12
+            self.calls += 1
+            if self.calls == 2:
+                both_started.set()
+            await release.wait()
+            return {"query": query}
+
+    studio = Studio()
+    monkeypatch.setattr(studio, "catalogue", CatalogueStub())
+    first = asyncio.create_task(studio.request("search", {"query": "first"}))
+    second = asyncio.create_task(studio.request("search", {"query": "second"}))
+    try:
+        await asyncio.wait_for(both_started.wait(), timeout=2)
+    finally:
+        release.set()
+
+    results = await asyncio.gather(first, second)
+    assert [value["data"]["query"] for value in results] == ["first", "second"]
+    await studio.close()
+
+
+async def test_studio_shutdown_drains_public_reads_before_closing_catalogue(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    started = asyncio.Event()
+    release = asyncio.Event()
+
+    class CatalogueStub:
+        closed = False
+
+        async def __aenter__(self) -> CatalogueStub:
+            return self
+
+        async def close(self) -> None:
+            self.closed = True
+
+        async def search(self, query: str, *, types: tuple[str, ...], limit: int) -> object:
+            started.set()
+            await release.wait()
+            return {"query": query}
+
+    stub = CatalogueStub()
+    studio = Studio()
+    monkeypatch.setattr(studio, "catalogue", stub)
+    search = asyncio.create_task(studio.request("search", {"query": "in flight"}))
+    await asyncio.wait_for(started.wait(), timeout=2)
+    shutdown = asyncio.create_task(studio.close())
+    await asyncio.sleep(0)
+    assert not stub.closed
+    assert not shutdown.done()
+    release.set()
+    assert (await search)["ok"] is True
+    await shutdown
+    assert stub.closed
+
+
+def test_lyrics_identifies_installed_release(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("spotapi._studio.lyrics.package_version", Mock(return_value="2.7.3"))
+    assert _studio_user_agent() == ("SpotAPI Studio v2.7.3 (https://github.com/Aran404/SpotAPI)")

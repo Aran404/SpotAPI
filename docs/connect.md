@@ -60,6 +60,19 @@ The keyring is deliberate: Connect never creates or modifies a plaintext
 The browser login uses a lazy Playwright import. On a system without Playwright
 or Chromium, existing shell cookies and saved keyring profiles still work.
 
+After saving a profile, ordinary account commands reuse it too:
+
+```bash
+spotapi player status
+spotapi library list
+spotapi player status --profile work
+```
+
+These commands read the default saved profile when `SPOTIFY_COOKIE` is absent.
+Use `--profile NAME` after a command to choose another saved profile, even when
+`SPOTIFY_COOKIE` is set. No second browser login or plaintext cookie file is
+needed. CLI profile reuse requires the keyring extra installed by `spotapi[connect]`.
+
 ## Controls
 
 Type any of these commands into the one input at the bottom of Connect.

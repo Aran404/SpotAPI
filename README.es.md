@@ -25,10 +25,6 @@
   <strong>Idioma:</strong> <a href="README.md">English</a> · <a href="README.pt-BR.md">Português (Brasil)</a> · Español · <a href="README.fr.md">Français</a> · <a href="README.ja.md">日本語</a>
 </p>
 
-![SpotAPI Connect controlando un reproductor real de Spotify desde la terminal](assets/cli-connect-demo.gif)
-
-<p align="center"><sub>Connect · Busca, navega y controla un reproductor de Spotify existente desde tu terminal. Spotify reproduce el audio; SpotAPI envía los controles.</sub></p>
-
 ## Comienza ahora
 
 Se requiere Python 3.11 o posterior. Comienza con una búsqueda real, sin iniciar sesión en Spotify, Client ID ni configuración.
@@ -37,6 +33,10 @@ Se requiere Python 3.11 o posterior. Comienza con una búsqueda real, sin inicia
 python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
+
+![SpotAPI Connect controlando un reproductor real de Spotify desde la terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Busca, navega y controla un reproductor de Spotify existente desde tu terminal. Spotify reproduce el audio; SpotAPI envía los controles.</sub></p>
 
 Ese es el catálogo público. Busca, resuelve enlaces de Spotify, consulta créditos y lee metadatos de listas de reproducción públicas sin configurar una aplicación de desarrollador de Spotify. La primera solicitud puede tardar más mientras SpotAPI descubre las consultas actuales del reproductor web; las siguientes reutilizan los resultados almacenados en caché.
 
@@ -84,11 +84,12 @@ Connect reúne búsqueda, selección de dispositivo, cola de próximas canciones
 Inicia Connect con la interfaz opcional de terminal:
 
 ```bash
-python -m pip install "spotapi[connect]"
+python -m pip install "spotapi[connect,browser]"
+python -m playwright install chromium
 python -m spotapi connect
 ```
 
-Si pip avisa de que no existe el extra `connect`, esa versión de PyPI es anterior a su incorporación. Hasta la próxima versión, clona el repositorio y ejecuta `python -m pip install -e ".[connect]"` desde la raíz.
+Estos comandos permiten iniciar sesión por primera vez desde el navegador. ¿Ya usas `SPOTIFY_COOKIE` o tienes un perfil guardado en Connect? Instala solo `spotapi[connect]` y omite la descarga del navegador.
 
 Usa `search Daft Punk` para buscar música, `queue 1` para añadir un resultado a la cola, o `pause`, `next` y `seek 1:30` para controlar la reproducción. Abre `/devices` para ver los reproductores disponibles; `/use 2` selecciona uno sin transferir la reproducción, mientras que `/transfer 2` la transfiere. `Ctrl+P` abre la paleta de comandos.
 

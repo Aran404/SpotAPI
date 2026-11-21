@@ -25,10 +25,6 @@
   <strong>Language:</strong> English · <a href="README.pt-BR.md">Português (Brasil)</a> · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a> · <a href="README.ja.md">日本語</a>
 </p>
 
-![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
-
-<p align="center"><sub>Connect · Search, navigate and control an existing Spotify player from your terminal. Spotify plays the audio; SpotAPI sends the controls.</sub></p>
-
 ## Get started
 
 Python 3.11+ is required. Start with a real search—no Spotify login, Client ID or configuration needed.
@@ -37,6 +33,10 @@ Python 3.11+ is required. Start with a real search—no Spotify login, Client ID
 python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
+
+![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Search, navigate and control an existing Spotify player from your terminal. Spotify plays the audio; SpotAPI sends the controls.</sub></p>
 
 That's the public catalogue. Search, resolve Spotify links, inspect credits and read public playlist metadata without setting up a Spotify developer application. The first request can take longer while SpotAPI discovers the current web-player queries; subsequent requests reuse the cached results.
 
@@ -84,11 +84,12 @@ Connect brings searching, device selection, up-next, playback and a live activit
 Launch Connect with the optional terminal interface:
 
 ```bash
-python -m pip install "spotapi[connect]"
+python -m pip install "spotapi[connect,browser]"
+python -m playwright install chromium
 python -m spotapi connect
 ```
 
-If pip warns that the `connect` extra does not exist, that PyPI release predates the extra. Until the next release, clone the repository and run `python -m pip install -e ".[connect]"` from its root.
+First-time browser sign-in is covered by these commands. Already use `SPOTIFY_COOKIE` or a saved Connect profile? Install only `spotapi[connect]` and skip the browser download.
 
 Use `search Daft Punk` to find music, `queue 1` to add a result, or `pause`, `next`, and `seek 1:30` to control playback. Open `/devices` to browse available players; `/use 2` selects one without transferring playback, while `/transfer 2` transfers playback. `Ctrl+P` opens the command palette.
 

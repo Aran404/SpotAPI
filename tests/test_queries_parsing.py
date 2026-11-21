@@ -158,3 +158,39 @@ def test_parse_raw_items_can_skip_non_mapping_entries() -> None:
     assert Queries.parse_raw_items(page, Operations.SEARCH_AUDIOBOOKS, skip_invalid=True) == [
         _object({"id": "1", "name": "valid"})
     ]
+
+
+async def test_pagination_reports_unknown_total_truncation_instead_of_silent_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("spotapi.query._DEFAULT_PAGE_CAP", 2)
+    requested: list[int] = []
+
+    async def request(variables: dict[str, Any]) -> ObjectDict:
+        requested.append(variables["offset"])
+        return ObjectDict({"items": [{"id": str(variables["offset"])}]})
+
+    pages: list[ObjectDict] = []
+    with pytest.raises(BaseClientError, match="results may be incomplete"):
+        async for page in paginate(request, {"limit": 1}):
+            pages.append(page)
+
+    assert requested == [0, 1]
+    assert len(pages) == 2
+
+
+async def test_pagination_with_explicit_total_is_not_limited_by_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("spotapi.query._DEFAULT_PAGE_CAP", 2)
+
+    async def request(variables: dict[str, Any]) -> ObjectDict:
+        return ObjectDict(
+            {
+                "items": [{"id": str(variables["offset"])}],
+                "totalCount": 3,
+            }
+        )
+
+    pages = [page async for page in paginate(request, {"limit": 1})]
+    assert len(pages) == 3
