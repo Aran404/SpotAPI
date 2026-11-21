@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 from collections.abc import Callable
-from typing import TypeVar
-from typing import TYPE_CHECKING, cast
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, TypeVar, cast
 from unittest.mock import AsyncMock
 
 import pytest
@@ -81,8 +80,8 @@ async def test_connect_command_completion_mouse_and_keyboard(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     pytest.importorskip("textual")
-    from textual.widgets import OptionList
     from spotapi._connect import app as ui
+    from textual.widgets import OptionList
 
     Callback = TypeVar("Callback", bound=Callable[..., object])
 
@@ -90,7 +89,7 @@ async def test_connect_command_completion_mouse_and_keyboard(
         def __init__(self, client: object) -> None:
             self.client = client
 
-        async def __aenter__(self) -> "FakeCatalogue":
+        async def __aenter__(self) -> FakeCatalogue:
             return self
 
         async def close(self) -> None:
@@ -179,9 +178,7 @@ def test_connect_css_ids_exist_in_the_tui() -> None:
 
 def test_search_results_have_useful_optional_metadata() -> None:
     from spotapi._connect.presentation import search_row
-    from spotapi.models.catalogue.track import (
-        ArtistItem, ArtistProfile, Artists, Duration, Track,
-    )
+    from spotapi.models.catalogue.track import ArtistItem, ArtistProfile, Artists, Duration, Track
 
     hit = Track(
         id="t",
@@ -211,17 +208,18 @@ async def test_results_and_devices_are_keyboard_navigable(
 ) -> None:
     """Runs with the optional connect extra, no live Spotify calls."""
     pytest.importorskip("textual")
+    import asyncio
+
     from spotapi._connect import app as ui
     from spotapi.models.catalogue.track import Track
     from spotapi.models.playback import Device
     from textual.widgets import Input
-    import asyncio
 
     class FakeCatalogue:
         def __init__(self, client: object) -> None:
             pass
 
-        async def __aenter__(self) -> "FakeCatalogue":
+        async def __aenter__(self) -> FakeCatalogue:
             return self
 
         async def close(self) -> None:
