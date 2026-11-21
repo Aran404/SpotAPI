@@ -106,7 +106,8 @@ def _heading_slug(title: str) -> str:
 
 @pytest.mark.parametrize("filename", _TRANSLATIONS)
 def test_localized_readme_has_full_english_structure(filename: str) -> None:
-    english_bytes = (ROOT / "README.md").read_bytes()
+    # Git checkouts may use CRLF on Windows; hash canonical LF bytes.
+    english_bytes = (ROOT / "README.md").read_bytes().replace(b"\r\n", b"\n")
     english = english_bytes.decode("utf-8")
     translated = (ROOT / filename).read_text(encoding="utf-8")
 
