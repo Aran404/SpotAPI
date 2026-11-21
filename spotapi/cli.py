@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import importlib
 import difflib
+import importlib
 import importlib.util
 import json
 import os
 import sys
 from collections.abc import Awaitable, Callable, Sequence
-from typing import NoReturn, cast
 from contextlib import aclosing
 from importlib.metadata import version as package_version
+from typing import NoReturn, cast
 
 from .account import Private
 from .embeds import get_embed
