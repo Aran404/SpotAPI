@@ -37,7 +37,7 @@ jobs:
           path: coverage.xml
       - run: python -m pyright
       - run: python -m ruff check .
-      - run: python -m black --check .
+      - run: python -m black --check --diff .
 
   installed-wheel:
     runs-on: ${{ matrix.os }}

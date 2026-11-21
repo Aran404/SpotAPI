@@ -130,8 +130,7 @@ def test_localized_readme_has_full_english_structure(filename: str) -> None:
     )
 
     headings = {
-        _heading_slug(title)
-        for title in re.findall(r"^#{2,3} (.+)$", translated, re.MULTILINE)
+        _heading_slug(title) for title in re.findall(r"^#{2,3} (.+)$", translated, re.MULTILINE)
     }
     anchors = [
         *re.findall(r'href="#([^"]+)"', translated),
