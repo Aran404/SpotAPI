@@ -1,21 +1,46 @@
-# SpotAPI
+<p align="center">
+  <img src="assets/spotapi-color.svg" width="76" alt="Logo do SpotAPI">
+</p>
 
-**Ferramentas do Spotify para Python, com aplicativos prontos para usar.**
+<h1 align="center">SpotAPI</h1>
 
-[English](README.md) · **Português (Brasil)** · [Español](README.es.md)
+<p align="center">
+  <strong>Spotify no seu terminal. Dados do Spotify no seu aplicativo Python.</strong>
+</p>
 
-SpotAPI é uma biblioteca Python assíncrona e tipada para consultar dados públicos do catálogo do Spotify, trabalhar com playlists e controlar players existentes. **Consultas públicas não exigem criar um aplicativo de desenvolvedor nem fornecer uma chave de API.** A biblioteca usa interfaces não oficiais do web player, que podem mudar.
+<p align="center">
+  Uma biblioteca Python tipada e assíncrona para o catálogo público, playlists e players conectados do Spotify.<br>
+  <strong>Sem aplicativo de desenvolvedor nem chave de API para dados públicos.</strong>
+</p>
 
-## Comece em segundos
+<p align="center">
+  <a href="#comece-agora">Comece agora</a> ·
+  <a href="#explore-pelo-terminal">Explore</a> ·
+  <a href="#desenvolva-com-python">API Python</a> ·
+  <a href="https://spotapi.readthedocs.io/">Documentação</a> ·
+  <a href="SPONSORSHIP.md">Patrocine</a>
+</p>
 
-Requer Python 3.11 ou superior.
+<p align="center">
+  <strong>Idioma:</strong> <a href="README.md">English</a> · Português (Brasil) · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a>
+</p>
+
+![SpotAPI Connect controlando um player real do Spotify pelo terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Pesquise, navegue e controle um player existente do Spotify pelo terminal. O Spotify reproduz o áudio; o SpotAPI envia os comandos.</sub></p>
+
+## Comece agora
+
+É necessário Python 3.11 ou superior. Comece com uma busca real, sem precisar de login do Spotify, Client ID ou configuração.
 
 ```bash
 python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-A mesma instalação permite usar a API diretamente:
+Esse é o catálogo público. Pesquise, resolva links do Spotify, consulte créditos e leia metadados de playlists públicas sem configurar um aplicativo de desenvolvedor do Spotify. A primeira requisição pode demorar mais enquanto o SpotAPI descobre as consultas atuais do web player; as seguintes reutilizam os resultados em cache.
+
+**Prefere desenvolver em Python?** A mesma instalação oferece uma API tipada. Nenhuma interface de terminal é necessária:
 
 ```python
 import asyncio
@@ -29,18 +54,136 @@ async def main():
 asyncio.run(main())
 ```
 
-## Aplicativos sem escrever código
+[Mais exemplos em Python](#desenvolva-com-python) · [Auditoria de playlists e exportação CSV](examples/playlist_audit.py)
 
-- **Discover:** navegue por músicas e metadados no terminal. Instale com `python -m pip install "spotapi[demo]"` e execute `python -m spotapi discover "Daft Punk"`.
-- **Connect:** controle um player Spotify existente pelo terminal. Instale com `python -m pip install "spotapi[connect]"` e execute `python -m spotapi connect`. É necessário ter uma sessão Spotify para controlar a reprodução. Se o extra ainda não estiver no PyPI, consulte a seção Connect do [README em inglês](README.md#connect-control-your-spotify-player).
-- **Studio:** explore músicas, créditos e letras sincronizadas em um aplicativo desktop. Instale com `python -m pip install "spotapi[studio]"` e execute `python -m spotapi studio`.
+**Quer navegar por uma interface?** Abra o explorador interativo no terminal:
 
-O projeto não transmite, baixa nem descriptografa músicas completas. A disponibilidade dos controles depende da conta e do dispositivo.
+```bash
+python -m pip install "spotapi[demo]"
+python -m spotapi discover "Daft Punk"
+```
 
-## Crie suas próprias ferramentas
+Navegue pelos resultados de busca, capas e links do Spotify sem fazer login. [Exemplo do Discover](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py) · [Solução de problemas](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
 
-A API permite consultar playlists, analisar dados, exportar resultados e desenvolver integrações. O [exemplo de auditoria de playlists](examples/playlist_audit.py) exporta ocorrências para CSV sem carregar toda a playlist na memória.
+## Explore pelo terminal
 
-Leia o [README principal](README.md), a [documentação](https://spotapi.readthedocs.io/) e os [exemplos](examples/README.md) para conhecer as funcionalidades e limitações atuais.
+A CLI vai além da busca. Consulte um artista, obtenha os créditos de uma faixa ou liste uma playlist pública:
 
-**Código aberto e independente do Spotify.** Use o projeto conforme as leis e condições de acesso aplicáveis. [Licença GPL-3.0](LICENSE) · [Contribuir](CONTRIBUTING.md) · [Apoiar o projeto](SPONSORSHIP.md).
+```bash
+python -m spotapi search "Daft Punk" --type artist --json
+python -m spotapi get SPOTIFY_URL
+python -m spotapi playlist items PLAYLIST_ID --limit 10
+```
+
+Esses comandos funcionam sem chave de API de desenvolvedor. Operações de conta — músicas curtidas, playlists privadas e controle do seu player existente do Spotify — exigem sua própria sessão do Spotify. Consulte o [guia de conta](https://spotapi.readthedocs.io/en/latest/account/) e o [guia do player](https://spotapi.readthedocs.io/en/latest/player/).
+
+### Connect: controle seu player do Spotify
+
+O Connect reúne busca, seleção de dispositivo, fila de próximas músicas, reprodução e registro de atividades em tempo real numa sessão de terminal fácil de usar pelo teclado. Ele controla um player existente com login no Spotify; **não** transmite, baixa nem descriptografa faixas.
+
+Inicie o Connect com a interface opcional de terminal:
+
+```bash
+python -m pip install "spotapi[connect]"
+python -m spotapi connect
+```
+
+Se o pip avisar que o extra `connect` não existe, essa versão do PyPI é anterior à inclusão do extra. Até a próxima versão, clone o repositório e execute `python -m pip install -e ".[connect]"` na raiz.
+
+Use `search Daft Punk` para encontrar músicas, `queue 1` para adicionar um resultado à fila ou `pause`, `next` e `seek 1:30` para controlar a reprodução. Abra `/devices` para ver os players disponíveis; `/use 2` seleciona um sem transferir a reprodução, enquanto `/transfer 2` transfere a reprodução. `Ctrl+P` abre a paleta de comandos.
+
+O Connect exige sua sessão do Spotify para controlar o player. Para entrar pelo navegador, talvez você também precise do extra `browser` e de instalar o Chromium do Playwright; consulte o [guia do Connect](docs/connect.md) para configurar.
+
+## Veja o que mais ele faz
+
+O SpotAPI também alimenta o **Studio**, um explorador de música para desktop construído com a mesma biblioteca. Abra faixas, consulte créditos, siga artistas e álbuns e exiba letras sincronizadas. Com um player do Spotify conectado, clicar numa linha da letra pode avançar a reprodução até aquele trecho.
+
+![Prévia do aplicativo SpotAPI Studio para desktop](examples/studio/preview.png)
+
+[Assista à demonstração de letras sincronizadas (GIF, cerca de 11 MB)](assets/lyrics-sync-demo.gif) · O próprio Studio não transmite músicas completas do Spotify.
+
+```bash
+python -m pip install "spotapi[studio]"
+python -m spotapi studio
+```
+
+O Studio usa uma WebView nativa. A [configuração do Studio](https://spotapi.readthedocs.io/en/latest/studio/) explica os requisitos da plataforma e o login no Spotify. A disponibilidade das letras depende da fonte e dos direitos da conta; avançar para um trecho exige um player autenticado que aceite o comando.
+
+## Desenvolva com Python
+
+As demonstrações de terminal são exemplos. **O SpotAPI é, antes de tudo, uma biblioteca Python:** operações assíncronas, resultados tipados, chamadas de rede explícitas e sessões reutilizáveis.
+
+```python
+import asyncio
+from spotapi import Public
+
+
+async def main() -> None:
+    results = await Public.search("Daft Punk", limit=5)
+    for track in results.tracks:
+        print(track.name, track.uri)
+
+
+asyncio.run(main())
+```
+
+Para várias operações relacionadas, reutilize uma sessão do catálogo:
+
+```python
+import asyncio
+from spotapi import Catalogue
+
+
+async def main() -> None:
+    async with Catalogue() as spotify:
+        results = await spotify.search("Daft Punk")
+        if results.artists:
+            artist = await spotify.get_artist(results.artists[0].uri)
+            print(artist.name)
+
+
+asyncio.run(main())
+```
+
+**Trabalhando com playlists grandes?** [Audite até 10.000 ocorrências de uma playlist](examples/playlist_audit.py), identifique faixas duplicadas e entradas indisponíveis e exporte um CSV. O exemplo percorre os resultados por páginas em vez de carregar toda a playlist na memória. Execute a partir de um checkout do repositório.
+
+### Próximos passos
+
+| O que desenvolver | Comece aqui |
+|---|---|
+| Ferramentas de busca musical ou metadados públicos | [Catálogo público](https://spotapi.readthedocs.io/en/latest/catalogue/) |
+| Organizador de playlists que lida corretamente com faixas duplicadas | [API de playlists](https://spotapi.readthedocs.io/en/latest/account/) |
+| Visor ou controlador em tempo real da música atual | [Exemplo do player](https://github.com/Aran404/SpotAPI/blob/main/examples/player.py) |
+| Painel pessoal de músicas | [Conta e estatísticas](https://spotapi.readthedocs.io/en/latest/account/) |
+| Coleção de DJ baseada em BPM e tonalidades harmônicas | [Coleção de playlist](https://github.com/Aran404/SpotAPI/blob/main/examples/playlist_crate.py) |
+| Recomendador experimental e local de músicas | [Taste Lab](https://github.com/Aran404/SpotAPI/blob/main/examples/taste_lab/README.md) |
+
+## Por que SpotAPI?
+
+- **Comece sem credenciais.** Buscar e consultar metadados do catálogo público não exige aplicativo de desenvolvedor do Spotify.
+- **Resultados tipados e assíncronos.** Trabalhe com modelos Python em vez de adivinhar chaves de dicionários.
+- **E/S explícita.** Ler um modelo não dispara outra requisição HTTP silenciosamente.
+- **Mais que metadados somente de leitura.** Com uma sessão autenticada, gerencie músicas salvas, edite ocorrências em playlists e controle players existentes.
+- **Feito para explorar.** Use a CLI, o Discover e o Studio para conhecer os recursos antes de integrá-los ao código.
+
+O SpotAPI usa endpoints não oficiais do web player do Spotify; portanto, seu comportamento pode mudar quando o Spotify altera esses endpoints. Ele **não** substitui a Web API oficial em todos os casos, e o acesso a dados públicos é diferente do acesso autenticado à reprodução. [Compare as APIs](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [Limites de verificação](https://spotapi.readthedocs.io/en/latest/release-checks/#boundaries)
+
+## Documentação e migração
+
+[Introdução rápida](https://spotapi.readthedocs.io/en/latest/quickstart/) · [Referência da API](https://spotapi.readthedocs.io/en/latest/reference/) · [Migrando do Spotipy](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [CLI e descoberta](https://spotapi.readthedocs.io/en/latest/discovery/) · [Solução de problemas](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
+
+**Atualizando da v1?** O SpotAPI 2 prioriza operações assíncronas e tem mudanças incompatíveis. Aplicativos existentes da v1 podem fixar `spotapi==1.2.8` durante a migração, ou usar `SyncCatalogue` em novos scripts síncronos. Leia o [guia de migração](MIGRATION.md).
+
+## Apoie o SpotAPI
+
+O SpotAPI é gratuito e de código aberto. Os patrocínios ajudam a financiar manutenção, testes e documentação sem alterar o comportamento da biblioteca nem criar barreiras de pagamento.
+
+**Desenvolve ferramentas para programadores?** [Conheça as opções de patrocínio](SPONSORSHIP.md) para alcançar quem usa o SpotAPI. Os espaços pagos são identificados claramente e ajudam a apoiar o projeto.
+
+<!-- Os patrocínios ativos, claramente identificados, ficam abaixo desta linha. Mantenha-os compactos e abaixo das demonstrações do produto. -->
+
+## Como contribuir
+
+Relatos de bugs, problemas reproduzíveis e contribuições bem pensadas são bem-vindos. [Como contribuir](CONTRIBUTING.md) · [Testes](tests/README.md) · [Aviso legal](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)
+
+Se o SpotAPI ajudar você a criar algo, **[dê uma estrela ao repositório](https://github.com/Aran404/SpotAPI)** para que outros programadores também o descubram.
