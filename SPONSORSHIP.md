@@ -4,7 +4,7 @@
 
 [SpotAPI](https://github.com/Aran404/SpotAPI) is a free, open-source Spotify library with a typed async API, a terminal interface, and a desktop Studio. Sponsorship pays for maintenance, regression testing, documentation, and keeping the project useful as upstream APIs evolve.
 
-**Interested in a placement? [Email to book or ask a question](mailto:aran.inbox.personal@gmail.com?subject=SpotAPI%20sponsorship).** A short note with your product link and preferred package is enough to get started.
+**A low-risk first test:** a 30-day README text link starts at **$50**. The first two paid featured partners can book a 30-day logo placement for **$79**; subsequent bookings are **$149**. [Email to reserve a placement](mailto:aran.inbox.personal@gmail.com?subject=SpotAPI%20sponsorship) with your product URL and preferred option. No long-term commitment.
 
 ## Who you reach
 
@@ -18,24 +18,27 @@ The [repository](https://github.com/Aran404/SpotAPI) displays public stars, fork
 
 ## 30-day sponsorship packages
 
-All prices are in **USD** for **30 consecutive days**, beginning when the agreed placement goes live.
+All prices are **USD** for **30 consecutive days**, starting only when the agreed placement is published. These are fixed-fee advertising placements, not promises of traffic or customers.
 
 | Package | Price | Included |
 |---|---:|---|
-| **Supporter** | **$50** | A labeled text link in the README's **Support SpotAPI** section. |
-| **Featured Partner** · recommended | **$200** | A compact, labeled sponsor placement with your logo, a one-sentence description, and one link in the README's **Support SpotAPI** section. |
-| **Category Exclusive** | **$300** | Everything in Featured Partner, plus no competing **paid README placements** in the mutually agreed product category during your 30-day term. |
-| **Exclusive Integration Partner** | **Custom quote** | Featured README placement, category exclusivity across agreed sponsored surfaces, and one officially maintained optional provider adapter with setup documentation. One-time engineering and ongoing exclusivity/maintenance are priced separately. |
+| **Supporter** | **$50** | One labeled text link in the README's **Support SpotAPI** section. |
+| **Founding Featured Partner** · first 2 paid bookings | **$79** | A compact, labeled sponsor logo, one-sentence description and one tracked link in **Support SpotAPI**. |
+| **Featured Partner** · standard rate | **$149** | The same 30-day featured placement, for bookings after the two founding slots are taken. |
+| **Category Exclusive** | **$199** | A featured placement plus no competing **paid README placements** in one agreed product category during the term. |
+| **Exclusive Integration Partner** | **Custom quote** | A separately scoped, optional provider adapter and documentation, plus any agreed advertising and limited-term exclusivity. Engineering and ongoing maintenance are priced separately. |
 
-Featured placements are limited to **four concurrent sponsors**, including any category-exclusive partners. Supporters appear as compact text links rather than competing with featured logos. Placement content and order are agreed before payment; no sponsor is presented as a recommendation purely because they paid.
+The **$79 founding rate** applies to the first two paid featured partners' initial 30-day bookings only. Slots are reserved after scope and payment are agreed, not by sending an inquiry. Once those slots are booked, the $149 standard rate applies. We will update this page when availability changes.
 
-**Introductory pricing:** These rates are for new 30-day bookings while we establish our first partnerships. We may revise prices for future bookings as the audience and measurable sponsor results grow. Any rate already agreed in writing remains valid for its booked term. Renewals use a newly agreed rate; no indefinite price lock is implied.
+We keep at most **three featured logos** in the README at once to preserve readability; Supporters use text links. All paid listings remain below the product introduction and working examples. Sponsor content is reviewed for relevance; payment never changes core library behavior or implies endorsement.
 
-If you prefer a first-month pilot, a longer engagement, an affiliate arrangement, or a more narrowly scoped placement, mention that in your email. Affiliate commissions and discounts are negotiated separately and **are not required** to buy a README sponsorship.
+**Buying the first placement is deliberately simple:** choose a package, confirm the placement and dates, pay an upfront direct invoice, then measure your own referrals with your tracking URL. We can share dated GitHub traffic or download data if available, but stars, downloads and views are not guaranteed sponsor impressions. If a pilot works, renewal is quoted and agreed separately; there is **no automatic renewal**.
+
+Business advertising uses direct invoicing. **GitHub Sponsors, if active for the maintainer, is an optional way for individual developers to support maintenance**, not an automatic entitlement to a logo, integration, or paid advertisement. Affiliate arrangements and technical work require separate written agreement.
 
 ### Exclusive integration partnerships
 
-For partners whose services are genuinely useful to SpotAPI developers, we can offer more than a logo: **a documented, optional, officially maintained provider integration with category exclusivity**. The partner becomes the sole *official turnkey adapter* in the agreed integration category for the contract term, alongside a featured README placement. This is distinct from the $300 **Category Exclusive** tier, which covers **paid README advertising only**.
+For partners whose services are genuinely useful to SpotAPI developers, we can offer more than a logo: **a documented, optional, officially maintained provider integration with category exclusivity**. The partner becomes the sole *official turnkey adapter* in the agreed integration category for the contract term, alongside a featured README placement. This is distinct from the $199 **Category Exclusive** tier, which covers **paid README advertising only**.
 
 **Example (illustrative, not an existing sponsorship):** SpotAPI already exposes the provider-neutral async `CaptchaSolver` protocol for certain account and password-recovery operations. A CAPTCHA service could sponsor the project's only officially maintained provider adapter for that protocol. Developers would supply their own service API key and explicitly select the adapter. Custom solvers and the provider-neutral protocol would continue to work; no commercial provider would be required to use SpotAPI.
 
@@ -72,4 +75,4 @@ Sponsor listings belong in the README **after the product introduction and usage
 
 **[Email about sponsoring SpotAPI](mailto:aran.inbox.personal@gmail.com?subject=SpotAPI%20sponsorship)** · [View the repository](https://github.com/Aran404/SpotAPI)
 
-For a quick reply, include your product URL, **Supporter / Featured / Category Exclusive / Exclusive Integration Partner**, and your preferred start date. We'll confirm the agreed scope and invoice details directly by email.
+For a quick reply, include your product URL, **Supporter / Founding Featured / Featured / Category Exclusive / Exclusive Integration Partner**, and your preferred start date. We'll confirm the agreed scope and invoice details directly by email.

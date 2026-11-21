@@ -179,7 +179,7 @@ SpotAPI uses unofficial Spotify web-player endpoints, so behavior can change whe
 
 SpotAPI is free and open source. Sponsorship helps fund maintenance, testing and documentation without changing the library's behavior or adding paywalls.
 
-**Build developer tools?** [Explore sponsorship options](SPONSORSHIP.md) to reach developers using SpotAPI. Paid placements are clearly labeled and help support the project.
+**Build developer tools?** [Explore sponsorship options](SPONSORSHIP.md) starting at $50 for 30 days. Paid placements are clearly labeled and kept below the product demos.
 
 <!-- Active, clearly labeled sponsor placements go below this line. Keep them compact and below the product demos. -->
 

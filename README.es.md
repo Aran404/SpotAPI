@@ -179,7 +179,7 @@ SpotAPI utiliza endpoints no oficiales del reproductor web de Spotify, por lo qu
 
 SpotAPI es gratuito y de código abierto. Los patrocinios ayudan a financiar el mantenimiento, las pruebas y la documentación sin cambiar el comportamiento de la biblioteca ni añadir muros de pago.
 
-**¿Desarrollas herramientas para programadores?** [Consulta las opciones de patrocinio](SPONSORSHIP.md) para llegar a desarrolladores que usan SpotAPI. Las ubicaciones pagadas se identifican claramente y ayudan a sostener el proyecto.
+**¿Desarrollas herramientas para programadores?** [Consulta las opciones de patrocinio](SPONSORSHIP.md) desde 50 USD por 30 días. Las ubicaciones pagadas se identifican claramente y aparecen después de las demostraciones del producto.
 
 <!-- Los patrocinios activos y claramente identificados deben aparecer debajo de esta línea. Mantenlos compactos y después de las demostraciones del producto. -->
 

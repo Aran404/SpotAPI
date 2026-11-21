@@ -179,7 +179,7 @@ SpotAPI utilise des points de terminaison non officiels du lecteur Web de Spotif
 
 SpotAPI est gratuit et open source. Le parrainage finance la maintenance, les tests et la documentation sans modifier le fonctionnement de la bibliothèque ni ajouter de fonctionnalités payantes.
 
-**Vous créez des outils pour les développeurs ?** [Découvrez les possibilités de parrainage](SPONSORSHIP.md) pour toucher les développeurs utilisant SpotAPI. Les emplacements payants sont clairement signalés et contribuent au financement du projet.
+**Vous créez des outils pour les développeurs ?** [Découvrez les possibilités de parrainage](SPONSORSHIP.md) dès 50 USD pour 30 jours. Les emplacements payants sont clairement signalés et placés après les démonstrations du produit.
 
 <!-- Placez les parrainages actifs, clairement identifiés, sous cette ligne. Restez concis et positionnez-les après les démonstrations du produit. -->
 
