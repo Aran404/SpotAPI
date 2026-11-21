@@ -377,3 +377,10 @@ async def test_studio_shutdown_drains_public_reads_before_closing_catalogue(
     assert (await search)["ok"] is True
     await shutdown
     assert stub.closed
+
+
+def test_lyrics_identifies_installed_release(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("spotapi._studio.lyrics.package_version", lambda name: "2.7.3")
+    assert _studio_user_agent() == (
+        "SpotAPI Studio v2.7.3 (https://github.com/Aran404/SpotAPI)"
+    )
