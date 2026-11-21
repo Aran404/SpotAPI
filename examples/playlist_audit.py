@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import os
 from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import dataclass
@@ -132,7 +133,9 @@ async def export_playlist(
                     )
 
         summary.unique_tracks = len(seen)
-        temp_path.replace(output)
+        # Create a hard link in the same directory, without overwriting a file
+        # created by another process during the export. os.replace is unsafe here.
+        os.link(temp_path, output)
         return summary
     finally:
         if temp_path is not None:
