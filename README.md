@@ -18,7 +18,7 @@
   <a href="#explore-in-the-terminal">Explore</a> ·
   <a href="#build-with-python">Python API</a> ·
   <a href="https://spotapi.readthedocs.io/">Documentation</a> ·
-  <a href="#support-spotapi">Sponsor</a>
+  <a href="SPONSORSHIP.md">Sponsor</a>
 </p>
 
 ![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
@@ -152,7 +152,7 @@ SpotAPI uses unofficial Spotify web-player endpoints, so behavior can change whe
 
 SpotAPI is free and open source. Sponsorship helps fund maintenance, testing and documentation without changing the library's behavior or adding paywalls.
 
-**Building something for Python developers?** [Sponsor SpotAPI](SPONSORSHIP.md) with a clearly labeled, 30-day placement. Featured partners start at **$250 USD**. [View packages and get in touch](SPONSORSHIP.md#contact).
+**Build developer tools?** [Explore sponsorship options](SPONSORSHIP.md) to reach developers using SpotAPI. Paid placements are clearly labeled and help support the project.
 
 <!-- Active, clearly labeled sponsor placements go below this line. Keep them compact and below the product demos. -->
 
