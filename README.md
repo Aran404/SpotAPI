@@ -121,6 +121,8 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+**Working with large playlists?** [Audit up to 10,000 playlist occurrences](examples/playlist_audit.py), identify duplicate tracks and unavailable entries, and export a CSV. The example pages through results instead of loading the whole playlist into memory. Run it from a repository checkout.
+
 ### Where to go next
 
 | Build | Start here |
