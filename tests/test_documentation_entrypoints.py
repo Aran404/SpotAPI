@@ -141,6 +141,6 @@ def test_localized_readme_has_full_english_structure(filename: str) -> None:
 
     for language in _LANGUAGES:
         if language != filename:
-            assert f'href="{language}"' in translated, (
-                f"{filename}: missing language-switch link for {language}"
-            )
+            assert (
+                f'href="{language}"' in translated
+            ), f"{filename}: missing language-switch link for {language}"
