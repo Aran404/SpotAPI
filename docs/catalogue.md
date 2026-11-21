@@ -63,6 +63,16 @@ replayed automatically after ambiguous failures.
 
 For runnable introductions, see the scripts in [examples](https://github.com/Aran404/SpotAPI/blob/main/examples).
 
+## Audit a large public playlist
+
+From a repository checkout, use the [playlist-audit example](https://github.com/Aran404/SpotAPI/blob/main/examples/playlist_audit.py) to inspect a playlist you are permitted to access:
+
+```bash
+python examples/playlist_audit.py "spotify:playlist:PLAYLIST_ID" --output playlist.csv
+```
+
+The script reads entries in pages of 100 and supports up to 10,000 occurrences via `--max-items`. It exports each occurrence with its UID, including repeated tracks, episodes and unavailable entries, and reports duplicate-track counts. It never modifies the playlist, never silently overwrites an existing CSV and removes incomplete output on errors. No developer application is required for accessible public data. Service access remains subject to applicable terms and limits; this example does not rotate proxies or bypass restrictions.
+
 ## Discovered On playlists
 
 `get_artist_discovered_on` is available on `Catalogue`,
