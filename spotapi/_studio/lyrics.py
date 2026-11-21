@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from importlib.metadata import version as package_version
 from datetime import timedelta
+from importlib.metadata import version as package_version
 from typing import cast
 
 import wreq

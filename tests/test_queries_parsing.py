@@ -185,10 +185,12 @@ async def test_pagination_with_explicit_total_is_not_limited_by_fallback(
     monkeypatch.setattr("spotapi.query._DEFAULT_PAGE_CAP", 2)
 
     async def request(variables: dict[str, Any]) -> ObjectDict:
-        return ObjectDict({
-            "items": [{"id": str(variables["offset"])}],
-            "totalCount": 3,
-        })
+        return ObjectDict(
+            {
+                "items": [{"id": str(variables["offset"])}],
+                "totalCount": 3,
+            }
+        )
 
     pages = [page async for page in paginate(request, {"limit": 1})]
     assert len(pages) == 3
