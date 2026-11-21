@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, TypeVar, cast
 from types import SimpleNamespace
+from typing import TYPE_CHECKING, TypeVar, cast
 from unittest.mock import AsyncMock
 
 import pytest
@@ -88,6 +89,9 @@ class StubPlayer:
         self.play = AsyncMock()
         self.seek = AsyncMock()
         self.refresh = AsyncMock()
+        self.volume = AsyncMock()
+        self.shuffle = AsyncMock()
+        self.repeat = AsyncMock()
 
     def select(self, device: Device) -> None:
         self.target_device_id = device.id
@@ -112,18 +116,16 @@ def test_all_documented_commands_parse(source: str) -> None:
 @pytest.mark.asyncio
 async def test_commands_reach_player_after_validation() -> None:
     player = StubPlayer()
-    for name in ("volume", "shuffle", "repeat"):
-        setattr(player, name, AsyncMock())
     catalogue = as_catalogue(SimpleNamespace())
     for source in ("pause", "resume", "next", "previous", "volume 35", "shuffle on", "repeat off"):
         await execute(parse_command(source), player=as_player(player), catalogue=catalogue)
     player.pause.assert_awaited_once()
     player.resume.assert_awaited_once()
     player.next.assert_awaited_once()
-    getattr(player, "previous").assert_awaited_once()
-    getattr(player, "volume").assert_awaited_once_with(35)
-    getattr(player, "shuffle").assert_awaited_once_with(True)
-    getattr(player, "repeat").assert_awaited_once_with("off")
+    player.previous.assert_awaited_once()
+    player.volume.assert_awaited_once_with(35)
+    player.shuffle.assert_awaited_once_with(True)
+    player.repeat.assert_awaited_once_with("off")
 
 
 @pytest.mark.asyncio
@@ -200,8 +202,9 @@ async def test_disconnected_mutations_do_not_run() -> None:
 async def test_connect_auth_uses_shell_cookie_without_force(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from spotapi._connect.auth import open_account
     import spotapi
+
+    from spotapi._connect.auth import open_account
 
     fake_client = SimpleNamespace(from_cookies=AsyncMock(return_value="session"))
     monkeypatch.setenv("SPOTIFY_COOKIE", "sp_dc=private")
@@ -214,8 +217,9 @@ async def test_connect_auth_uses_shell_cookie_without_force(
 async def test_connect_auth_force_uses_fresh_named_browser(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from spotapi._connect.auth import open_account
     import spotapi
+
+    from spotapi._connect.auth import open_account
 
     class FakeSavedSession:
         def __init__(self, name: str) -> None:
@@ -239,15 +243,14 @@ async def test_connect_ui_mounts_and_exits_in_headless_terminal(
 ) -> None:
     """Optional Textual smoke test; runs when the Connect extra is installed."""
     pytest.importorskip("textual")
-    from textual.widgets import Input
-
     from spotapi._connect import app as connect_ui
+    from textual.widgets import Input
 
     class FakeCatalogue:
         def __init__(self, client: object) -> None:
             self.client = client
 
-        async def __aenter__(self) -> "FakeCatalogue":
+        async def __aenter__(self) -> FakeCatalogue:
             return self
 
         async def close(self) -> None:
