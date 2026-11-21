@@ -242,7 +242,9 @@ def test_cli_explicit_profile_overrides_environment_cookie(
     open_saved = AsyncMock(return_value=client)
     monkeypatch.setattr(SavedSession, "open", open_saved)
     liked = SimpleNamespace(get=AsyncMock(return_value=()))
-    monkeypatch.setattr("spotapi.cli.Private", Mock(return_value=SimpleNamespace(liked_tracks=liked)))
+    monkeypatch.setattr(
+        "spotapi.cli.Private", Mock(return_value=SimpleNamespace(liked_tracks=liked))
+    )
 
     assert main(["library", "list", "--profile", "personal"]) == 0
 

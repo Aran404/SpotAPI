@@ -322,7 +322,9 @@ async def test_studio_overlaps_public_reads_without_blocking_each_other(
         async def close(self) -> None:
             return None
 
-        async def search(self, query: str, *, types: tuple[str, ...], limit: int) -> dict[str, str]:
+        async def search(
+            self, query: str, *, types: tuple[str, ...], limit: int
+        ) -> dict[str, str]:
             assert types and limit == 12
             self.calls += 1
             if self.calls == 2:
@@ -381,6 +383,4 @@ async def test_studio_shutdown_drains_public_reads_before_closing_catalogue(
 
 def test_lyrics_identifies_installed_release(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("spotapi._studio.lyrics.package_version", Mock(return_value="2.7.3"))
-    assert _studio_user_agent() == (
-        "SpotAPI Studio v2.7.3 (https://github.com/Aran404/SpotAPI)"
-    )
+    assert _studio_user_agent() == ("SpotAPI Studio v2.7.3 (https://github.com/Aran404/SpotAPI)")
