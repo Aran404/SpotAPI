@@ -213,7 +213,7 @@ def test_cli_reuses_saved_connect_profile_without_reauthenticating(
 ) -> None:
     """A saved Connect login works for ordinary CLI commands without an env cookie."""
     monkeypatch.delenv("SPOTIFY_COOKIE", raising=False)
-    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", lambda name: object())
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
     client = AsyncMock()
     client.__aenter__.return_value = client
     open_saved = AsyncMock(return_value=client)
@@ -236,7 +236,7 @@ def test_cli_explicit_profile_overrides_environment_cookie(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("SPOTIFY_COOKIE", "different-account-cookie")
-    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", lambda name: object())
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
     client = AsyncMock()
     client.__aenter__.return_value = client
     open_saved = AsyncMock(return_value=client)
@@ -254,7 +254,7 @@ def test_cli_rejects_invalid_profile_before_keyring_access(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", lambda name: object())
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
     open_saved = AsyncMock()
     monkeypatch.setattr(SavedSession, "open", open_saved)
 
@@ -270,7 +270,7 @@ def test_cli_says_how_to_recover_when_named_profile_is_absent(
     from spotapi.types import BaseClientError
 
     monkeypatch.delenv("SPOTIFY_COOKIE", raising=False)
-    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", lambda name: object())
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
     monkeypatch.setattr(
         SavedSession, "open", AsyncMock(side_effect=BaseClientError("Missing saved profile"))
     )
