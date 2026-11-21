@@ -1,6 +1,7 @@
-from spotapi import Player, Private
 import asyncio
 import os
+
+from spotapi import Player, Private
 
 COOKIE = os.environ["SPOTIFY_COOKIE"]
 
