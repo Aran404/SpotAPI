@@ -35,7 +35,7 @@ If you prefer a first-month pilot, a longer engagement, an affiliate arrangement
 
 ### Exclusive integration partnerships
 
-For partners whose services are genuinely useful to SpotAPI developers, we can offer more than a logo: **a documented, optional, officially maintained provider integration with category exclusivity**. The partner becomes the sole *official turnkey adapter* in the agreed integration category for the contract term, alongside a featured README placement. This is distinct from the $400 **Category Exclusive** tier, which covers **paid README advertising only**.
+For partners whose services are genuinely useful to SpotAPI developers, we can offer more than a logo: **a documented, optional, officially maintained provider integration with category exclusivity**. The partner becomes the sole *official turnkey adapter* in the agreed integration category for the contract term, alongside a featured README placement. This is distinct from the $300 **Category Exclusive** tier, which covers **paid README advertising only**.
 
 **Example (illustrative, not an existing sponsorship):** SpotAPI already exposes the provider-neutral async `CaptchaSolver` protocol for certain account and password-recovery operations. A CAPTCHA service could sponsor the project's only officially maintained provider adapter for that protocol. Developers would supply their own service API key and explicitly select the adapter. Custom solvers and the provider-neutral protocol would continue to work; no commercial provider would be required to use SpotAPI.
 

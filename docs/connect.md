@@ -18,6 +18,9 @@ From a published version containing Connect:
 python -m pip install "spotapi[connect]"
 ```
 
+The `connect` extra installs the terminal UI and OS-keyring support for saved profiles.
+Browser sign-in is a separate optional installation, described below.
+
 Browser sign-in is optional. Only if you want Connect to open a fresh login
 window (including with `--force`), install the browser extra and its Chromium
 runtime:
