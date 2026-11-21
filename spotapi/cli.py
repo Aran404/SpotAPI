@@ -10,14 +10,15 @@ import importlib.util
 import json
 import os
 import sys
-from collections.abc import Awaitable, Callable, Sequence
-from contextlib import aclosing
+from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
+from contextlib import aclosing, asynccontextmanager
 from importlib.metadata import version as package_version
 from typing import NoReturn, cast
 
 from .account import Private
 from .embeds import get_embed
 from .library import LikedTracks
+from .login import SavedSession
 from .media import Media
 from .models import Album, PlaylistEntry, Track
 from .operations import SEARCH_DESKTOP_SECTIONS, SearchKind
@@ -25,7 +26,7 @@ from .player import Player
 from .playlist import Playlist
 from .public import Public
 from .serialization import to_dict
-from .types import SpotAPIError
+from .types import BaseClientError, SpotAPIError
 
 # CLI presentation is kept here rather than introducing a dependency on Rich or
 # Textual for commands that only need the base installation.
@@ -290,6 +291,21 @@ def _parser() -> argparse.ArgumentParser:
     _configure_player(commands.add_parser("player", help="control an existing Spotify device"))
 
     _add_output_options(parser)
+    # The same named OS-keyring profiles used by Connect work in CLI commands.
+    # Put --profile on leaves so it works after a positional action or resource.
+    for name in ("library", "playlist", "player"):
+        for child in _subcommands(_subcommands(parser)[name]).values():
+            child.add_argument(
+                "--profile",
+                metavar="NAME",
+                help="saved Connect profile; overrides SPOTIFY_COOKIE",
+            )
+    for name in ("lyrics", "transcript"):
+        _subcommands(parser)[name].add_argument(
+            "--profile",
+            metavar="NAME",
+            help="saved Connect profile; overrides SPOTIFY_COOKIE",
+        )
     return parser
 
 
@@ -480,6 +496,44 @@ async def _run_download(args: argparse.Namespace) -> None:
         print(f"Saved to {destination}")
 
 
+@asynccontextmanager
+async def _authenticated_account(args: argparse.Namespace) -> AsyncGenerator[Private, None]:
+    """Borrow a named Connect profile or an explicit environment session.
+
+    A caller's SPOTIFY_COOKIE wins by default. Supplying --profile explicitly
+    selects the saved OS-keyring profile instead; no browser is launched and
+    no credentials are written to disk by this command.
+    """
+    profile: str | None = getattr(args, "profile", None)
+    cookie = os.environ.get("SPOTIFY_COOKIE", "").strip() if profile is None else ""
+    if cookie:
+        async with Private.from_cookies(cookie) as account:
+            yield account
+        return
+
+    # Keep the base install free of keyring dependencies and provide a useful
+    # first-use message instead of an ImportError or a credential-store traceback.
+    if importlib.util.find_spec("keyring") is None:
+        raise ValueError(
+            "This command needs a Spotify session. Set SPOTIFY_COOKIE, or install "
+            "'spotapi[connect]' and run 'spotapi connect' to save a profile."
+        )
+
+    from ._connect.commands import profile_name
+
+    name = profile_name(profile or "default")
+    try:
+        client = await SavedSession(name).open()
+    except BaseClientError as error:
+        raise ValueError(
+            f"No saved Spotify profile {name!r}. Set SPOTIFY_COOKIE, or run "
+            "'spotapi connect' to sign in and save this profile."
+        ) from error
+
+    async with client:
+        yield Private(client)
+
+
 async def _run(args: argparse.Namespace) -> None:
     command: str = args.command
     resource_lookup: Callable[[str], Awaitable[object]] | None = args.resource_lookup
@@ -509,27 +563,17 @@ async def _run(args: argparse.Namespace) -> None:
             _display((await anext(pages, ()))[: args.limit], args)
         return
 
-    cookie = os.environ.get("SPOTIFY_COOKIE", "").strip()
-    if not cookie:
-        raise ValueError(
-            "This command needs a Spotify session. Set SPOTIFY_COOKIE, or run spotapi connect --force for browser login."
-        )
-
-    if command in {"transcript", "lyrics"}:
-        async with Private.from_cookies(cookie) as account:
+    async with _authenticated_account(args) as account:
+        if command in {"transcript", "lyrics"}:
             helper = account.transcripts if command == "transcript" else account.lyrics
             _display(await helper.get(args.resource), args)
-        return
-
-    async with Private.from_cookies(cookie) as account:
-        match command:
-            case "library":
-                await _run_library(account.liked_tracks, args)
-            case "playlist":
-                await _run_playlist(Playlist(account.session, args.playlist), args)
-            case _:
-                async with Player(account.session).connect() as player:
-                    await _run_player(player, args)
+        elif command == "library":
+            await _run_library(account.liked_tracks, args)
+        elif command == "playlist":
+            await _run_playlist(Playlist(account.session, args.playlist), args)
+        else:
+            async with Player(account.session).connect() as player:
+                await _run_player(player, args)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
