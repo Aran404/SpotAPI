@@ -10,14 +10,14 @@ SpotAPI es una biblioteca de Python asíncrona y tipada para consultar datos pú
 
 Requiere Python 3.11 o posterior.
 
-\`\`\`bash
+```bash
 python -m pip install spotapi
 python -m spotapi search "Daft Punk"
-\`\`\`
+```
 
 La misma instalación permite utilizar la API directamente:
 
-\`\`\`python
+```python
 import asyncio
 from spotapi import Public
 
@@ -27,13 +27,13 @@ async def main():
         print(track.name, track.uri)
 
 asyncio.run(main())
-\`\`\`
+```
 
 ## Aplicaciones sin escribir código
 
-- **Discover:** explora música y metadatos desde la terminal. Instala con \`python -m pip install "spotapi[demo]"\` y ejecuta \`python -m spotapi discover "Daft Punk"\`.
-- **Connect:** controla un reproductor de Spotify existente desde la terminal. Instala con \`python -m pip install "spotapi[connect]"\` y ejecuta \`python -m spotapi connect\`. Se necesita una sesión de Spotify para controlar la reproducción. Si el extra aún no está en PyPI, consulta la sección Connect del [README en inglés](README.md#connect-control-your-spotify-player).
-- **Studio:** explora música, créditos y letras sincronizadas en una aplicación de escritorio. Instala con \`python -m pip install "spotapi[studio]"\` y ejecuta \`python -m spotapi studio\`.
+- **Discover:** explora música y metadatos desde la terminal. Instala con `python -m pip install "spotapi[demo]"` y ejecuta `python -m spotapi discover "Daft Punk"`.
+- **Connect:** controla un reproductor de Spotify existente desde la terminal. Instala con `python -m pip install "spotapi[connect]"` y ejecuta `python -m spotapi connect`. Se necesita una sesión de Spotify para controlar la reproducción. Si el extra aún no está en PyPI, consulta la sección Connect del [README en inglés](README.md#connect-control-your-spotify-player).
+- **Studio:** explora música, créditos y letras sincronizadas en una aplicación de escritorio. Instala con `python -m pip install "spotapi[studio]"` y ejecuta `python -m spotapi studio`.
 
 SpotAPI no transmite, descarga ni descifra canciones completas. La disponibilidad de los controles depende de la cuenta y del dispositivo.
 

@@ -10,14 +10,14 @@ SpotAPI é uma biblioteca Python assíncrona e tipada para consultar dados públ
 
 Requer Python 3.11 ou superior.
 
-\`\`\`bash
+```bash
 python -m pip install spotapi
 python -m spotapi search "Daft Punk"
-\`\`\`
+```
 
 A mesma instalação permite usar a API diretamente:
 
-\`\`\`python
+```python
 import asyncio
 from spotapi import Public
 
@@ -27,13 +27,13 @@ async def main():
         print(track.name, track.uri)
 
 asyncio.run(main())
-\`\`\`
+```
 
 ## Aplicativos sem escrever código
 
-- **Discover:** navegue por músicas e metadados no terminal. Instale com \`python -m pip install "spotapi[demo]"\` e execute \`python -m spotapi discover "Daft Punk"\`.
-- **Connect:** controle um player Spotify existente pelo terminal. Instale com \`python -m pip install "spotapi[connect]"\` e execute \`python -m spotapi connect\`. É necessário ter uma sessão Spotify para controlar a reprodução. Se o extra ainda não estiver no PyPI, consulte a seção Connect do [README em inglês](README.md#connect-control-your-spotify-player).
-- **Studio:** explore músicas, créditos e letras sincronizadas em um aplicativo desktop. Instale com \`python -m pip install "spotapi[studio]"\` e execute \`python -m spotapi studio\`.
+- **Discover:** navegue por músicas e metadados no terminal. Instale com `python -m pip install "spotapi[demo]"` e execute `python -m spotapi discover "Daft Punk"`.
+- **Connect:** controle um player Spotify existente pelo terminal. Instale com `python -m pip install "spotapi[connect]"` e execute `python -m spotapi connect`. É necessário ter uma sessão Spotify para controlar a reprodução. Se o extra ainda não estiver no PyPI, consulte a seção Connect do [README em inglês](README.md#connect-control-your-spotify-player).
+- **Studio:** explore músicas, créditos e letras sincronizadas em um aplicativo desktop. Instale com `python -m pip install "spotapi[studio]"` e execute `python -m spotapi studio`.
 
 O projeto não transmite, baixa nem descriptografa músicas completas. A disponibilidade dos controles depende da conta e do dispositivo.
 
