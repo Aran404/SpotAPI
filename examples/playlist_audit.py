@@ -13,11 +13,11 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from collections.abc import AsyncGenerator
 
 from spotapi import Public
 from spotapi.models.catalogue.playlist_details import PlaylistEntry

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import csv
-from pathlib import Path
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
 import pytest
 
