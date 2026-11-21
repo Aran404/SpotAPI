@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <strong>Language:</strong> English · <a href="README.pt-BR.md">Português (Brasil)</a> · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a>
+  <strong>Language:</strong> English · <a href="README.pt-BR.md">Português (Brasil)</a> · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a> · <a href="README.ja.md">日本語</a>
 </p>
 
 ![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
