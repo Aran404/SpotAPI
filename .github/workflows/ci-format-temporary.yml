@@ -1,0 +1,31 @@
+name: Temporary CI formatting
+on:
+  push:
+    branches: [fix/ci-cli-types-connect-lifecycle]
+    paths: [.github/workflows/ci-format-temporary.yml]
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install 'black>=24'
+      - name: Format six flagged files and push to isolated branch
+        shell: bash
+        run: |
+          python -m black spotapi/_connect/suggestions.py spotapi/_connect/presentation.py spotapi/_connect/app.py spotapi/cli.py tests/test_connect_presentation.py tests/test_connect_terminal.py
+          git diff --check
+          git add spotapi/_connect/suggestions.py spotapi/_connect/presentation.py spotapi/_connect/app.py spotapi/cli.py tests/test_connect_presentation.py tests/test_connect_terminal.py
+          if git diff --cached --quiet; then
+            echo "Already formatted."
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Format Connect and CLI files with Black'
+          git push origin HEAD:fix/ci-cli-types-connect-lifecycle
