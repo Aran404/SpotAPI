@@ -179,7 +179,7 @@ O SpotAPI usa endpoints não oficiais do web player do Spotify; portanto, seu co
 
 O SpotAPI é gratuito e de código aberto. Os patrocínios ajudam a financiar manutenção, testes e documentação sem alterar o comportamento da biblioteca nem criar barreiras de pagamento.
 
-**Desenvolve ferramentas para programadores?** [Conheça as opções de patrocínio](SPONSORSHIP.md) para alcançar quem usa o SpotAPI. Os espaços pagos são identificados claramente e ajudam a apoiar o projeto.
+**Desenvolve ferramentas para programadores?** [Conheça as opções de patrocínio](SPONSORSHIP.md) a partir de US$ 50 por 30 dias. Os espaços pagos são claramente identificados e ficam abaixo das demonstrações do produto.
 
 <!-- Os patrocínios ativos, claramente identificados, ficam abaixo desta linha. Mantenha-os compactos e abaixo das demonstrações do produto. -->
 

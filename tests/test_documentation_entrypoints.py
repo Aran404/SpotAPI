@@ -61,7 +61,7 @@ def test_quickstart_points_to_current_anchor() -> None:
 
 # English README Git blob SHA at translation time. Changes to the canonical
 # README must be reviewed against *all* translations, even when only prose changes.
-_ENGLISH_README_BLOB_SHA = "78028377eecab9366d2d1dc1eedaa06c5f5b47f1"
+_ENGLISH_README_BLOB_SHA = "bdf5dc8cb75e3dd55897be6ed85065ba59b2dad1"
 _TRANSLATIONS = ("README.pt-BR.md", "README.es.md", "README.fr.md", "README.ja.md")
 _LANGUAGES = ("README.md", *_TRANSLATIONS)
 
