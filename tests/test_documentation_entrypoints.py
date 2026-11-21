@@ -22,6 +22,7 @@ HTML_LINK = re.compile(r"""href=["']([^"']+)["']""")
         "README.pt-BR.md",
         "README.es.md",
         "README.fr.md",
+        "README.ja.md",
         "examples/README.md",
         "docs/quickstart.md",
         "docs/release-checks.md",
@@ -60,8 +61,8 @@ def test_quickstart_points_to_current_anchor() -> None:
 
 # English README Git blob SHA at translation time. Changes to the canonical
 # README must be reviewed against *all* translations, even when only prose changes.
-_ENGLISH_README_BLOB_SHA = "b91592b23ad6a940e3279f63efcbd0743fd62157"
-_TRANSLATIONS = ("README.pt-BR.md", "README.es.md", "README.fr.md")
+_ENGLISH_README_BLOB_SHA = "aaf3f0759306642ede10121d84eec0918564c0a4"
+_TRANSLATIONS = ("README.pt-BR.md", "README.es.md", "README.fr.md", "README.ja.md")
 _LANGUAGES = ("README.md", *_TRANSLATIONS)
 
 
@@ -112,7 +113,7 @@ def test_localized_readme_has_full_english_structure(filename: str) -> None:
     translated = (ROOT / filename).read_text(encoding="utf-8")
 
     assert _git_blob_sha(english_bytes) == _ENGLISH_README_BLOB_SHA, (
-        "README.md changed: review/update Portuguese, Spanish, and French "
+        "README.md changed: review/update Portuguese, Spanish, French, and Japanese "
         "translations, then update the reviewed English blob SHA."
     )
 
