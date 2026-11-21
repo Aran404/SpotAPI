@@ -1,44 +1,36 @@
-## Legal Notice
+# Legal notice
 
-This repository is in no way affiliated with, authorized, maintained, sponsored or endorsed by Spotify Inc. (spotify.com) or any of its affiliates or subsidiaries. This project is intended **for educational purposes only**.
+SpotAPI is an independent, community-maintained open-source project. It is not
+affiliated with, authorized by, sponsored by, or endorsed by Spotify or its
+affiliates. Spotify and related names and marks belong to their respective owners
+and are used here only to identify the service with which the project interacts.
 
-Please note the following:
+## Third-party services
 
-### **Affiliation Disclaimer**
-The project is intended for educational purposes only. The APIs, services, trademarks, and other intellectual property mentioned in this repository are the property of their respective owners, with no claim of ownership or affiliation by this project.
+SpotAPI interacts with Spotify's services, including undocumented web-player
+interfaces. Availability of this code does not imply that Spotify authorizes
+any particular use. Access to third-party services may be governed by their terms,
+technical restrictions, and applicable laws. Users and developers should assess
+those obligations before using or distributing integrations built with SpotAPI.
 
-### **Liability Limitation**
-Under no circumstances shall the author of this repository be liable for any direct, indirect, incidental, special, consequential, or punitive damages, including but not limited to, loss of profits, data, or use, arising out of or in connection with the repository, regardless of whether such damages were foreseeable and whether the author was advised of the possibility of such damages.
+Features can stop working or be restricted when Spotify changes its services,
+policies, or account entitlements. SpotAPI does not guarantee uninterrupted
+access to any third-party API.
 
-### **No Warranties**
-The repository is provided on an "as is" and "as available" basis without any warranties of any kind, either express or implied, including but not limited to, implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
+## Licensing and warranties
 
-### **User Responsibility**
-Users assume all risk for their use of this repository and are solely responsible for any damage or loss, including but not limited to financial loss, of any kind, to any party, that results from the use or misuse of the repository and its contents.
+SpotAPI's independently authored source code is distributed under the
+[GNU General Public License version 3](LICENSE). See the license for its terms,
+including the applicable disclaimers of warranty and liability. The project is
+provided without a guarantee of fitness, accuracy, availability, or compatibility.
 
-### **Legal Compliance**
-Users are responsible for ensuring their use of the repository and its contents complies with all local, state, national, and international laws and regulations.
+This notice does not grant rights in Spotify's intellectual property, amend
+Spotify's terms, limit the rights of any third party, or guarantee that a particular
+use of SpotAPI is permitted by law. It does not replace professional legal advice.
 
-### **Indemnification**
-Users agree to indemnify, defend, and hold harmless the author from any claims, liabilities, damages, losses, or expenses, including legal fees, arising out of or in any way connected with their use of this repository, violation of these terms, or infringement of any intellectual property or other rights of any person or entity.
+## Reporting concerns
 
-### **No Endorsement**
-The inclusion of third-party content does not imply endorsement or recommendation of such content by the author.
-
-### **Governing Law and Jurisdiction**
-Any disputes arising out of or related to the use of this repository shall be governed by the laws of the author's jurisdiction, without regard to its conflict of law principles.
-
-### **Severability**
-If any provision of this notice is found to be unlawful, void, or unenforceable, then that provision shall be deemed severable from this notice and shall not affect the validity and enforceability of any remaining provisions.
-
-### **Acknowledgment of Understanding**
-By using this repository, users acknowledge that they have read, understood, and agree to be bound by these terms.
-
-### **Updates and Changes**
-The author reserves the right to modify, update, or remove any content, information, or features in this repository at any time without prior notice. Users are responsible for regularly reviewing the content and any changes made to this repository.
-
-### **Unforeseen Consequences**
-The author of this repository is not responsible for any consequences, damages, or losses arising from the use or misuse of this repository or the content provided by the third-party APIs. Users are solely responsible for their actions and any repercussions that may follow. 
-
-### **Educational Purpose**
-Please note that this project and its content are provided strictly for educational purposes. Users acknowledge that they are using the APIs at their own risk and agree to comply with any applicable laws and regulations.
+If you believe material in this repository infringes your rights or requires
+correction, please contact the maintainer through the repository's public
+[issue tracker](https://github.com/Aran404/SpotAPI/issues), without posting
+credentials, private account information, or confidential legal documents.

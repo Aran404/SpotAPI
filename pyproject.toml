@@ -45,6 +45,7 @@ spotapi-mcp = "spotapi.mcp:main"
 mcp = ["mcp>=1.12,<2"]
 browser = ["playwright>=1.55,<2"]
 keyring = ["keyring>=25,<26"]
+connect = ["textual>=8.2,<9", "keyring>=25,<26"]
 media = ["mutagen>=1.47,<2"]
 studio = ["pywebview>=6.2,<7", "python-dotenv>=1.0"]
 demo = [

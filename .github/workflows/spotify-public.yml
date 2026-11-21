@@ -56,7 +56,8 @@ jobs:
         shell: pwsh
         run: |
           $wheel = (Get-ChildItem dist/*.whl).FullName
-          python -m pip install $wheel
+          python -m pip install "$($wheel)[connect]"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Set-Location $env:RUNNER_TEMP
           spotapi --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -65,6 +66,10 @@ jobs:
           python -I -m spotapi discover --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -I -m spotapi studio --help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -I -m spotapi connect --help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -I -c "import textual, keyring; from spotapi._connect.app import ConnectApp; assert ConnectApp"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -I -c "from importlib.resources import files; root = files('spotapi'); assert root.joinpath('py.typed').is_file(); assert root.joinpath('_studio', 'app.js').is_file()"
 
