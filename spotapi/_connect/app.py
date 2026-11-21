@@ -18,6 +18,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.events import Key, MouseMove, Resize
 from textual.message import Message
+from textual.timer import Timer
 from textual.widgets import Button, Input, OptionList, RichLog, Static
 from textual.widgets.option_list import Option
 
@@ -158,6 +159,7 @@ class ConnectApp(App[None]):
         self._context_options: tuple[tuple[str, str], ...] | None = None
         self._player_task: asyncio.Task[None] | None = None
         self._ui_ready = False
+        self._refresh_timer: Timer | None = None
         self._command_busy = False
         self._shutting_down = False
         self._resources_closed = False
@@ -268,7 +270,7 @@ class ConnectApp(App[None]):
         self._player_task = asyncio.create_task(self.player.start(), name="spotapi-connect")
         self._player_task.add_done_callback(self._on_supervisor_done)
         self._load_identity()
-        self.set_interval(0.5, self._render_state)
+        self._refresh_timer = self.set_interval(0.5, self._render_state)
         self._render_state()
         self.query_one("#command", CommandInput).focus()
 
@@ -319,7 +321,7 @@ class ConnectApp(App[None]):
         self._entry("#diagnostics", message, "#a8baa9")
 
     def _render_state(self) -> None:
-        if not self._ui_ready:
+        if not self._ui_ready or not self.is_mounted:
             return
         state = self.player.state
         target = self.player.target_device_id
@@ -786,6 +788,14 @@ class ConnectApp(App[None]):
         self.set_class(event.size.height < 30, "short")
         self.set_class(event.size.height < 23, "tiny")
 
+    def on_shutdown(self) -> None:
+        """Stop UI callbacks before Textual dismantles the widget tree."""
+        self._ui_ready = False
+        self._shutting_down = True
+        if self._refresh_timer is not None:
+            self._refresh_timer.stop()
+            self._refresh_timer = None
+
     async def on_unmount(self) -> None:
         await self.close_connections()
 
@@ -794,8 +804,7 @@ class ConnectApp(App[None]):
         if self._resources_closed:
             return
         self._resources_closed = True
-        self._shutting_down = True
-        self._ui_ready = False
+        self.on_shutdown()
         try:
             await self.player.close()
         finally:
