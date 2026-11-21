@@ -25,10 +25,6 @@
   <strong>Langue :</strong> <a href="README.md">English</a> · <a href="README.pt-BR.md">Português (Brasil)</a> · <a href="README.es.md">Español</a> · Français · <a href="README.ja.md">日本語</a>
 </p>
 
-![SpotAPI Connect pilotant un véritable lecteur Spotify depuis le terminal](assets/cli-connect-demo.gif)
-
-<p align="center"><sub>Connect · Recherchez, naviguez et pilotez un lecteur Spotify existant depuis votre terminal. Spotify lit l'audio ; SpotAPI envoie les commandes.</sub></p>
-
 ## Bien démarrer
 
 Python 3.11 ou une version ultérieure est nécessaire. Commencez par une vraie recherche, sans connexion Spotify, identifiant client ni configuration.
@@ -37,6 +33,10 @@ Python 3.11 ou une version ultérieure est nécessaire. Commencez par une vraie 
 python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
+
+![SpotAPI Connect pilotant un véritable lecteur Spotify depuis le terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Recherchez, naviguez et pilotez un lecteur Spotify existant depuis votre terminal. Spotify lit l'audio ; SpotAPI envoie les commandes.</sub></p>
 
 Vous accédez ainsi au catalogue public. Recherchez des titres, résolvez des liens Spotify, consultez les crédits et lisez les métadonnées de playlists publiques sans créer d'application développeur Spotify. La première requête peut être plus longue, car SpotAPI découvre les requêtes actuelles du lecteur Web ; les suivantes réutilisent les résultats mis en cache.
 
