@@ -14,7 +14,7 @@ SpotAPI's README and examples serve developers interested in:
 - Building applications with music search, playlists, metadata, and connected-player controls.
 - Developer tools that make shipping, testing, and maintaining Python applications easier.
 
-The [repository](https://github.com/Aran404/SpotAPI) displays public stars, forks, and activity. Ask for a dated snapshot of available GitHub traffic (views, unique visitors, referral sources) and package-download information. Stars and downloads are **not** unique people or guaranteed sponsor impressions. No reach or conversion figure is promised.
+The [repository](https://github.com/Aran404/SpotAPI) displays public stars, forks, and activity. See recent community discussions on [r/ReverseEngineering](https://www.reddit.com/r/ReverseEngineering/comments/1xz8cb0/i_reverseengineered_spotifys_private_api_and/) and [r/BestGitHubRepos](https://www.reddit.com/r/BestGitHubRepos/comments/1xx0iqk/i_waited_3_months_to_post_here_i_built_a_spotify/). Ask for a dated snapshot of available GitHub traffic (views, unique visitors, referral sources) and package-download information. Stars and downloads are **not** unique people or guaranteed sponsor impressions. No reach or conversion figure is promised.
 
 ## 30-day sponsorship packages
 
