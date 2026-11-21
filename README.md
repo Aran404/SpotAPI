@@ -17,7 +17,8 @@
   <a href="#get-started">Get started</a> ·
   <a href="#explore-in-the-terminal">Explore</a> ·
   <a href="#build-with-python">Python API</a> ·
-  <a href="https://spotapi.readthedocs.io/">Documentation</a>
+  <a href="https://spotapi.readthedocs.io/">Documentation</a> ·
+  <a href="#support-spotapi">Sponsor</a>
 </p>
 
 ![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
@@ -147,8 +148,16 @@ SpotAPI uses unofficial Spotify web-player endpoints, so behavior can change whe
 
 **Upgrading from v1?** SpotAPI 2 is async-first and contains breaking changes. Existing v1 apps can pin `spotapi==1.2.8` while migrating, or use `SyncCatalogue` for new synchronous scripts. Read the [migration guide](MIGRATION.md).
 
+## Support SpotAPI
+
+SpotAPI is free and open source. Sponsorship helps fund maintenance, testing and documentation without changing the library's behavior or adding paywalls.
+
+**Building something for Python developers?** [Sponsor SpotAPI](SPONSORSHIP.md) with a clearly labeled, 30-day placement. Featured partners start at **$250 USD**. [View packages and get in touch](SPONSORSHIP.md#contact).
+
+<!-- Active, clearly labeled sponsor placements go below this line. Keep them compact and below the product demos. -->
+
 ## Contributing
 
-Bug reports, reproducible issues and thoughtful contributions are welcome. [Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Legal notice](LEGAL_NOTICE.md) · [Sponsorship](SPONSORSHIP.md) · [GPL-3.0](LICENSE)
+Bug reports, reproducible issues and thoughtful contributions are welcome. [Contributing](CONTRIBUTING.md) · [Tests](tests/README.md) · [Legal notice](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)
 
 If SpotAPI helps you build something, **[star the repository](https://github.com/Aran404/SpotAPI)** to help other developers discover it.
