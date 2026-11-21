@@ -21,6 +21,10 @@
   <a href="SPONSORSHIP.md">Sponsor</a>
 </p>
 
+<p align="center">
+  <strong>Language:</strong> English · <a href="README.pt-BR.md">Português (Brasil)</a> · <a href="README.es.md">Español</a>
+</p>
+
 ![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
 
 <p align="center"><sub>Connect · Search, navigate and control an existing Spotify player from your terminal. Spotify plays the audio; SpotAPI sends the controls.</sub></p>
@@ -35,6 +39,22 @@ python -m spotapi search "Daft Punk"
 ```
 
 That's the public catalogue. Search, resolve Spotify links, inspect credits and read public playlist metadata without setting up a Spotify developer application. The first request can take longer while SpotAPI discovers the current web-player queries; subsequent requests reuse the cached results.
+
+**Building with Python instead?** The same installation provides a typed API. No terminal interface is required:
+
+```python
+import asyncio
+from spotapi import Public
+
+async def main():
+    results = await Public.search("Daft Punk", limit=5)
+    for track in results.tracks:
+        print(track.name, track.uri)
+
+asyncio.run(main())
+```
+
+[More Python examples](#build-with-python) · [Playlist audit and CSV export](examples/playlist_audit.py)
 
 **Want something you can browse?** Open the interactive terminal explorer:
 
@@ -68,6 +88,8 @@ python -m pip install "spotapi[connect]"
 python -m spotapi connect
 ```
 
+If pip warns that the `connect` extra does not exist, that PyPI release predates the extra. Until the next release, clone the repository and run `python -m pip install -e ".[connect]"` from its root.
+
 Use `search Daft Punk` to find music, `queue 1` to add a result, or `pause`, `next`, and `seek 1:30` to control playback. Open `/devices` to browse available players; `/use 2` selects one without transferring playback, while `/transfer 2` transfers playback. `Ctrl+P` opens the command palette.
 
 Connect requires your Spotify session for player controls. For browser-based sign-in, you may also need the `browser` extra and Playwright's Chromium installation; see the [Connect guide](docs/connect.md) for setup.
@@ -76,7 +98,9 @@ Connect requires your Spotify session for player controls. For browser-based sig
 
 SpotAPI also powers **Studio**, a desktop music explorer built on the same library. Open tracks, inspect credits, follow artists and albums, and display timed lyrics. With a connected Spotify player, clicking a lyric can seek playback to that line.
 
-![SpotAPI Studio synchronizing lyrics with a connected Spotify player](assets/lyrics-sync-demo.gif)
+![SpotAPI Studio desktop application preview](examples/studio/preview.png)
+
+[Watch the synchronized-lyrics demo (GIF, about 11 MB)](assets/lyrics-sync-demo.gif) · Studio itself does not stream full Spotify tracks.
 
 ```bash
 python -m pip install "spotapi[studio]"

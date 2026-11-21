@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 2.1.1 - Pending release
+
+- Add the installable `connect` optional extra and verify its installed wheel
+  on Linux, Windows and macOS; clarify browser sign-in requirements (#94).
+- Add a bounded, streaming, offline-tested public playlist CSV auditor (#95).
+- Improve the README's first Python example and make the Studio screenshot
+  lightweight; retain the lyrics animation as an optional link.
+- Fix outdated quickstart/release documentation and avoid duplicate CI runs
+  when a feature branch has an open pull request.
 
 - Add `Player.current_track_details()` for explicit current-track metadata.
 - Reconnect after transient grouped cleanup failures and report `disconnect`
