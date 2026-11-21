@@ -80,8 +80,9 @@ async def test_connect_command_completion_mouse_and_keyboard(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     pytest.importorskip("textual")
-    from spotapi._connect import app as ui
     from textual.widgets import OptionList
+
+    from spotapi._connect import app as ui
 
     Callback = TypeVar("Callback", bound=Callable[..., object])
 
@@ -210,10 +211,11 @@ async def test_results_and_devices_are_keyboard_navigable(
     pytest.importorskip("textual")
     import asyncio
 
+    from textual.widgets import Input
+
     from spotapi._connect import app as ui
     from spotapi.models.catalogue.track import Track
     from spotapi.models.playback import Device
-    from textual.widgets import Input
 
     class FakeCatalogue:
         def __init__(self, client: object) -> None:
