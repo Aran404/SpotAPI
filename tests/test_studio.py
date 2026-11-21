@@ -12,7 +12,7 @@ import pytest
 from spotapi import AsyncClient, Catalogue, Player
 from spotapi._studio.actions import ACTIONS
 from spotapi._studio.desktop import Bridge, _authenticate, page
-from spotapi._studio.lyrics import parse_lyrics
+from spotapi._studio.lyrics import _studio_user_agent, parse_lyrics
 from spotapi._studio.service import Studio, first_page, serialize
 from spotapi.models import AccountChallenge
 
