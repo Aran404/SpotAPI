@@ -14,7 +14,8 @@ breaking applications.
 From a checkout with the development extras installed:
 
 ```sh
-python -m pip install -e ".[dev,demo]"
+python -m pip install -e ".[dev,demo,connect]"
+python -m pip install -r requirements-docs.txt
 python -m pytest -m "not live" -q
 python -m pyright
 python -m ruff check .
@@ -31,6 +32,7 @@ python -m spotapi --version
 python -m spotapi search --help
 python -m spotapi discover --help
 python -m spotapi studio --help
+python -m spotapi connect --help
 ```
 
 The [CI workflows](https://github.com/Aran404/SpotAPI/tree/main/.github/workflows)
@@ -71,7 +73,6 @@ possible. Some player devices and account entitlements may reject actions.
 See [player capability boundaries](player-coverage.md), the
 [request policy](transport.md), and [troubleshooting](troubleshooting.md).
 
-The dated results from the November 13, 2026 hardening run are preserved in the
-[maintainer verification snapshot](https://github.com/Aran404/SpotAPI/blob/main/docs/development/release-verification-2026-11-13.md).
-They are historical observations, not the current release status or a substitute
-for the CI result on a new commit.
+For current verification, check the [GitHub Actions runs](https://github.com/Aran404/SpotAPI/actions)
+for the exact commit you intend to release. Historical test claims are not a
+substitute for current CI results or fresh live checks.

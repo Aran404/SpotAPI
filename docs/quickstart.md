@@ -50,7 +50,7 @@ API as your Python application. Plain `spotapi search` needs no demo dependencie
 
 If the terminal cannot find `spotapi`, check the installation with
 `python -m pip show spotapi`. Use `py -m pip show spotapi` on Windows if you
-installed with `py`. See the [Windows first-search instructions](https://github.com/Aran404/SpotAPI#first-search)
+installed with `py`. See the [Windows first-search instructions](https://github.com/Aran404/SpotAPI#get-started)
 for a way to call the executable without changing PATH.
 
 ## Reuse connections

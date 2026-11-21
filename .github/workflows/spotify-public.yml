@@ -2,6 +2,7 @@ name: Spotify API checks
 
 on:
   push:
+    branches: [main]
   pull_request:
   schedule:
     - cron: "17 8 * * *" # Daily contract check; reports upstream breaking changes
