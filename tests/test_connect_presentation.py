@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 from collections.abc import Callable
-from typing import TypeVar
-from typing import TYPE_CHECKING, cast
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, TypeVar, cast
 from unittest.mock import AsyncMock
 
 import pytest
@@ -82,6 +81,7 @@ async def test_connect_command_completion_mouse_and_keyboard(
 ) -> None:
     pytest.importorskip("textual")
     from textual.widgets import OptionList
+
     from spotapi._connect import app as ui
 
     Callback = TypeVar("Callback", bound=Callable[..., object])
@@ -90,7 +90,7 @@ async def test_connect_command_completion_mouse_and_keyboard(
         def __init__(self, client: object) -> None:
             self.client = client
 
-        async def __aenter__(self) -> "FakeCatalogue":
+        async def __aenter__(self) -> FakeCatalogue:
             return self
 
         async def close(self) -> None:
@@ -108,10 +108,12 @@ async def test_connect_command_completion_mouse_and_keyboard(
         def listen(self, name: str) -> Callable[[Callback], Callback]:
             def register(callback: Callback) -> Callback:
                 return callback
+
             return register
 
         async def start(self) -> None:
             import asyncio
+
             await asyncio.Event().wait()
 
         async def close(self) -> None:
@@ -119,6 +121,7 @@ async def test_connect_command_completion_mouse_and_keyboard(
 
     monkeypatch.setattr(ui, "Catalogue", FakeCatalogue)
     monkeypatch.setattr(ui, "Player", FakePlayer)
+
     def skip_profile_load(self: ui.ConnectApp) -> None:
         return None
 
@@ -129,7 +132,9 @@ async def test_connect_command_completion_mouse_and_keyboard(
         command.value = "/se"
         await pilot.pause()
         suggestions = application.query_one("#suggestions", OptionList)
-        assert command.suggestions_menu is application.query_one("#suggestions", ui.HoverOptionList)
+        assert command.suggestions_menu is application.query_one(
+            "#suggestions", ui.HoverOptionList
+        )
         assert suggestions.display
         await pilot.press("down", "enter")
         await pilot.pause()
@@ -179,15 +184,15 @@ def test_connect_css_ids_exist_in_the_tui() -> None:
 
 def test_search_results_have_useful_optional_metadata() -> None:
     from spotapi._connect.presentation import search_row
-    from spotapi.models.catalogue.track import (
-        ArtistItem, ArtistProfile, Artists, Duration, Track,
-    )
+    from spotapi.models.catalogue.track import ArtistItem, ArtistProfile, Artists, Duration, Track
 
     hit = Track(
         id="t",
         name="Let Down",
         uri="spotify:track:t",
-        artists=Artists(items=[ArtistItem(uri="spotify:artist:a", profile=ArtistProfile("Radiohead"))]),
+        artists=Artists(
+            items=[ArtistItem(uri="spotify:artist:a", profile=ArtistProfile("Radiohead"))]
+        ),
         duration=Duration(total_milliseconds=299_000),
     )
     assert search_row(2, hit) == "02  Let Down   ·   Radiohead  ·  4:59"
@@ -211,17 +216,19 @@ async def test_results_and_devices_are_keyboard_navigable(
 ) -> None:
     """Runs with the optional connect extra, no live Spotify calls."""
     pytest.importorskip("textual")
+    import asyncio
+
+    from textual.widgets import Input
+
     from spotapi._connect import app as ui
     from spotapi.models.catalogue.track import Track
     from spotapi.models.playback import Device
-    from textual.widgets import Input
-    import asyncio
 
     class FakeCatalogue:
         def __init__(self, client: object) -> None:
             pass
 
-        async def __aenter__(self) -> "FakeCatalogue":
+        async def __aenter__(self) -> FakeCatalogue:
             return self
 
         async def close(self) -> None:
@@ -239,6 +246,7 @@ async def test_results_and_devices_are_keyboard_navigable(
         def listen(self, name: str) -> Callable[[Callable[..., object]], Callable[..., object]]:
             def register(callback: Callable[..., object]) -> Callable[..., object]:
                 return callback
+
             return register
 
         async def start(self) -> None:
@@ -249,6 +257,7 @@ async def test_results_and_devices_are_keyboard_navigable(
 
     monkeypatch.setattr(ui, "Catalogue", FakeCatalogue)
     monkeypatch.setattr(ui, "Player", FakePlayer)
+
     def skip_profile_load(self: ui.ConnectApp) -> None:
         return None
 

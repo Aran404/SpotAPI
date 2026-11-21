@@ -47,8 +47,5 @@ def completions(source: str, *, limit: int = 6) -> tuple[Hint, ...]:
     if not query:
         return HINTS[:limit]
     starts = [hint for hint in HINTS if hint.example.casefold().startswith(query)]
-    contains = [
-        hint for hint in HINTS
-        if query in hint.example.casefold() and hint not in starts
-    ]
+    contains = [hint for hint in HINTS if query in hint.example.casefold() and hint not in starts]
     return tuple((starts + contains)[:limit])

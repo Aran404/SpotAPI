@@ -16,8 +16,10 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.css.query import NoMatches
 from textual.events import Key, MouseMove, Resize
 from textual.message import Message
+from textual.timer import Timer
 from textual.widgets import Button, Input, OptionList, RichLog, Static
 from textual.widgets.option_list import Option
 
@@ -106,8 +108,7 @@ class CommandInput(Input):
                 key == "enter"
                 and selected is not None
                 and selected.id is not None
-                and self.value.strip().removeprefix("/").casefold()
-                == selected.id.casefold()
+                and self.value.strip().removeprefix("/").casefold() == selected.id.casefold()
             ):
                 return
         elif key == "escape" and menu.display:
@@ -158,6 +159,7 @@ class ConnectApp(App[None]):
         self._context_options: tuple[tuple[str, str], ...] | None = None
         self._player_task: asyncio.Task[None] | None = None
         self._ui_ready = False
+        self._refresh_timer: Timer | None = None
         self._command_busy = False
         self._shutting_down = False
         self._resources_closed = False
@@ -268,7 +270,7 @@ class ConnectApp(App[None]):
         self._player_task = asyncio.create_task(self.player.start(), name="spotapi-connect")
         self._player_task.add_done_callback(self._on_supervisor_done)
         self._load_identity()
-        self.set_interval(0.5, self._render_state)
+        self._refresh_timer = self.set_interval(0.5, self._render_state)
         self._render_state()
         self.query_one("#command", CommandInput).focus()
 
@@ -336,7 +338,17 @@ class ConnectApp(App[None]):
         )
         if self._player_task is not None and self._player_task.done():
             status = "○ offline"
-        self.query_one("#connection", Static).update(status)
+        try:
+            connection = self.query_one("#connection", Static)
+        except NoMatches:
+            # Textual may detach the screen before dispatching Shutdown,
+            # notably when run_test exits on Windows.
+            self._ui_ready = False
+            if self._refresh_timer is not None:
+                self._refresh_timer.stop()
+                self._refresh_timer = None
+            return
+        connection.update(status)
         self.query_one("#account", Static).update(
             f"account  /  {self.identity.label}    ·    profile {self.profile}"
         )
@@ -412,9 +424,7 @@ class ConnectApp(App[None]):
         content = self.query_one("#context-content", Static)
         options = self.query_one("#context-options", ContextOptions)
         for name in ("queue", "devices", "search", "help"):
-            self.query_one(f"#tab-{name}", Button).set_class(
-                self._active_panel == name, "active"
-            )
+            self.query_one(f"#tab-{name}", Button).set_class(self._active_panel == name, "active")
 
         rows: tuple[tuple[str, str], ...] = ()
         match self._active_panel:
@@ -594,9 +604,9 @@ class ConnectApp(App[None]):
         selected = self.query_one("#context-options", ContextOptions).highlighted_option
         if selected is None or selected.id is None:
             return
-        if event.key == "q" and selected.id.startswith("track:"):
-            self._activate_context(selected.id, alternate=True)
-        elif event.key == "t" and selected.id.startswith("device:"):
+        if (event.key == "q" and selected.id.startswith("track:")) or (
+            event.key == "t" and selected.id.startswith("device:")
+        ):
             self._activate_context(selected.id, alternate=True)
 
     def _activate_context(self, identifier: str, *, alternate: bool = False) -> None:
@@ -722,7 +732,10 @@ class ConnectApp(App[None]):
     def action_cycle_panel(self, direction: int) -> None:
         """Arrow navigation is cyclic; arrow keys in typed input still move its caret."""
         panels: tuple[Literal["queue", "search", "devices", "help"], ...] = (
-            "queue", "search", "devices", "help"
+            "queue",
+            "search",
+            "devices",
+            "help",
         )
         index = panels.index(self._active_panel)
         self.action_panel(panels[(index + direction) % len(panels)])
@@ -775,7 +788,8 @@ class ConnectApp(App[None]):
         )
         self.query_one("#activity-subtitle", Static).update(
             "Diagnostic event types · no credentials or tokens"
-            if self._diagnostics_open else "Commands and Spotify events  ·  scroll to inspect"
+            if self._diagnostics_open
+            else "Commands and Spotify events  ·  scroll to inspect"
         )
         self.query_one("#logs-toggle", Button).label = (
             "activity  F2" if self._diagnostics_open else "logs  F2"
@@ -786,6 +800,14 @@ class ConnectApp(App[None]):
         self.set_class(event.size.height < 30, "short")
         self.set_class(event.size.height < 23, "tiny")
 
+    def on_shutdown(self) -> None:
+        """Stop UI callbacks before Textual dismantles the widget tree."""
+        self._ui_ready = False
+        self._shutting_down = True
+        if self._refresh_timer is not None:
+            self._refresh_timer.stop()
+            self._refresh_timer = None
+
     async def on_unmount(self) -> None:
         await self.close_connections()
 
@@ -794,8 +816,7 @@ class ConnectApp(App[None]):
         if self._resources_closed:
             return
         self._resources_closed = True
-        self._shutting_down = True
-        self._ui_ready = False
+        self.on_shutdown()
         try:
             await self.player.close()
         finally:

@@ -60,8 +60,12 @@ class Identity:
         if not value:
             return "spotapi@spotify ~ $"
         allowed = "".join(
-            character if character.isascii() and (character.isalnum() or character in "_-")
-            else "_" for character in value.strip()
+            (
+                character
+                if character.isascii() and (character.isalnum() or character in "_-")
+                else "_"
+            )
+            for character in value.strip()
         ).strip("_")
         return f"spotapi@{allowed[:20]} ~ $" if allowed else "spotapi@spotify ~ $"
 
@@ -69,7 +73,7 @@ class Identity:
 def _short(value: str, width: int) -> str:
     """Keep interactive rows scannable even in an IDE terminal."""
     value = value.replace("\r", " ").replace("\n", " ").strip()
-    return value if len(value) <= width else value[:width - 1].rstrip() + "…"
+    return value if len(value) <= width else value[: width - 1].rstrip() + "…"
 
 
 def search_row(index: int, hit: Track) -> str:
@@ -77,11 +81,10 @@ def search_row(index: int, hit: Track) -> str:
     title = _short(hit.name, 34)
     artist_names = (
         ", ".join(
-            artist.profile.name
-            for artist in hit.artists.items
-            if artist.profile is not None
+            artist.profile.name for artist in hit.artists.items if artist.profile is not None
         )
-        if hit.artists is not None else ""
+        if hit.artists is not None
+        else ""
     )
     detail = _short(artist_names, 24)
     duration = clock(hit.duration.total_milliseconds) if hit.duration else ""
@@ -92,9 +95,7 @@ def search_row(index: int, hit: Track) -> str:
 def device_row(index: int, device: Device, *, active: str | None, target: str | None) -> str:
     """Distinguish Spotify's actual playback device from a selected target."""
     status = (
-        "● playing" if device.id == active
-        else "◎ target" if device.id == target
-        else "○ ready"
+        "● playing" if device.id == active else "◎ target" if device.id == target else "○ ready"
     )
     name = _short(device.name, 32)
     return f"{index:02}  {status}   {name}   ·   {_short(device.type, 14)}"
