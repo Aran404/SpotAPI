@@ -596,9 +596,9 @@ class ConnectApp(App[None]):
         selected = self.query_one("#context-options", ContextOptions).highlighted_option
         if selected is None or selected.id is None:
             return
-        if event.key == "q" and selected.id.startswith("track:"):
-            self._activate_context(selected.id, alternate=True)
-        elif event.key == "t" and selected.id.startswith("device:"):
+        if (event.key == "q" and selected.id.startswith("track:")) or (
+            event.key == "t" and selected.id.startswith("device:")
+        ):
             self._activate_context(selected.id, alternate=True)
 
     def _activate_context(self, identifier: str, *, alternate: bool = False) -> None:
