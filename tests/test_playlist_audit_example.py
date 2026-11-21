@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import os
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
@@ -72,6 +73,25 @@ async def test_failed_read_does_not_leave_partial_csv(tmp_path: Path) -> None:
     with pytest.raises(RuntimeError, match="upstream"):
         await export_playlist(failing(), tmp_path / "report.csv")
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.asyncio
+async def test_concurrent_output_creation_never_overwrites_another_writer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "report.csv"
+    real_link = os.link
+
+    def competing_link(source: Path, destination: Path) -> None:
+        destination.write_text("created by another writer", encoding="utf-8")
+        real_link(source, destination)
+
+    monkeypatch.setattr("examples.playlist_audit.os.link", competing_link)
+
+    with pytest.raises(FileExistsError):
+        await export_playlist(sample_entries(), output)
+    assert output.read_text(encoding="utf-8") == "created by another writer"
+    assert list(tmp_path.iterdir()) == [output]
 
 
 @pytest.mark.asyncio
