@@ -84,11 +84,12 @@ Connect rassemble la recherche, la sélection d'appareil, la file d'attente, la 
 Lancez Connect avec l'interface de terminal facultative :
 
 ```bash
-python -m pip install "spotapi[connect]"
+python -m pip install "spotapi[connect,browser]"
+python -m playwright install chromium
 python -m spotapi connect
 ```
 
-Si pip indique que l'extra `connect` n'existe pas, la version présente sur PyPI est antérieure à cet extra. En attendant la prochaine version, clonez le dépôt et exécutez `python -m pip install -e ".[connect]"` à sa racine.
+Ces commandes permettent une première connexion via le navigateur. Vous utilisez déjà `SPOTIFY_COOKIE` ou un profil Connect enregistré ? Installez uniquement `spotapi[connect]` et évitez le téléchargement du navigateur.
 
 Utilisez `search Daft Punk` pour trouver de la musique, `queue 1` pour ajouter un résultat à la file d'attente, ou `pause`, `next` et `seek 1:30` pour contrôler la lecture. Ouvrez `/devices` pour voir les lecteurs disponibles ; `/use 2` en sélectionne un sans transférer la lecture, tandis que `/transfer 2` effectue le transfert. `Ctrl+P` ouvre la palette de commandes.
 

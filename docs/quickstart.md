@@ -88,7 +88,7 @@ or `async with Catalogue()` instead. The sync facade reuses the async core.
 ## Account commands
 
 For authenticated CLI commands, use `SPOTIFY_COOKIE` in the process environment
-or reuse a saved Connect login. Install `spotapi[connect]` and run `spotapi connect`
+or reuse a saved Connect login. For first-time sign-in, install `spotapi[connect,browser]`, run `python -m playwright install chromium`, then run `spotapi connect`
 to save the default profile in your OS keyring. Then use `spotapi player status`
 or `spotapi library list` without copying cookies again. Add `--profile personal`
 after an authenticated command to select the named Connect account. An explicit

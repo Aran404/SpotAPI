@@ -84,11 +84,12 @@ Connect は、検索、デバイス選択、次に再生する曲、再生操作
 オプションのターミナルインターフェースで Connect を起動します:
 
 ```bash
-python -m pip install "spotapi[connect]"
+python -m pip install "spotapi[connect,browser]"
+python -m playwright install chromium
 python -m spotapi connect
 ```
 
-pip が `connect` extra が存在しないと警告する場合、その PyPI リリースは extra の追加より前のものです。次のリリースまでは、リポジトリをクローンし、そのルートで `python -m pip install -e ".[connect]"` を実行してください。
+これらのコマンドで初回のブラウザサインインを準備できます。すでに `SPOTIFY_COOKIE` または保存済みの Connect プロファイルがある場合は、`spotapi[connect]` のみをインストールし、ブラウザのダウンロードを省略できます。
 
 `search Daft Punk` で音楽を検索し、`queue 1` で結果をキューに追加し、`pause`、`next`、`seek 1:30` で再生を操作します。`/devices` を開くと利用可能なプレーヤーを一覧できます。`/use 2` は再生を移さずにプレーヤーを選択し、`/transfer 2` は再生を移します。`Ctrl+P` でコマンドパレットが開きます。
 
