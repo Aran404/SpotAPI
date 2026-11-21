@@ -188,6 +188,7 @@ def _human(value: object) -> str:
     visit(data)
     return "\n".join(lines)
 
+
 def _display(value: object, args: argparse.Namespace) -> None:
     if getattr(args, "json", False) or not sys.stdout.isatty():
         _json(value)

@@ -108,8 +108,7 @@ class CommandInput(Input):
                 key == "enter"
                 and selected is not None
                 and selected.id is not None
-                and self.value.strip().removeprefix("/").casefold()
-                == selected.id.casefold()
+                and self.value.strip().removeprefix("/").casefold() == selected.id.casefold()
             ):
                 return
         elif key == "escape" and menu.display:
@@ -425,9 +424,7 @@ class ConnectApp(App[None]):
         content = self.query_one("#context-content", Static)
         options = self.query_one("#context-options", ContextOptions)
         for name in ("queue", "devices", "search", "help"):
-            self.query_one(f"#tab-{name}", Button).set_class(
-                self._active_panel == name, "active"
-            )
+            self.query_one(f"#tab-{name}", Button).set_class(self._active_panel == name, "active")
 
         rows: tuple[tuple[str, str], ...] = ()
         match self._active_panel:
@@ -735,7 +732,10 @@ class ConnectApp(App[None]):
     def action_cycle_panel(self, direction: int) -> None:
         """Arrow navigation is cyclic; arrow keys in typed input still move its caret."""
         panels: tuple[Literal["queue", "search", "devices", "help"], ...] = (
-            "queue", "search", "devices", "help"
+            "queue",
+            "search",
+            "devices",
+            "help",
         )
         index = panels.index(self._active_panel)
         self.action_panel(panels[(index + direction) % len(panels)])
@@ -788,7 +788,8 @@ class ConnectApp(App[None]):
         )
         self.query_one("#activity-subtitle", Static).update(
             "Diagnostic event types · no credentials or tokens"
-            if self._diagnostics_open else "Commands and Spotify events  ·  scroll to inspect"
+            if self._diagnostics_open
+            else "Commands and Spotify events  ·  scroll to inspect"
         )
         self.query_one("#logs-toggle", Button).label = (
             "activity  F2" if self._diagnostics_open else "logs  F2"

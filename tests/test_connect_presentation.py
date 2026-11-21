@@ -108,10 +108,12 @@ async def test_connect_command_completion_mouse_and_keyboard(
         def listen(self, name: str) -> Callable[[Callback], Callback]:
             def register(callback: Callback) -> Callback:
                 return callback
+
             return register
 
         async def start(self) -> None:
             import asyncio
+
             await asyncio.Event().wait()
 
         async def close(self) -> None:
@@ -119,6 +121,7 @@ async def test_connect_command_completion_mouse_and_keyboard(
 
     monkeypatch.setattr(ui, "Catalogue", FakeCatalogue)
     monkeypatch.setattr(ui, "Player", FakePlayer)
+
     def skip_profile_load(self: ui.ConnectApp) -> None:
         return None
 
@@ -129,7 +132,9 @@ async def test_connect_command_completion_mouse_and_keyboard(
         command.value = "/se"
         await pilot.pause()
         suggestions = application.query_one("#suggestions", OptionList)
-        assert command.suggestions_menu is application.query_one("#suggestions", ui.HoverOptionList)
+        assert command.suggestions_menu is application.query_one(
+            "#suggestions", ui.HoverOptionList
+        )
         assert suggestions.display
         await pilot.press("down", "enter")
         await pilot.pause()
@@ -185,7 +190,9 @@ def test_search_results_have_useful_optional_metadata() -> None:
         id="t",
         name="Let Down",
         uri="spotify:track:t",
-        artists=Artists(items=[ArtistItem(uri="spotify:artist:a", profile=ArtistProfile("Radiohead"))]),
+        artists=Artists(
+            items=[ArtistItem(uri="spotify:artist:a", profile=ArtistProfile("Radiohead"))]
+        ),
         duration=Duration(total_milliseconds=299_000),
     )
     assert search_row(2, hit) == "02  Let Down   ·   Radiohead  ·  4:59"
@@ -239,6 +246,7 @@ async def test_results_and_devices_are_keyboard_navigable(
         def listen(self, name: str) -> Callable[[Callable[..., object]], Callable[..., object]]:
             def register(callback: Callable[..., object]) -> Callable[..., object]:
                 return callback
+
             return register
 
         async def start(self) -> None:
@@ -249,6 +257,7 @@ async def test_results_and_devices_are_keyboard_navigable(
 
     monkeypatch.setattr(ui, "Catalogue", FakeCatalogue)
     monkeypatch.setattr(ui, "Player", FakePlayer)
+
     def skip_profile_load(self: ui.ConnectApp) -> None:
         return None
 

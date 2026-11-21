@@ -97,15 +97,30 @@ class StubPlayer:
         self.target_device_id = device.id
 
 
-
-
 @pytest.mark.parametrize(
     "source",
     [
-        "help", "devices", "pause", "resume", "toggle", "next", "previous",
-        "refresh", "quit", "search The Weeknd", "play 1", "queue 3",
-        "transfer 1", "use 2", "volume 60", "shuffle on", "shuffle off",
-        "repeat context", "repeat off", "repeat track", "seek 1:30",
+        "help",
+        "devices",
+        "pause",
+        "resume",
+        "toggle",
+        "next",
+        "previous",
+        "refresh",
+        "quit",
+        "search The Weeknd",
+        "play 1",
+        "queue 3",
+        "transfer 1",
+        "use 2",
+        "volume 60",
+        "shuffle on",
+        "shuffle off",
+        "repeat context",
+        "repeat off",
+        "repeat track",
+        "seek 1:30",
     ],
 )
 def test_all_documented_commands_parse(source: str) -> None:
