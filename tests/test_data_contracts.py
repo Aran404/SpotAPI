@@ -169,13 +169,14 @@ def test_album_models_decode_object_shaped_pre_release_timestamp(
     payload = {
         "name": "Kehlani",
         "uri": _KEHLANI_URI,
-        "date": {"isoString": _KEHLANI_TIMESTAMP, "precision": "DAY"},
         "isPreRelease": False,
         "isAlbumPreRelease": False,
         "preReleaseEndDateTime": timestamp,
     }
 
     for model in (Album, AlbumDetails):
+        if model is AlbumDetails:
+            payload["date"] = {"isoString": _KEHLANI_TIMESTAMP, "precision": "DAY"}
         album = from_dict(model, payload)
         release_end = album.pre_release_end_date_time
         assert isinstance(release_end, ReleaseDate)
@@ -191,11 +192,12 @@ def test_album_pre_release_timestamp_keeps_legacy_string_and_null(
     payload = {
         "name": "Kehlani",
         "uri": _KEHLANI_URI,
-        "date": {"isoString": _KEHLANI_TIMESTAMP},
         "preReleaseEndDateTime": timestamp,
     }
 
     for model in (Album, AlbumDetails):
+        if model is AlbumDetails:
+            payload["date"] = {"isoString": _KEHLANI_TIMESTAMP, "precision": "DAY"}
         assert from_dict(model, payload).pre_release_end_date_time == timestamp
 
 
@@ -204,11 +206,12 @@ def test_album_pre_release_timestamp_rejects_malformed_values(invalid: object) -
     payload = {
         "name": "Kehlani",
         "uri": _KEHLANI_URI,
-        "date": {"isoString": _KEHLANI_TIMESTAMP},
         "preReleaseEndDateTime": invalid,
     }
 
     for model in (Album, AlbumDetails):
+        if model is AlbumDetails:
+            payload["date"] = {"isoString": _KEHLANI_TIMESTAMP, "precision": "DAY"}
         with pytest.raises((TypeError, ValueError), match="pre_release_end_date_time"):
             from_dict(model, payload)
 
