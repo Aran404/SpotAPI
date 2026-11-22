@@ -1,11 +1,17 @@
-name: Publish a tagged release
+name: Release preflight and PyPI publish
 
+# PRs and main use the SAME build/test environment as tagged releases.
+# Only a version-tag push is allowed to upload to PyPI.
 on:
+  pull_request:
   push:
+    branches: [main]
     tags: ["v*"]
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Release preflight (publish environment)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -13,6 +19,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Check the tag matches package metadata
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           python - <<'PY'
           import os, tomllib
@@ -61,6 +68,8 @@ jobs:
           path: dist/
 
   publish:
+    # Never publish from a PR, main-branch push, or manual dry run.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     environment: pypi
