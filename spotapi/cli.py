@@ -536,7 +536,7 @@ async def _authenticated_account(args: argparse.Namespace) -> AsyncGenerator[Pri
         try:
             keyring_error = importlib.import_module("keyring.errors").NoKeyringError
         except ImportError:
-            raise error
+            raise error from None
         if not isinstance(error, keyring_error):
             raise
         raise ValueError(
