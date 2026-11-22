@@ -522,20 +522,26 @@ async def _authenticated_account(args: argparse.Namespace) -> AsyncGenerator[Pri
     from ._connect.commands import profile_name
 
     name = profile_name(profile or "default")
-    # The keyring Python package may be installed without a usable OS backend,
-    # especially on headless Linux hosts. Keep the CLI recovery actionable.
-    keyring_errors = importlib.import_module("keyring.errors")
     try:
         client = await SavedSession(name).open()
-    except keyring_errors.NoKeyringError as error:
-        raise ValueError(
-            "No supported OS keyring backend is available. Set SPOTIFY_COOKIE "
-            "or configure a supported secure keyring backend."
-        ) from error
     except BaseClientError as error:
         raise ValueError(
             f"No saved Spotify profile {name!r}. Set SPOTIFY_COOKIE, or run "
             "'spotapi connect' to sign in and save this profile."
+        ) from error
+    except Exception as error:
+        # The keyring package can be installed without a secure OS backend.
+        # Import its optional exception type only after a keyring operation fails,
+        # preserving base installs and test environments without keyring.
+        try:
+            keyring_error = importlib.import_module("keyring.errors").NoKeyringError
+        except ImportError:
+            raise error
+        if not isinstance(error, keyring_error):
+            raise
+        raise ValueError(
+            "No supported OS keyring backend is available. Set SPOTIFY_COOKIE "
+            "or configure a supported secure keyring backend."
         ) from error
 
     async with client:
