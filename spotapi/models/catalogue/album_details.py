@@ -15,6 +15,7 @@ from .album import (
     Playability as AlbumPlayability,
 )
 from .common import (
+    ReleaseDate,
     Sources,
     VisualIdentity,
 )
@@ -32,17 +33,6 @@ from .track_details import (
 )
 
 __all__ = ("AlbumDetails",)
-
-
-@dataclass(slots=True)
-class ReleaseDate:
-    iso_string: str
-    precision: str | None = None
-
-    @property
-    def year(self) -> int:
-        """Return the available release year without inventing an unknown date."""
-        return int(self.iso_string[:4])
 
 
 @dataclass(slots=True)
@@ -200,7 +190,7 @@ class AlbumDetails:
     type: str | None = None
     visual_identity: VisualIdentity | None = None
     more_albums_by_artist: MoreAlbumsByArtist | None = None
-    pre_release_end_date_time: str | None = None
+    pre_release_end_date_time: ReleaseDate | None = None
     releases: AlbumReleases | None = None
     watch_feed_entrypoint: dict[str, Any] | None = None
 

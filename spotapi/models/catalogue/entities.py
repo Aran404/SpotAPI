@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .album_details import ReleaseDate
-from .common import CoverArt
+from .common import CoverArt, ReleaseDate
 from .podcast import Publisher
 from .podcast_episode import EpisodePodcastReference
 from .track import Duration

@@ -1,0 +1,116 @@
+{
+  "albumUnion": {
+    "__typename": "Album",
+    "copyright": {
+      "items": [
+        {"text": "2026 Prophecy Productions", "type": "C"},
+        {"text": "2026 Prophecy Productions", "type": "P"}
+      ],
+      "totalCount": 2
+    },
+    "courtesyLine": "",
+    "date": {"isoString": "2026-02-20T00:00:00Z", "precision": "DAY"},
+    "isPreRelease": false,
+    "label": "Prophecy Productions",
+    "name": "Aba Khan",
+    "playability": {"playable": true, "reason": "PLAYABLE"},
+    "preReleaseEndDateTime": {"isoString": "2026-02-20T05:00:00Z", "precision": "MINUTE"},
+    "saved": false,
+    "sharingInfo": {
+      "shareId": "k6pVxV-MSCGXR45wyOMiqQ",
+      "shareUrl": "https://open.spotify.com/album/3LUcDBe7DZDExhHbZEQchk?si=k6pVxV-MSCGXR45wyOMiqQ"
+    },
+    "tracksV2": {
+      "items": [
+        {
+          "track": {
+            "artists": {
+              "items": [
+                {
+                  "profile": {"name": "Nytt Land"},
+                  "uri": "spotify:artist:6NQ701XGEJodDZ5lqVtrBp"
+                }
+              ]
+            },
+            "associationsV3": {
+              "audioAssociations": {"totalCount": 0},
+              "videoAssociations": {"totalCount": 0}
+            },
+            "contentRating": {"label": "NONE"},
+            "discNumber": 1,
+            "duration": {"totalMilliseconds": 142235},
+            "mediaType": "AUDIO",
+            "name": "Aba Khan",
+            "playability": {"playable": true},
+            "playcount": "15313",
+            "relinkingInformation": null,
+            "saved": false,
+            "trackNumber": 1,
+            "uri": "spotify:track:5GZeWg8JmrxO15G2KT6p9p"
+          },
+          "uid": "4772f4dc743d57837fc3"
+        },
+        {
+          "track": {
+            "artists": {
+              "items": [
+                {
+                  "profile": {"name": "Nytt Land"},
+                  "uri": "spotify:artist:6NQ701XGEJodDZ5lqVtrBp"
+                }
+              ]
+            },
+            "associationsV3": {
+              "audioAssociations": {"totalCount": 0},
+              "videoAssociations": {"totalCount": 0}
+            },
+            "contentRating": {"label": "NONE"},
+            "discNumber": 1,
+            "duration": {"totalMilliseconds": 405882},
+            "mediaType": "AUDIO",
+            "name": "Taiga",
+            "playability": {"playable": true},
+            "playcount": "38060",
+            "relinkingInformation": null,
+            "saved": false,
+            "trackNumber": 2,
+            "uri": "spotify:track:3Gt2s4m4yw7NDPPFgJpf5O"
+          },
+          "uid": "6c7375030f2f3c35a3b4"
+        }
+      ],
+      "totalCount": 8
+    },
+    "type": "ALBUM",
+    "uri": "spotify:album:3LUcDBe7DZDExhHbZEQchk",
+    "watchFeedEntrypoint": null,
+    "artists": {
+      "items": [
+        {
+          "id": "6NQ701XGEJodDZ5lqVtrBp",
+          "profile": {"name": "Nytt Land"},
+          "sharingInfo": {
+            "shareUrl": "https://open.spotify.com/artist/6NQ701XGEJodDZ5lqVtrBp?si=7Nf73ATjT6aRAASmy0QHFQ"
+          },
+          "uri": "spotify:artist:6NQ701XGEJodDZ5lqVtrBp"
+        }
+      ],
+      "totalCount": 1
+    },
+    "coverArt": {
+      "extractedColors": {"colorDark": {"hex": "#600810"}},
+      "sources": [
+        {
+          "height": 300,
+          "url": "https://i.scdn.co/image/ab67616d00001e02798cbc922f80394af87cef8c",
+          "width": 300
+        }
+      ]
+    },
+    "discs": {
+      "items": [{"number": 1, "tracks": {"totalCount": 8}}],
+      "totalCount": 1
+    }
+  },
+  "meV2": {"ianaTimezoneId": "America/New_York"}
+}

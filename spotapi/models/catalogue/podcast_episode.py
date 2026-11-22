@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .album_details import ReleaseDate
-from .common import Sources, VisualIdentity
+from .common import ReleaseDate, Sources, VisualIdentity
 from .track import ContentRating, Duration
 from .track_details import SharingInfo
 

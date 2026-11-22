@@ -8,6 +8,11 @@
   installed optional packages; verify the headless-backend failure explicitly.
 - Keep the v2.1.2 GitHub tag as a historical failed publishing attempt. Its
   tagged workflow failed before uploading to PyPI; v2.1.3 supersedes it.
+- Fix `get_album` failing with `AlbumDetails.pre_release_end_date_time: value
+  does not match str | None`: Spotify returns `preReleaseEndDateTime` as an
+  `{isoString, precision}` object, now decoded as `ReleaseDate`. Album search
+  hits shared the same field and were silently skipped; they decode too.
+  `ReleaseDate` now lives in `spotapi.models.catalogue.common`.
 
 ## 2.1.2 - 2026-11-22 (GitHub tag; PyPI publication blocked)
 

@@ -13,6 +13,7 @@ authenticated session.
 | What you're building | Example | Notes |
 |---|---|---|
 | First public search | [public_search.py](public_search.py) | Typed results and predictable field names |
+| Album lookup with pre-release end date | [album_lookup.py](album_lookup.py) | Prints name, pre-release end date and track count for one album |
 | CSV audit of a large public playlist | [playlist_audit.py](playlist_audit.py) | Keeps duplicate occurrences and unavailable entries; bounded to 10,000 |
 | Playlist overlap analysis | [overlap.py](overlap.py) | Compare shared tracks without editing either playlist |
 | Artist and recording credits | [credit_trail.py](credit_trail.py) | Inspect contributors and related metadata |

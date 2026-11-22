@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .common import CoverArt, VisualIdentity
+from .common import CoverArt, ReleaseDate, VisualIdentity
 
 __all__ = ("Album",)
 
@@ -54,7 +54,7 @@ class Album:
     date: Date | None = None
     is_album_pre_release: bool | None = None
     playability: Playability | None = None
-    pre_release_end_date_time: str | None = None
+    pre_release_end_date_time: ReleaseDate | None = None
     type: str | None = None
     visual_identity: VisualIdentity | None = None
 

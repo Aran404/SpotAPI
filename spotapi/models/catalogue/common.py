@@ -1,4 +1,4 @@
-"""Shared artwork and color dataclasses."""
+"""Shared artwork, color and release-date dataclasses."""
 
 from __future__ import annotations
 
@@ -11,10 +11,24 @@ __all__ = (
     "CoverArt",
     "ExtractedColorSet",
     "ExtractedColors",
+    "ReleaseDate",
     "Sources",
     "SquareCoverImage",
     "VisualIdentity",
 )
+
+
+@dataclass(slots=True)
+class ReleaseDate:
+    """A Spotify timestamp: an ISO 8601 string and its precision (e.g. ``DAY``)."""
+
+    iso_string: str
+    precision: str | None = None
+
+    @property
+    def year(self) -> int:
+        """Return the available release year without inventing an unknown date."""
+        return int(self.iso_string[:4])
 
 
 @dataclass(slots=True)
