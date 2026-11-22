@@ -5,7 +5,7 @@
 <h1 align="center">SpotAPI</h1>
 
 <p align="center">
-  <strong>Spotify in your terminal. Spotify data in your Python app.</strong>
+  <strong>Build Spotify apps in Python with a typed, async API.</strong>
 </p>
 
 <p align="center">
@@ -34,13 +34,7 @@ python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
-
-<p align="center"><sub>Connect · Search, navigate and control an existing Spotify player from your terminal. Spotify plays the audio; SpotAPI sends the controls.</sub></p>
-
-That's the public catalogue. Search, resolve Spotify links, inspect credits and read public playlist metadata without setting up a Spotify developer application. The first request can take longer while SpotAPI discovers the current web-player queries; subsequent requests reuse the cached results.
-
-**Building with Python instead?** The same installation provides a typed API. No terminal interface is required:
+**Python API first.** The same installation returns typed results to your own app; no terminal UI or Spotify developer credentials are needed:
 
 ```python
 import asyncio
@@ -54,7 +48,13 @@ async def main():
 asyncio.run(main())
 ```
 
-[More Python examples](#build-with-python) · [Playlist audit and CSV export](examples/playlist_audit.py)
+[More Python examples](#build-with-python) · [Playlist audit and CSV export](examples/playlist_audit.py) · [No-API-key Python guide](docs/no-api-key.md)
+
+![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Search, navigate and control an existing Spotify player from your terminal. Spotify plays the audio; SpotAPI sends the controls.</sub></p>
+
+The terminal Connect demo is built on the same library. Public search, Spotify links, credits and public playlist metadata need no developer app. The first request may be slower while SpotAPI discovers and caches the current web-player queries.
 
 **Want something you can browse?** Open the interactive terminal explorer:
 

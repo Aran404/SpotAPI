@@ -5,7 +5,7 @@
 <h1 align="center">SpotAPI</h1>
 
 <p align="center">
-  <strong>Spotify dans votre terminal. Les données Spotify dans vos applications Python.</strong>
+  <strong>Créez des applications Spotify en Python avec une API typée et asynchrone.</strong>
 </p>
 
 <p align="center">
@@ -34,13 +34,7 @@ python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-![SpotAPI Connect pilotant un véritable lecteur Spotify depuis le terminal](assets/cli-connect-demo.gif)
-
-<p align="center"><sub>Connect · Recherchez, naviguez et pilotez un lecteur Spotify existant depuis votre terminal. Spotify lit l'audio ; SpotAPI envoie les commandes.</sub></p>
-
-Vous accédez ainsi au catalogue public. Recherchez des titres, résolvez des liens Spotify, consultez les crédits et lisez les métadonnées de playlists publiques sans créer d'application développeur Spotify. La première requête peut être plus longue, car SpotAPI découvre les requêtes actuelles du lecteur Web ; les suivantes réutilisent les résultats mis en cache.
-
-**Vous préférez développer en Python ?** La même installation fournit une API typée. Aucune interface de terminal n'est nécessaire :
+**L'API Python d'abord.** La même installation renvoie des résultats typés à votre application, sans interface de terminal ni identifiants développeur Spotify :
 
 ```python
 import asyncio
@@ -54,7 +48,13 @@ async def main():
 asyncio.run(main())
 ```
 
-[Autres exemples Python](#développer-avec-python) · [Audit de playlists et export CSV](examples/playlist_audit.py)
+[Autres exemples Python](#développer-avec-python) · [Audit de playlists et export CSV](examples/playlist_audit.py) · [Guide Python sans clé API](docs/no-api-key.md)
+
+![SpotAPI Connect pilotant un véritable lecteur Spotify depuis le terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Recherchez, naviguez et pilotez un lecteur Spotify existant depuis votre terminal. Spotify lit l'audio ; SpotAPI envoie les commandes.</sub></p>
+
+La démonstration Connect repose sur la même bibliothèque. La recherche publique, les liens Spotify, les crédits et les métadonnées des playlists publiques ne nécessitent pas d'application développeur. La première requête peut être plus lente pendant la découverte et la mise en cache des requêtes du lecteur Web.
 
 **Vous préférez une interface de navigation ?** Ouvrez l'explorateur interactif dans le terminal :
 

@@ -133,6 +133,8 @@ not prerequisites. Start a real application by reusing a `Catalogue`, choosing
 one workflow from [the catalogue guide](catalogue.md), and keeping network calls
 inside explicit async functions.
 
+For a copy-pasteable anonymous workflow, see [searching Spotify in Python without a developer API key](no-api-key.md).
+
 For small, complete scripts, see
 [search and artist lookup](https://github.com/Aran404/SpotAPI/blob/main/examples/public_search.py)
 and [playlist metadata export](https://github.com/Aran404/SpotAPI/blob/main/examples/export.py).

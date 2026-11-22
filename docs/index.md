@@ -11,6 +11,7 @@ now-playing display. Start anonymously; connect your own account when you need
 saved music, playlist edits, entitled lyrics or podcast captions.
 
 [Get your first result](quickstart.md){ .md-button .md-button--primary }
+[Search Spotify in Python without an API key](no-api-key.md){ .md-button }
 [Coming from Spotipy?](from-spotipy.md){ .md-button }
 
 ```sh
