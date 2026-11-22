@@ -1,6 +1,20 @@
 # Changelog
 
-## 2.1.1 - Pending release
+## 2.1.2 - Pending release
+
+- Reuse saved Connect profiles in authenticated CLI commands, with explicit profile
+  selection and actionable errors when credentials are missing (#100).
+- Keep the Connect playback listener available if catalogue startup fails; bound
+  concurrent Studio catalogue reads and clean them up during account switches.
+- Report playlist/query pagination truncation instead of silently returning
+  incomplete results; correct Studio's installed-version identification.
+- Put the Python API before the terminal demo in English, Portuguese, Spanish,
+  French and Japanese READMEs; add a public search guide with copyable examples (#103).
+- Add a dated, qualified GitHub traffic snapshot for prospective sponsors and
+  direct PayPal funding for voluntary support (#101, #102, #103).
+- Update GitHub Actions to Node 24-compatible versions (#102).
+
+## 2.1.1 - 2026-11-21
 
 - Add the installable `connect` optional extra and verify its installed wheel
   on Linux, Windows and macOS; clarify browser sign-in requirements (#94).
