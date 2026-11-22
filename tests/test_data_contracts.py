@@ -238,9 +238,7 @@ def test_album_search_retains_hits_with_object_pre_release_timestamp() -> None:
 async def test_album_detail_lookup_decodes_object_pre_release_timestamp(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    async def fake_direct_query(
-        self: Queries, uri: str, operation: Operations
-    ) -> ObjectDict:
+    async def fake_direct_query(self: Queries, uri: str, operation: Operations) -> ObjectDict:
         assert uri == _KEHLANI_URI
         assert operation is Operations.GET_ALBUM
         return ObjectDict(
