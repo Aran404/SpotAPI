@@ -18,6 +18,7 @@ from spotapi import (
     SpotAPIError,
 )
 from spotapi.cli import _parser, main
+from spotapi.types import BaseClientError
 from spotapi.login import SavedSession
 
 
@@ -174,6 +175,10 @@ def test_cli_requires_a_session_for_playlist_changes(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     monkeypatch.delenv("SPOTIFY_COOKIE", raising=False)
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
+    monkeypatch.setattr(
+        SavedSession, "open", AsyncMock(side_effect=BaseClientError("No saved session"))
+    )
 
     assert main(["playlist", "remove", "playlist", "occurrence"]) == 1
     captured = capsys.readouterr()
@@ -282,3 +287,33 @@ def test_cli_says_how_to_recover_when_named_profile_is_absent(
     assert "spotapi connect" in error
     assert "Set SPOTIFY_COOKIE" in error
     assert "Missing saved profile" not in error
+
+
+def test_cli_reports_missing_secure_keyring_backend(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A headless Linux installation needs an actionable session fallback."""
+    class NoKeyringError(Exception):
+        pass
+
+    monkeypatch.delenv("SPOTIFY_COOKIE", raising=False)
+    monkeypatch.setattr("spotapi.cli.importlib.util.find_spec", Mock(return_value=object()))
+    old_import = __import__("importlib").import_module
+
+    def import_module(name: str, package: str | None = None) -> object:
+        if name == "keyring.errors":
+            return SimpleNamespace(NoKeyringError=NoKeyringError)
+        return old_import(name, package)
+
+    monkeypatch.setattr("spotapi.cli.importlib.import_module", import_module)
+    monkeypatch.setattr(
+        SavedSession, "open", AsyncMock(side_effect=NoKeyringError("No recommended backend"))
+    )
+
+    assert main(["playlist", "remove", "playlist", "occurrence"]) == 1
+    captured = capsys.readouterr()
+    assert not captured.out
+    assert "Set SPOTIFY_COOKIE" in captured.err
+    assert "keyring backend" in captured.err
+    assert "No recommended backend" not in captured.err
