@@ -294,6 +294,7 @@ def test_cli_reports_missing_secure_keyring_backend(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A headless Linux installation needs an actionable session fallback."""
+
     class NoKeyringError(Exception):
         pass
 
