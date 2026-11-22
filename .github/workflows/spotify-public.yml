@@ -102,8 +102,8 @@ jobs:
           SPOTIFY_COOKIE: ${{ secrets.SPOTIFY_CANARY_COOKIE }}
         run: |
           if [ -z "$SPOTIFY_COOKIE" ]; then
-            echo "::notice::Authenticated canary skipped because SPOTIFY_CANARY_COOKIE is not configured."
-            exit 0
+            echo "::error::Authenticated read check cannot run: configure SPOTIFY_CANARY_COOKIE in repository secrets."
+            exit 1
           fi
           python -m pytest --live=read -m "live and authenticated and not mutates" -vv -rs
 
