@@ -166,7 +166,7 @@ def test_album_models_decode_object_shaped_pre_release_timestamp(
     if precision is not None:
         timestamp["precision"] = precision
 
-    payload = {
+    payload: dict[str, object] = {
         "name": "Kehlani",
         "uri": _KEHLANI_URI,
         "isPreRelease": False,
@@ -189,7 +189,7 @@ def test_album_models_decode_object_shaped_pre_release_timestamp(
 def test_album_pre_release_timestamp_keeps_legacy_string_and_null(
     timestamp: str | None,
 ) -> None:
-    payload = {
+    payload: dict[str, object] = {
         "name": "Kehlani",
         "uri": _KEHLANI_URI,
         "preReleaseEndDateTime": timestamp,
@@ -203,7 +203,7 @@ def test_album_pre_release_timestamp_keeps_legacy_string_and_null(
 
 @pytest.mark.parametrize("invalid", [{}, {"precision": "DAY"}, 123, []])
 def test_album_pre_release_timestamp_rejects_malformed_values(invalid: object) -> None:
-    payload = {
+    payload: dict[str, object] = {
         "name": "Kehlani",
         "uri": _KEHLANI_URI,
         "preReleaseEndDateTime": invalid,
