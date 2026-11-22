@@ -529,6 +529,20 @@ async def _authenticated_account(args: argparse.Namespace) -> AsyncGenerator[Pri
             f"No saved Spotify profile {name!r}. Set SPOTIFY_COOKIE, or run "
             "'spotapi connect' to sign in and save this profile."
         ) from error
+    except Exception as error:
+        # The keyring package can be installed without a secure OS backend.
+        # Import its optional exception type only after a keyring operation fails,
+        # preserving base installs and test environments without keyring.
+        try:
+            keyring_error = importlib.import_module("keyring.errors").NoKeyringError
+        except ImportError:
+            raise error from None
+        if not isinstance(error, keyring_error):
+            raise
+        raise ValueError(
+            "No supported OS keyring backend is available. Set SPOTIFY_COOKIE "
+            "or configure a supported secure keyring backend."
+        ) from error
 
     async with client:
         yield Private(client)

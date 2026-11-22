@@ -1,6 +1,15 @@
 # Changelog
 
-## 2.1.2 - Pending release
+## 2.1.3 - Pending release
+
+- Return an actionable SPOTIFY_COOKIE fallback when the optional Python keyring
+  package is installed but the operating system has no secure keyring backend.
+- Make the missing-session CLI regression independent of the CI runner's
+  installed optional packages; verify the headless-backend failure explicitly.
+- Keep the v2.1.2 GitHub tag as a historical failed publishing attempt. Its
+  tagged workflow failed before uploading to PyPI; v2.1.3 supersedes it.
+
+## 2.1.2 - 2026-11-22 (GitHub tag; PyPI publication blocked)
 
 - Reuse saved Connect profiles in authenticated CLI commands, with explicit profile
   selection and actionable errors when credentials are missing (#100).
