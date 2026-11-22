@@ -18,8 +18,8 @@ from spotapi import (
     SpotAPIError,
 )
 from spotapi.cli import _parser, main
-from spotapi.types import BaseClientError
 from spotapi.login import SavedSession
+from spotapi.types import BaseClientError
 
 
 @pytest.mark.parametrize(
