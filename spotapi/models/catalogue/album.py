@@ -31,6 +31,19 @@ class Date:
 
 
 @dataclass(slots=True)
+class ReleaseDate:
+    """Spotify timestamp with its optional precision metadata."""
+
+    iso_string: str
+    precision: str | None = None
+
+    @property
+    def year(self) -> int:
+        """Return the available year without inventing an unknown date."""
+        return int(self.iso_string[:4])
+
+
+@dataclass(slots=True)
 class Playability:
     playable: bool | None = None
     reason: str | None = None
@@ -54,7 +67,7 @@ class Album:
     date: Date | None = None
     is_album_pre_release: bool | None = None
     playability: Playability | None = None
-    pre_release_end_date_time: str | None = None
+    pre_release_end_date_time: ReleaseDate | str | None = None
     type: str | None = None
     visual_identity: VisualIdentity | None = None
 
