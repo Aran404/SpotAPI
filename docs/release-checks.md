@@ -39,6 +39,20 @@ The [CI workflows](https://github.com/Aran404/SpotAPI/tree/main/.github/workflow
 exercise offline contracts across Python 3.11-3.13 and supported desktop OSes,
 plus wheel installation checks and frontend browser tests.
 
+**Publishing preflight:** The [release workflow](https://github.com/Aran404/SpotAPI/actions/workflows/publish.yml)
+also runs its **exact tagged-release build and test steps** on every pull request and
+every push to `main`. This matters because `build` and `twine` introduce dependencies
+that the ordinary development test environment might not have. It builds and checks
+the distributions, installs the wheel, and smoke-tests it outside the checkout.
+The PyPI upload job is **skipped** unless the event is a matching `v*` tag push.
+
+Before tagging, verify a **successful release preflight on the exact `main` commit**
+you plan to tag, not just the separate cross-platform checks. You can also run the
+release workflow manually for a non-publishing preflight. After pushing the tag,
+verify that the tagged run's **publish** job succeeds and that the new version
+actually appears on [PyPI](https://pypi.org/project/spotapi/). A GitHub release
+entry is not proof that PyPI was updated.
+
 ## Live checks
 
 Most tests run without a Spotify account or a network connection. The opt-in
@@ -48,6 +62,12 @@ checks require credentials supplied only in your own environment.
 ```sh
 python -m pytest --live=read -m "live and not authenticated" -vv
 ```
+
+The scheduled public checks exercise Spotify's actual read-only endpoints.
+They do **not** run on ordinary pull requests and can still miss changes to
+uncovered endpoints. A manually dispatched authenticated check requires a
+configured `SPOTIFY_CANARY_COOKIE` secret; missing credentials cause that check
+to fail explicitly, rather than report a misleading success.
 
 Playback-changing tests are **not** part of scheduled public CI. To verify
 controls on your own device, see the procedure in [Player controls](player.md).
