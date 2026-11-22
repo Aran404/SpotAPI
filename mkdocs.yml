@@ -28,6 +28,7 @@ nav:
   - Start here:
       - Overview: index.md
       - First result: quickstart.md
+      - Spotify Python without an API key: no-api-key.md
       - Coming from Spotipy: from-spotipy.md
       - Troubleshooting: troubleshooting.md
   - Build something:

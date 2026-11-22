@@ -5,7 +5,7 @@
 <h1 align="center">SpotAPI</h1>
 
 <p align="center">
-  <strong>Spotify no seu terminal. Dados do Spotify no seu aplicativo Python.</strong>
+  <strong>Crie aplicativos do Spotify em Python com uma API tipada e assíncrona.</strong>
 </p>
 
 <p align="center">
@@ -34,13 +34,7 @@ python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-![SpotAPI Connect controlando um player real do Spotify pelo terminal](assets/cli-connect-demo.gif)
-
-<p align="center"><sub>Connect · Pesquise, navegue e controle um player existente do Spotify pelo terminal. O Spotify reproduz o áudio; o SpotAPI envia os comandos.</sub></p>
-
-Esse é o catálogo público. Pesquise, resolva links do Spotify, consulte créditos e leia metadados de playlists públicas sem configurar um aplicativo de desenvolvedor do Spotify. A primeira requisição pode demorar mais enquanto o SpotAPI descobre as consultas atuais do web player; as seguintes reutilizam os resultados em cache.
-
-**Prefere desenvolver em Python?** A mesma instalação oferece uma API tipada. Nenhuma interface de terminal é necessária:
+**Primeiro, a API Python.** A mesma instalação oferece resultados tipados para o seu aplicativo, sem interface de terminal nem credenciais de desenvolvedor do Spotify:
 
 ```python
 import asyncio
@@ -54,7 +48,13 @@ async def main():
 asyncio.run(main())
 ```
 
-[Mais exemplos em Python](#desenvolva-com-python) · [Auditoria de playlists e exportação CSV](examples/playlist_audit.py)
+[Mais exemplos em Python](#desenvolva-com-python) · [Auditoria de playlists e exportação CSV](examples/playlist_audit.py) · [Guia de Python sem chave de API](docs/no-api-key.md)
+
+![SpotAPI Connect controlando um player real do Spotify pelo terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Pesquise, navegue e controle um player existente do Spotify pelo terminal. O Spotify reproduz o áudio; o SpotAPI envia os comandos.</sub></p>
+
+A demonstração do Connect usa a mesma biblioteca. Buscas públicas, links do Spotify, créditos e metadados de playlists públicas não exigem aplicativo de desenvolvedor. A primeira requisição pode demorar mais enquanto o SpotAPI descobre e armazena em cache as consultas atuais do web player.
 
 **Quer navegar por uma interface?** Abra o explorador interativo no terminal:
 

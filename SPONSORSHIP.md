@@ -14,6 +14,8 @@ SpotAPI's README and examples serve developers interested in:
 - Building applications with music search, playlists, metadata, and connected-player controls.
 - Developer tools that make shipping, testing, and maintaining Python applications easier.
 
+**Dated traffic snapshot (November 21, 2026):** GitHub Insights showed **3,689 repository views, 2,465 unique visitors, 1,071 clones and 468 unique cloners over the preceding 14 days**. These are maintainer-provided GitHub Insights figures, not ad impressions, completed installs, or a forecast. A recent Reddit spike contributed to the period; future traffic may be lower. The original dated screenshots are available on request.
+
 The [repository](https://github.com/Aran404/SpotAPI) displays public stars, forks, and activity. See recent community discussions on [r/ReverseEngineering](https://www.reddit.com/r/ReverseEngineering/comments/1xz8cb0/i_reverseengineered_spotifys_private_api_and/) and [r/BestGitHubRepos](https://www.reddit.com/r/BestGitHubRepos/comments/1xx0iqk/i_waited_3_months_to_post_here_i_built_a_spotify/). Ask for a dated snapshot of available GitHub traffic (views, unique visitors, referral sources) and package-download information. Stars and downloads are **not** unique people or guaranteed sponsor impressions. No reach or conversion figure is promised.
 
 ## 30-day sponsorship packages
@@ -34,7 +36,7 @@ We keep at most **three featured logos** in the README at once to preserve reada
 
 **Buying the first placement is deliberately simple:** choose a package, confirm the placement and dates, pay an upfront direct invoice, then measure your own referrals with your tracking URL. We can share dated GitHub traffic or download data if available, but stars, downloads and views are not guaranteed sponsor impressions. If a pilot works, renewal is quoted and agreed separately; there is **no automatic renewal**.
 
-Business advertising uses direct invoicing. **GitHub Sponsors, if active for the maintainer, is an optional way for individual developers to support maintenance**, not an automatic entitlement to a logo, integration, or paid advertisement. Affiliate arrangements and technical work require separate written agreement.
+Business advertising uses direct invoicing. [PayPal.Me](https://paypal.me/aranyyz) accepts optional community contributions only; donating does **not** purchase a logo, integration or paid advertisement. Affiliate arrangements and technical work require separate written agreement.
 
 ### Exclusive integration partnerships
 

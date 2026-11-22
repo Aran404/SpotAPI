@@ -5,7 +5,7 @@
 <h1 align="center">SpotAPI</h1>
 
 <p align="center">
-  <strong>Spotify en tu terminal. Datos de Spotify en tu aplicación Python.</strong>
+  <strong>Crea aplicaciones de Spotify en Python con una API tipada y asíncrona.</strong>
 </p>
 
 <p align="center">
@@ -34,13 +34,7 @@ python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-![SpotAPI Connect controlando un reproductor real de Spotify desde la terminal](assets/cli-connect-demo.gif)
-
-<p align="center"><sub>Connect · Busca, navega y controla un reproductor de Spotify existente desde tu terminal. Spotify reproduce el audio; SpotAPI envía los controles.</sub></p>
-
-Ese es el catálogo público. Busca, resuelve enlaces de Spotify, consulta créditos y lee metadatos de listas de reproducción públicas sin configurar una aplicación de desarrollador de Spotify. La primera solicitud puede tardar más mientras SpotAPI descubre las consultas actuales del reproductor web; las siguientes reutilizan los resultados almacenados en caché.
-
-**¿Prefieres desarrollar con Python?** La misma instalación incluye una API tipada. No necesitas ninguna interfaz de terminal:
+**Primero, la API de Python.** La misma instalación devuelve resultados tipados a tu aplicación, sin interfaz de terminal ni credenciales de desarrollador de Spotify:
 
 ```python
 import asyncio
@@ -54,7 +48,13 @@ async def main():
 asyncio.run(main())
 ```
 
-[Más ejemplos en Python](#desarrolla-con-python) · [Auditoría de listas y exportación CSV](examples/playlist_audit.py)
+[Más ejemplos en Python](#desarrolla-con-python) · [Auditoría de listas y exportación CSV](examples/playlist_audit.py) · [Guía de Python sin clave API](docs/no-api-key.md)
+
+![SpotAPI Connect controlando un reproductor real de Spotify desde la terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Busca, navega y controla un reproductor de Spotify existente desde tu terminal. Spotify reproduce el audio; SpotAPI envía los controles.</sub></p>
+
+La demostración de Connect usa la misma biblioteca. La búsqueda pública, los enlaces de Spotify, los créditos y los metadatos de playlists públicas no requieren una aplicación de desarrollador. La primera solicitud puede tardar más mientras SpotAPI descubre y almacena en caché las consultas actuales del reproductor web.
 
 **¿Prefieres explorar con una interfaz?** Abre el explorador interactivo en la terminal:
 

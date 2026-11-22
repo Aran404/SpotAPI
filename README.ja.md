@@ -5,7 +5,7 @@
 <h1 align="center">SpotAPI</h1>
 
 <p align="center">
-  <strong>ターミナルで Spotify を。Python アプリで Spotify のデータを。</strong>
+  <strong>型付き・非同期 Python API で Spotify アプリを作ろう。</strong>
 </p>
 
 <p align="center">
@@ -34,13 +34,7 @@ python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-![ターミナルから実際の Spotify プレーヤーを操作する SpotAPI Connect](assets/cli-connect-demo.gif)
-
-<p align="center"><sub>Connect · ターミナルから既存の Spotify プレーヤーで検索、ナビゲート、操作ができます。音声を再生するのは Spotify で、SpotAPI は操作コマンドを送信します。</sub></p>
-
-これが公開カタログです。Spotify 開発者アプリケーションを用意しなくても、検索、Spotify リンクの解決、クレジットの確認、公開プレイリストのメタデータの読み取りができます。最初のリクエストは SpotAPI が現在の Web プレーヤーのクエリを検出するため時間がかかることがありますが、以降のリクエストではキャッシュされた結果が再利用されます。
-
-**Python で開発したいですか？** 同じインストールで型付き API が使えます。ターミナルインターフェースは不要です:
+**まずは Python API。** 同じインストールから型付きの結果をアプリで利用できます。ターミナル UI も Spotify の開発者認証情報も不要です:
 
 ```python
 import asyncio
@@ -54,7 +48,13 @@ async def main():
 asyncio.run(main())
 ```
 
-[その他の Python の例](#python-で開発する) · [プレイリストの監査と CSV エクスポート](examples/playlist_audit.py)
+[その他の Python の例](#python-で開発する) · [プレイリストの監査と CSV エクスポート](examples/playlist_audit.py) · [API キー不要の Python ガイド](docs/no-api-key.md)
+
+![ターミナルから実際の Spotify プレーヤーを操作する SpotAPI Connect](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · ターミナルから既存の Spotify プレーヤーで検索、ナビゲート、操作ができます。音声を再生するのは Spotify で、SpotAPI は操作コマンドを送信します。</sub></p>
+
+Connect のデモも同じライブラリで作られています。公開検索、Spotify リンク、クレジット、公開プレイリストのメタデータには開発者アプリは不要です。初回のリクエストでは Web プレーヤーのクエリを検出してキャッシュするため、時間がかかる場合があります。
 
 **ブラウズできるものが欲しいですか？** インタラクティブなターミナルエクスプローラーを開きましょう:
 

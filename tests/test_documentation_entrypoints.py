@@ -25,6 +25,7 @@ HTML_LINK = re.compile(r"""href=["']([^"']+)["']""")
         "README.ja.md",
         "examples/README.md",
         "docs/quickstart.md",
+        "docs/no-api-key.md",
         "docs/release-checks.md",
     ],
 )
@@ -61,7 +62,7 @@ def test_quickstart_points_to_current_anchor() -> None:
 
 # English README Git blob SHA at translation time. Changes to the canonical
 # README must be reviewed against *all* translations, even when only prose changes.
-_ENGLISH_README_BLOB_SHA = "bdf5dc8cb75e3dd55897be6ed85065ba59b2dad1"
+_ENGLISH_README_BLOB_SHA = "83583178d06eb2421616ade98929f20fdc44387e"
 _TRANSLATIONS = ("README.pt-BR.md", "README.es.md", "README.fr.md", "README.ja.md")
 _LANGUAGES = ("README.md", *_TRANSLATIONS)
 
@@ -146,3 +147,19 @@ def test_localized_readme_has_full_english_structure(filename: str) -> None:
             assert (
                 f'href="{language}"' in translated
             ), f"{filename}: missing language-switch link for {language}"
+
+
+def test_readmes_show_python_api_before_terminal_demo() -> None:
+    for filename in _LANGUAGES:
+        readme = (ROOT / filename).read_text(encoding="utf-8")
+        assert readme.index("```python") < readme.index("assets/cli-connect-demo.gif")
+        assert "(docs/no-api-key.md)" in readme
+
+
+def test_no_api_key_guide_python_examples_compile() -> None:
+    guide = (ROOT / "docs/no-api-key.md").read_text(encoding="utf-8")
+    examples = [block for block in _fenced_code(guide) if block.startswith("```python\n")]
+    assert len(examples) == 3
+    for example in examples:
+        source = example.partition("\n")[2].rsplit("```", 1)[0]
+        compile(source, "docs/no-api-key.md", "exec")
