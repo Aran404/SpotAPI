@@ -11,7 +11,8 @@ from pathlib import Path
 import pytest
 
 from spotapi.datastruct import ObjectDict
-from spotapi.models.catalogue import Track, from_dict
+from spotapi.models.catalogue import Album, AlbumDetails, Track, from_dict
+from spotapi.models.catalogue.album_details import ReleaseDate
 from spotapi.models.catalogue.common import SquareCoverImage
 from spotapi.operations import Operations
 from spotapi.queries import Queries
@@ -149,6 +150,121 @@ def test_optional_model_fields_may_be_missing() -> None:
     assert track.duration is None
     assert track.artists is None
     assert "Song" in repr(track)
+
+
+# The object-only case uses a documented Spotify-derived Kehlani album response:
+# https://www.nexscope.ai/api-docs/social-spotify-artist
+_KEHLANI_URI = "spotify:album:2xkYTmqjear3lSGydIn7wh"
+_KEHLANI_TIMESTAMP = "2026-04-24T04:00:00Z"
+
+
+@pytest.mark.parametrize("precision", [None, "DAY", "MINUTE"])
+def test_album_models_decode_object_shaped_pre_release_timestamp(
+    precision: str | None,
+) -> None:
+    timestamp = {"isoString": _KEHLANI_TIMESTAMP}
+    if precision is not None:
+        timestamp["precision"] = precision
+
+    payload: dict[str, object] = {
+        "name": "Kehlani",
+        "uri": _KEHLANI_URI,
+        "isPreRelease": False,
+        "isAlbumPreRelease": False,
+        "preReleaseEndDateTime": timestamp,
+    }
+
+    for model in (Album, AlbumDetails):
+        if model is AlbumDetails:
+            payload["date"] = {"isoString": _KEHLANI_TIMESTAMP, "precision": "DAY"}
+        album = from_dict(model, payload)
+        release_end = album.pre_release_end_date_time
+        assert isinstance(release_end, ReleaseDate)
+        assert release_end.iso_string == _KEHLANI_TIMESTAMP
+        assert release_end.precision == precision
+        assert release_end.year == 2026
+
+
+@pytest.mark.parametrize("timestamp", [None, "2026-04-24T04:00:00Z"])
+def test_album_pre_release_timestamp_keeps_legacy_string_and_null(
+    timestamp: str | None,
+) -> None:
+    payload: dict[str, object] = {
+        "name": "Kehlani",
+        "uri": _KEHLANI_URI,
+        "preReleaseEndDateTime": timestamp,
+    }
+
+    for model in (Album, AlbumDetails):
+        if model is AlbumDetails:
+            payload["date"] = {"isoString": _KEHLANI_TIMESTAMP, "precision": "DAY"}
+        assert from_dict(model, payload).pre_release_end_date_time == timestamp
+
+
+@pytest.mark.parametrize("invalid", [{}, {"precision": "DAY"}, 123, []])
+def test_album_pre_release_timestamp_rejects_malformed_values(invalid: object) -> None:
+    payload: dict[str, object] = {
+        "name": "Kehlani",
+        "uri": _KEHLANI_URI,
+        "preReleaseEndDateTime": invalid,
+    }
+
+    for model in (Album, AlbumDetails):
+        if model is AlbumDetails:
+            payload["date"] = {"isoString": _KEHLANI_TIMESTAMP, "precision": "DAY"}
+        with pytest.raises((TypeError, ValueError), match="pre_release_end_date_time"):
+            from_dict(model, payload)
+
+
+def test_album_search_retains_hits_with_object_pre_release_timestamp() -> None:
+    page = ObjectDict(
+        {
+            "items": [
+                {
+                    "data": {
+                        "name": "Kehlani",
+                        "uri": _KEHLANI_URI,
+                        "preReleaseEndDateTime": {"isoString": _KEHLANI_TIMESTAMP},
+                    }
+                }
+            ]
+        }
+    )
+
+    albums = Queries.parse_items(page, Album, Operations.SEARCH_ALBUMS, skip_invalid=True)
+
+    assert len(albums) == 1
+    assert albums[0].uri == _KEHLANI_URI
+    assert isinstance(albums[0].pre_release_end_date_time, ReleaseDate)
+
+
+async def test_album_detail_lookup_decodes_object_pre_release_timestamp(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def fake_direct_query(self: Queries, uri: str, operation: Operations) -> ObjectDict:
+        assert uri == _KEHLANI_URI
+        assert operation is Operations.GET_ALBUM
+        return ObjectDict(
+            {
+                "data": {
+                    "albumUnion": {
+                        "name": "Kehlani",
+                        "uri": uri,
+                        "date": {"isoString": _KEHLANI_TIMESTAMP, "precision": "DAY"},
+                        "isPreRelease": False,
+                        "preReleaseEndDateTime": {"isoString": _KEHLANI_TIMESTAMP},
+                    }
+                }
+            }
+        )
+
+    monkeypatch.setattr(Queries, "direct_query", fake_direct_query)
+    album = await Queries().resource(_KEHLANI_URI, Operations.GET_ALBUM, AlbumDetails)
+
+    assert isinstance(album, AlbumDetails)
+    assert album.name == "Kehlani"
+    assert isinstance(album.pre_release_end_date_time, ReleaseDate)
+    assert album.pre_release_end_date_time.iso_string == _KEHLANI_TIMESTAMP
 
 
 def test_query_cache_validates_expiry_shape_and_size(tmp_path: Path) -> None:

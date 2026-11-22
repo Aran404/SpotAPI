@@ -2,6 +2,8 @@
 
 ## 2.1.3 - Pending release
 
+- Decode object-shaped album pre-release timestamps as typed dates without breaking
+  previous string or null values (#105).
 - Return an actionable SPOTIFY_COOKIE fallback when the optional Python keyring
   package is installed but the operating system has no secure keyring backend.
 - Make the missing-session CLI regression independent of the CI runner's

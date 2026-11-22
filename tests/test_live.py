@@ -90,6 +90,19 @@ def test_live_get_track_artist_and_album_from_search() -> None:
     asyncio.run(scenario())
 
 
+def test_live_get_album_with_pre_release_timestamp_issue_105() -> None:
+    """Read the public album that exposed Spotify's object-shaped timestamp."""
+    album_uri = "spotify:album:3LUcDBe7DZDExhHbZEQchk"
+
+    async def scenario() -> None:
+        album = await Public.get_album(album_uri)
+
+        assert album.uri == album_uri
+        assert album.name == "Aba Khan"
+
+    asyncio.run(scenario())
+
+
 def test_live_search_accepts_plural_category_alias() -> None:
     """Accept plural aliases and return only the requested category."""
 
