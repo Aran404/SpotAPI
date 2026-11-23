@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/spotapi-color.svg" width="76" alt="Logo SpotAPI">
+  <img src="assets/spotapi-icon.svg" width="112" alt="Logo SpotAPI">
 </p>
 
 <h1 align="center">SpotAPI</h1>
