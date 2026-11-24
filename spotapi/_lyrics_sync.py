@@ -35,6 +35,7 @@ class Track:
     duration: float
     embedded: tuple[str, ...] = ()
     timed: bool = False
+    signature: tuple[int, int, int] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,7 +48,13 @@ class Lyrics:
         return ".lrc" if self.synced else ".txt"
 
 
+def _signature(path: Path) -> tuple[int, int, int]:
+    stat = path.stat()
+    return stat.st_ino, stat.st_size, stat.st_mtime_ns
+
+
 def _read_track(path: Path) -> Track:
+    signature = _signature(path)
     mutagen: Any = importlib.import_module("mutagen")
     try:
         audio: Any = mutagen.File(path, easy=True)
@@ -70,7 +77,7 @@ def _read_track(path: Path) -> Track:
         else:
             embedded, timed = (), False
 
-        return Track(path, title, artist, album, duration, embedded, timed)
+        return Track(path, title, artist, album, duration, embedded, timed, signature)
     except mutagen.MutagenError as error:
         raise ValueError(f"cannot read audio metadata: {error}") from error
 
@@ -118,10 +125,8 @@ def _lookup(track: Track) -> Lyrics | None:
             "duration": round(track.duration),
         }
     )
-    request = Request(
-        f"https://lrclib.net/api/get?{query}",
-        headers={"User-Agent": f"SpotAPI/{version('spotapi')} (https://github.com/Aran404/SpotAPI)"},
-    )
+    agent = f"SpotAPI/{version('spotapi')} (https://github.com/Aran404/SpotAPI)"
+    request = Request(f"https://lrclib.net/api/get?{query}", headers={"User-Agent": agent})
     try:
         with urlopen(request, timeout=20) as response:
             body = response.read(1_000_001)
@@ -165,9 +170,12 @@ def _write_text(path: Path, text: str, previous: str | None) -> None:
             staged.replace(path)
 
 
-def _embed(path: Path, lyrics: Lyrics) -> None:
+def _embed(track: Track, lyrics: Lyrics) -> None:
+    path = track.path
+    original = _signature(path)
+    if path.is_symlink() or original != track.signature:
+        raise ValueError("audio changed since review")
     mutagen: Any = importlib.import_module("mutagen")
-    original = path.stat()
     with tempfile.TemporaryDirectory(prefix=".spotapi-", dir=path.parent) as directory:
         staged = Path(directory) / path.name
         shutil.copy2(path, staged)
@@ -186,12 +194,7 @@ def _embed(path: Path, lyrics: Lyrics) -> None:
             audio.save()
         except mutagen.MutagenError as error:
             raise ValueError(f"cannot embed lyrics: {error}") from error
-        current = path.stat()
-        if path.is_symlink() or (current.st_ino, current.st_size, current.st_mtime_ns) != (
-            original.st_ino,
-            original.st_size,
-            original.st_mtime_ns,
-        ):
+        if path.is_symlink() or _signature(path) != original:
             raise ValueError("audio changed since review")
         staged.replace(path)
 
@@ -233,7 +236,9 @@ def _save(track: Track, lyrics: Lyrics, destination: Path, *, embed: bool, dry_r
     plain = _read_text(destination.with_suffix(".txt"))
     if not lyrics.synced and (lrc is not None or track.timed):
         return "Kept synced"
-    if embed and (len(track.embedded) > 1 or (track.timed and not track.embedded)):
+    if embed and len(track.embedded) > 1:
+        return "Kept embedded"
+    if track.timed and not track.embedded and lrc is None:
         return "Kept embedded"
 
     target = destination.with_suffix(lyrics.suffix)
@@ -258,7 +263,7 @@ def _save(track: Track, lyrics: Lyrics, destination: Path, *, embed: bool, dry_r
     if dry_run:
         return "Would embed" if embed else f"Would save {lyrics.suffix}"
     if embed:
-        _embed(track.path, lyrics)
+        _embed(track, lyrics)
         return "Embedded"
     _write_text(target, lyrics.text, existing)
     return f"Saved {lyrics.suffix}"

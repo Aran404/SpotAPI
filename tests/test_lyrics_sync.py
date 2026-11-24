@@ -9,6 +9,7 @@ import json
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
+from unittest.mock import Mock
 from urllib.error import HTTPError, URLError
 
 import pytest
@@ -76,7 +77,7 @@ def test_reject_mismatch(track: sync.Track, changes: dict[str, object]) -> None:
 
 def test_lookup(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        sync, "urlopen", lambda *a, **kw: io.BytesIO(json.dumps(_record(track)).encode())
+        sync, "urlopen", Mock(return_value=io.BytesIO(json.dumps(_record(track)).encode()))
     )
     assert sync._lookup(track) == sync.Lyrics("[00:00.00] hello\n", True)
 
@@ -105,7 +106,7 @@ def test_network_failure(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> 
 
 @pytest.mark.parametrize("body", [b"[]", b"x" * 1_000_001, b"invalid json"])
 def test_invalid_response(track: sync.Track, monkeypatch: pytest.MonkeyPatch, body: bytes) -> None:
-    monkeypatch.setattr(sync, "urlopen", lambda *a, **kw: io.BytesIO(body))
+    monkeypatch.setattr(sync, "urlopen", Mock(return_value=io.BytesIO(body)))
     with pytest.raises(ValueError):
         sync._lookup(track)
 
@@ -118,9 +119,9 @@ def test_sidecar_lifecycle(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -
     assert not path.with_suffix(".txt").exists()
     assert sync._save(track, plain, path, embed=False, dry_run=False) == "Saved .txt"
     assert sync._save(track, plain, path, embed=False, dry_run=False) == "Unchanged"
-    monkeypatch.setattr(sync, "_review", lambda *a, **kw: False)
+    monkeypatch.setattr(sync, "_review", Mock(return_value=False))
     assert sync._save(track, timed, path, embed=False, dry_run=False) == "Kept existing"
-    monkeypatch.setattr(sync, "_review", lambda *a, **kw: True)
+    monkeypatch.setattr(sync, "_review", Mock(return_value=True))
     assert sync._save(track, timed, path, embed=False, dry_run=False) == "Saved .lrc"
     assert path.with_suffix(".txt").read_text() == plain.text
     assert path.with_suffix(".lrc").read_text() == timed.text
@@ -159,9 +160,9 @@ def test_review(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPa
     assert not sync._review("old", lyrics, dry_run=False)
     monkeypatch.setattr(sync.sys.stdin, "isatty", lambda: True)
     monkeypatch.setattr(sync.sys.stdout, "isatty", lambda: True)
-    monkeypatch.setattr("builtins.input", lambda _: "yes")
+    monkeypatch.setattr("builtins.input", Mock(return_value="yes"))
     assert sync._review("old", lyrics, dry_run=False)
-    monkeypatch.setattr("builtins.input", lambda _: "")
+    monkeypatch.setattr("builtins.input", Mock(return_value=""))
     assert not sync._review("old", lyrics, dry_run=False)
 
 
@@ -171,7 +172,7 @@ def test_cli(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    monkeypatch.setattr(sync, "_lookup", lambda _: sync.Lyrics("hello\n", False))
+    monkeypatch.setattr(sync, "_lookup", Mock(return_value=sync.Lyrics("hello\n", False)))
     output = tmp_path / "Lyrics"
     assert main(["lyrics-sync", str(track.path), "--output", str(output), "--dry-run"]) == 0
     assert not output.exists()
@@ -186,7 +187,7 @@ def test_cli(
 def test_recursive_and_collision(
     track: sync.Track, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(sync, "_lookup", lambda _: sync.Lyrics("hello\n", False))
+    monkeypatch.setattr(sync, "_lookup", Mock(return_value=sync.Lyrics("hello\n", False)))
     album = tmp_path / "album"
     album.mkdir()
     moved = album / track.path.name
@@ -208,16 +209,16 @@ def test_missing_tracks(tmp_path: Path) -> None:
 def test_mp3(tmp_path: Path) -> None:
     # Five silent MPEG frames, produced from a short generated silence clip.
     data = (
-        "//sQxAADwAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
-        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xLE"
-        "KYPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
-        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xDEU4PAAAG"
-        "kAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
-        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EsR9A8AAAaQAA"
-        "AAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
-        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMSnA8AA"
-        "AaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
-        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+        "//sQxAADwAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xLEKYPAAAGk"
+        "AAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xDEU4PAAAGkAAAAIAAANIAA"
+        "AARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EsR9A8AAAaQAAAAgAAA0gAAABFVVVVVVVVVV"
+        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+        "VVVVVVVVVVVVVVVVVVVVVVVVVf/7EMSnA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVV"
+        "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+        "VVVVVVVVVVVV"
     )
     path = tmp_path / "silence.mp3"
     path.write_bytes(base64.b64decode(data))
@@ -244,14 +245,14 @@ def test_existing_embedded(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -
     timed = replace(track, timed=True)
     assert sync._save(timed, lyrics, track.path, embed=False, dry_run=False) == "Kept synced"
     existing = replace(track, embedded=("old",))
-    monkeypatch.setattr(sync, "_review", lambda *a, **kw: False)
+    monkeypatch.setattr(sync, "_review", Mock(return_value=False))
     assert sync._save(existing, lyrics, track.path, embed=False, dry_run=False) == "Kept existing"
 
 
 def test_not_found(
     track: sync.Track, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(sync, "_lookup", lambda _: None)
+    monkeypatch.setattr(sync, "_lookup", Mock(return_value=None))
     assert sync.run(track.path, output=None, embed=False, dry_run=False) == 0
     assert "Not found" in capsys.readouterr().out
     assert not track.path.with_suffix(".txt").exists()
@@ -266,7 +267,7 @@ def test_invalid_audio(tmp_path: Path) -> None:
 
 
 def test_missing_dependency(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(sync.importlib.util, "find_spec", lambda _: None)
+    monkeypatch.setattr(sync.importlib.util, "find_spec", Mock(return_value=None))
     with pytest.raises(RuntimeError, match=r"spotapi\[media\]"):
         sync.run(track.path, output=None, embed=False, dry_run=False)
 
@@ -296,3 +297,12 @@ def test_sidecar_symlink(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="symbolic link"):
         sync._write_text(alias, "new", None)
     assert original.read_text(encoding="utf-8") == "old"
+
+
+def test_changed_audio_is_not_replaced(track: sync.Track) -> None:
+    original = track.path.read_bytes()
+    changed = original + b"changed"
+    track.path.write_bytes(changed)
+    with pytest.raises(ValueError, match="audio changed"):
+        sync._embed(track, sync.Lyrics("hello\n", False))
+    assert track.path.read_bytes() == changed
