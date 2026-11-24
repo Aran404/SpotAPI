@@ -17,7 +17,7 @@ from spotapi import (
     SearchResults,
     SpotAPIError,
 )
-from spotapi.cli import _parser, main
+from spotapi.cli import _human, _parser, main
 from spotapi.login import SavedSession
 from spotapi.types import BaseClientError
 
@@ -318,3 +318,153 @@ def test_cli_reports_missing_secure_keyring_backend(
     assert "Set SPOTIFY_COOKIE" in captured.err
     assert "keyring backend" in captured.err
     assert "No recommended backend" not in captured.err
+
+
+def test_human_output_preserves_distinct_name_and_title() -> None:
+    output = _human([{"name": "Artist", "title": "Track", "uri": "spotify:track:one"}])
+    assert output == "1. Artist\n  title: Track\n  uri: spotify:track:one"
+
+
+def test_human_output_preserves_empty_name_when_title_is_used() -> None:
+    output = _human([{"name": "", "title": "Track"}])
+    assert output == "1. Track\n  name: "
+
+
+def test_root_help_lists_every_command(capsys: pytest.CaptureFixture[str]) -> None:
+    from spotapi.cli import _subcommands
+
+    parser = _parser()
+    with pytest.raises(SystemExit) as exit_info:
+        main(["--help"])
+    assert exit_info.value.code == 0
+    output = capsys.readouterr().out
+    for command in _subcommands(parser):
+        assert f"  {command} " in output
+
+
+def test_cli_suggests_close_command(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exit_info:
+        main(["serach"])
+    assert exit_info.value.code == 2
+    assert "Did you mean 'search'?" in capsys.readouterr().err
+
+
+def test_public_playlist_rejects_ignored_profile(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    lookup = Mock()
+    monkeypatch.setattr(Public, "get_playlist_items", lookup)
+    assert main(["playlist", "items", "abc", "--profile", "work"]) == 1
+    assert "Use --private with --profile" in capsys.readouterr().err
+    lookup.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("command", "method", "arguments"),
+    [
+        (["pause"], "pause", ()),
+        (["resume"], "resume", ()),
+        (["next"], "next", ()),
+        (["previous"], "previous", ()),
+        (["play", "spotify:track:abc"], "play", ("spotify:track:abc",)),
+        (["seek", "2000"], "seek", (2000,)),
+        (["volume", "25"], "volume", (25,)),
+        (["queue", "spotify:track:abc"], "add_to_queue", ("spotify:track:abc",)),
+    ],
+)
+def test_player_commands_dispatch_once(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    command: list[str],
+    method: str,
+    arguments: tuple[object, ...],
+) -> None:
+    player = Mock()
+    action = AsyncMock()
+    setattr(player, method, action)
+    closed: list[bool] = []
+
+    @asynccontextmanager
+    async def connection() -> AsyncGenerator[Mock, None]:
+        try:
+            yield player
+        finally:
+            closed.append(True)
+
+    @asynccontextmanager
+    async def account(cookie: str) -> AsyncGenerator[object, None]:
+        yield SimpleNamespace(session=Mock(spec=AuthSession))
+
+    monkeypatch.setenv("SPOTIFY_COOKIE", "test-cookie")
+    monkeypatch.setattr(Private, "from_cookies", account)
+    monkeypatch.setattr("spotapi.cli.Player", Mock(return_value=Mock(connect=connection)))
+    assert main(["player", *command]) == 0
+    action.assert_awaited_once_with(*arguments)
+    assert closed == [True]
+    assert not capsys.readouterr().out
+
+
+def test_player_command_failure_closes_connection(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    player = Mock(next=AsyncMock(side_effect=SpotAPIError("device disconnected")))
+    closed: list[bool] = []
+
+    @asynccontextmanager
+    async def connection() -> AsyncGenerator[Mock, None]:
+        try:
+            yield player
+        finally:
+            closed.append(True)
+
+    @asynccontextmanager
+    async def account(cookie: str) -> AsyncGenerator[object, None]:
+        yield SimpleNamespace(session=Mock(spec=AuthSession))
+
+    monkeypatch.setenv("SPOTIFY_COOKIE", "test-cookie")
+    monkeypatch.setattr(Private, "from_cookies", account)
+    monkeypatch.setattr("spotapi.cli.Player", Mock(return_value=Mock(connect=connection)))
+    assert main(["player", "next"]) == 1
+    player.next.assert_awaited_once()
+    assert closed == [True]
+    captured = capsys.readouterr()
+    assert not captured.out
+    assert "device disconnected" in captured.err
+
+
+def test_public_playlist_read_closes_generator(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    closed: list[bool] = []
+
+    async def items(value: str, *, limit: int) -> AsyncGenerator[tuple[dict[str, str], ...], None]:
+        assert value == "playlist" and limit == 2
+        try:
+            yield ({"uid": "first"}, {"uid": "second"})
+            raise AssertionError("The CLI should read only one page")
+        finally:
+            closed.append(True)
+
+    monkeypatch.setattr(Public, "get_playlist_items", items)
+    assert main(["playlist", "items", "playlist", "--limit", "2"]) == 0
+    assert json.loads(capsys.readouterr().out) == [{"uid": "first"}, {"uid": "second"}]
+    assert closed == [True]
+
+
+def test_library_contains_preserves_input_order(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    liked = Mock(contains=AsyncMock(return_value=[True, False]))
+
+    @asynccontextmanager
+    async def account(cookie: str) -> AsyncGenerator[object, None]:
+        yield SimpleNamespace(liked_tracks=liked)
+
+    monkeypatch.setenv("SPOTIFY_COOKIE", "test-cookie")
+    monkeypatch.setattr(Private, "from_cookies", account)
+    assert main(["library", "contains", "first", "second"]) == 0
+    liked.contains.assert_awaited_once_with(["first", "second"])
+    assert json.loads(capsys.readouterr().out) == [
+        {"track": "first", "liked": True},
+        {"track": "second", "liked": False},
+    ]

@@ -386,3 +386,33 @@ def test_generic_decoder_does_not_treat_error_metadata_as_an_exception() -> None
 
     with pytest.raises(TypeError):
         from_dict(BatchItem, {"index": 0, "value": "bad", "error": {"type": "ValueError"}})
+
+
+def test_cache_reads_newer_disk_entry_after_memory_expires(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    clock = Mock(return_value=100.0)
+    monkeypatch.setattr("spotapi.cache.time.time", clock)
+    first = ResponseCache(tmp_path, ttl=10)
+    second = ResponseCache(tmp_path, ttl=10)
+    key = first.key("track", {"id": "one"}, "test")
+    first.put(key, ObjectDict({"name": "old"}))
+
+    clock.return_value = 108.0
+    second.put(key, ObjectDict({"name": "new"}))
+    assert first.get(key) == ObjectDict({"name": "old"})
+
+    clock.return_value = 111.0
+    assert first.get(key) == ObjectDict({"name": "new"})
+    clock.return_value = 119.0
+    assert first.get(key) is None
+
+
+def test_cache_rejects_overflowing_expiry(tmp_path: Path) -> None:
+    cache = ResponseCache(tmp_path)
+    key = cache.key("track", {}, "test")
+    (tmp_path / f"{key}.json").write_text(
+        json.dumps({"version": 1, "expires": 10**400, "data": {"name": "bad"}}),
+        encoding="utf-8",
+    )
+    assert cache.get(key) is None

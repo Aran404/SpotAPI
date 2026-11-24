@@ -36,14 +36,24 @@ jobs:
       - run: python -m black --check .
       - run: python -m build
       - run: python -m twine check dist/*
-      - run: python -m pip install --force-reinstall --no-deps dist/*.whl
+      - name: Install distributions in separate clean environments
+        run: |
+          python -m venv "$RUNNER_TEMP/spotapi-wheel"
+          "$RUNNER_TEMP/spotapi-wheel/bin/python" -m pip install dist/*.whl
+          "$RUNNER_TEMP/spotapi-wheel/bin/python" -m pip check
+          python -m venv "$RUNNER_TEMP/spotapi-sdist"
+          "$RUNNER_TEMP/spotapi-sdist/bin/python" -m pip install dist/*.tar.gz
+          "$RUNNER_TEMP/spotapi-sdist/bin/python" -m pip check
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/spotapi-sdist/bin/python" -I -m spotapi --version
+          "$RUNNER_TEMP/spotapi-sdist/bin/python" -I -m spotapi search --help
       - name: Smoke-test the installed wheel outside the checkout
         working-directory: /tmp
         run: |
-          spotapi --help
-          spotapi discover --help
-          spotapi studio --help
-          python -I - <<'PY'
+          "$RUNNER_TEMP/spotapi-wheel/bin/python" -I -m spotapi --help
+          "$RUNNER_TEMP/spotapi-wheel/bin/python" -I -m spotapi discover --help
+          "$RUNNER_TEMP/spotapi-wheel/bin/python" -I -m spotapi studio --help
+          "$RUNNER_TEMP/spotapi-wheel/bin/python" -I - <<'PY'
           import os
           from importlib.util import find_spec
           from pathlib import Path

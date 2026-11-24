@@ -76,7 +76,7 @@ _ALL_COMMANDS = tuple(name for _, entries in _COMMAND_GROUPS for name, _ in entr
 
 
 def _subcommands(parser: argparse.ArgumentParser) -> dict[str, argparse.ArgumentParser]:
-    """Find child parsers via the public Action.choices interface."""
+    """Find subcommand parsers among argparse actions."""
     children: dict[str, argparse.ArgumentParser] = {}
     for action in parser._actions:
         choices: object = action.choices
@@ -92,8 +92,8 @@ class _CommandParser(argparse.ArgumentParser):
     """Compact errors with guidance, without changing argparse's exit codes."""
 
     def error(self, message: str) -> NoReturn:
-        if "invalid choice:" in message and (
-            message.startswith("argument command:") or message.startswith("argument action:")
+        if "invalid choice:" in message and message.startswith(
+            ("argument command:", "argument <command>:", "argument action:")
         ):
             invalid = message.partition("invalid choice: ")[2].split(" (choose from", 1)[0]
             command = invalid.strip().strip("'\"")
@@ -130,7 +130,7 @@ class _RootParser(_CommandParser):
                 "",
                 "Run 'spotapi <command> --help' for command-specific options.",
                 "Use --json after a command for machine-readable output.",
-                "API output remains JSON when redirected or piped.",
+                "Most reads output JSON when redirected; search requires --json.",
                 "",
             )
         )
@@ -176,10 +176,13 @@ def _human(value: object) -> str:
             for number, entry in enumerate(entries, 1):
                 if isinstance(entry, dict):
                     fields = cast("dict[str, object]", entry)
-                    title = fields.get("name") or fields.get("title") or fields.get("uri")
-                    lines.append("  " * depth + f"{number}. {title or 'Item'}")
+                    heading = next(
+                        (key for key in ("name", "title", "uri") if fields.get(key)), None
+                    )
+                    title = fields[heading] if heading is not None else "Item"
+                    lines.append("  " * depth + f"{number}. {title}")
                     for key, subvalue in fields.items():
-                        if title is not None and key in {"name", "title"}:
+                        if key == heading and heading != "uri":
                             continue
                         visit(subvalue, depth + 1, key.replace("_", " "))
                 else:
@@ -588,6 +591,8 @@ async def _run(args: argparse.Namespace) -> None:
         _display(await Public.get_track_credits(args.track), args)
         return
     if command == "playlist" and args.action == "items" and not args.private:
+        if args.profile is not None:
+            raise ValueError("Use --private with --profile to read a private playlist.")
         async with aclosing(Public.get_playlist_items(args.playlist, limit=args.limit)) as pages:
             _display((await anext(pages, ()))[: args.limit], args)
         return

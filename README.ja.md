@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  Spotify の公開カタログ、プレイリスト、接続されたプレーヤーを扱う、型付きの非同期 Python ライブラリです。<br>
+  Spotify の公開カタログ、プレイリスト、接続されたプレーヤーを扱えます。<br>
   <strong>公開データの利用に開発者アプリや API キーは不要です。</strong>
 </p>
 
@@ -38,7 +38,7 @@ python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-**まずは Python API。** 同じインストールから型付きの結果をアプリで利用できます。ターミナル UI も Spotify の開発者認証情報も不要です:
+Python で同じ API を使えます:
 
 ```python
 import asyncio
@@ -54,13 +54,9 @@ asyncio.run(main())
 
 [その他の Python の例](#python-で開発する) · [プレイリストの監査と CSV エクスポート](examples/playlist_audit.py) · [API キー不要の Python ガイド](docs/no-api-key.md)
 
-![ターミナルから実際の Spotify プレーヤーを操作する SpotAPI Connect](assets/cli-connect-demo.gif)
+初回のリクエストでは Web プレーヤーのクエリを検出してキャッシュするため、時間がかかる場合があります。
 
-<p align="center"><sub>Connect · ターミナルから既存の Spotify プレーヤーで検索、ナビゲート、操作ができます。音声を再生するのは Spotify で、SpotAPI は操作コマンドを送信します。</sub></p>
-
-Connect のデモも同じライブラリで作られています。公開検索、Spotify リンク、クレジット、公開プレイリストのメタデータには開発者アプリは不要です。初回のリクエストでは Web プレーヤーのクエリを検出してキャッシュするため、時間がかかる場合があります。
-
-**ブラウズできるものが欲しいですか？** インタラクティブなターミナルエクスプローラーを開きましょう:
+インタラクティブなターミナルエクスプローラーを試してみましょう:
 
 ```bash
 python -m pip install "spotapi[demo]"
@@ -85,7 +81,11 @@ python -m spotapi playlist items PLAYLIST_ID --limit 10
 
 Connect は、検索、デバイス選択、次に再生する曲、再生操作、ライブアクティビティログを、キーボード操作しやすい 1 つのターミナルセッションにまとめます。サインイン済みの既存の Spotify プレーヤーを操作するもので、トラックのストリーミング、ダウンロード、復号は**行いません**。
 
-オプションのターミナルインターフェースで Connect を起動します:
+![ターミナルから実際の Spotify プレーヤーを操作する SpotAPI Connect](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · ターミナルから既存の Spotify プレーヤーで検索、ナビゲート、操作ができます。音声を再生するのは Spotify で、SpotAPI は操作コマンドを送信します。</sub></p>
+
+Connect を起動します:
 
 ```bash
 python -m pip install "spotapi[connect,browser]"
@@ -95,9 +95,7 @@ python -m spotapi connect
 
 これらのコマンドで初回のブラウザサインインを準備できます。すでに `SPOTIFY_COOKIE` または保存済みの Connect プロファイルがある場合は、`spotapi[connect]` のみをインストールし、ブラウザのダウンロードを省略できます。
 
-`search Daft Punk` で音楽を検索し、`queue 1` で結果をキューに追加し、`pause`、`next`、`seek 1:30` で再生を操作します。`/devices` を開くと利用可能なプレーヤーを一覧できます。`/use 2` は再生を移さずにプレーヤーを選択し、`/transfer 2` は再生を移します。`Ctrl+P` でコマンドパレットが開きます。
-
-Connect でプレーヤーを操作するには Spotify セッションが必要です。ブラウザでサインインする場合は、`browser` extra と Playwright の Chromium のインストールも必要になることがあります。セットアップについては [Connect ガイド](docs/connect.md)を参照してください。
+`search Daft Punk`、`queue 1`、`pause`、`next`、`seek 1:30` が使えます。`Ctrl+P` でコマンドパレットが開きます。デバイスの選択や設定は [Connect ガイド](docs/connect.md)を参照してください。
 
 ## その他の機能を見る
 
@@ -114,25 +112,30 @@ python -m spotapi studio
 
 Studio はネイティブの WebView を使用します。プラットフォームの要件と Spotify へのサインインについては [Studio のセットアップ](https://spotapi.readthedocs.io/en/latest/studio/)で説明しています。歌詞を利用できるかどうかはソースとアカウントの権利によって異なります。シークには認証済みで操作可能なプレーヤーが必要です。
 
+## SpotAPI を支援する
+
+スポンサーは SpotAPI の無料提供を支え、メンテナンス、テスト、ドキュメントの資金を提供します。[スポンサーになる](SPONSORSHIP.md)。
+
+<details open>
+<summary><strong>スポンサー</strong></summary>
+
+<!-- Each sponsor gets a separate table. Add new cards before the closing details tag. -->
+
+<table>
+  <tr>
+    <td width="100%">
+      <p align="center"><a href="https://www.rapidproxy.io/?code=Z89BQULDV"><img src="assets/sponsors/rapidproxy.webp" width="220" alt="RapidProxy"></a></p>
+      <p>Python による自動化と Web データ収集向けの信頼性の高い住宅用プロキシ。9,000 万以上の IP、世界各地の地域指定、ローテーションと固定セッション、HTTP(S)/SOCKS5 に対応。</p>
+      <sub>有料スポンサー · アフィリエイトリンク。購入により SpotAPI が報酬を受け取る場合があります。</sub>
+    </td>
+  </tr>
+</table>
+
+</details>
+
 ## Python で開発する
 
-ターミナルのデモはあくまで例です。**SpotAPI は何よりもまず Python ライブラリです:** 非同期の操作、型付きの結果、明示的なネットワーク呼び出し、再利用可能なセッションを備えています。
-
-```python
-import asyncio
-from spotapi import Public
-
-
-async def main() -> None:
-    results = await Public.search("Daft Punk", limit=5)
-    for track in results.tracks:
-        print(track.name, track.uri)
-
-
-asyncio.run(main())
-```
-
-関連する複数の操作を行う場合は、1 つのカタログセッションを再利用します:
+関連する操作にはカタログセッションを再利用します:
 
 ```python
 import asyncio
@@ -178,14 +181,6 @@ SpotAPI は非公式の Spotify Web プレーヤーのエンドポイントを�
 [クイックスタート](https://spotapi.readthedocs.io/en/latest/quickstart/) · [API リファレンス](https://spotapi.readthedocs.io/en/latest/reference/) · [Spotipy から移行する](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [CLI とディスカバリー](https://spotapi.readthedocs.io/en/latest/discovery/) · [トラブルシューティング](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
 
 **v1 からアップグレードしますか？** SpotAPI 2 は非同期ファーストで、互換性のない変更を含みます。既存の v1 アプリは移行中に `spotapi==1.2.8` に固定するか、新しい同期スクリプトでは `SyncCatalogue` を使用できます。[移行ガイド](MIGRATION.md)をお読みください。
-
-## SpotAPI を支援する
-
-SpotAPI は無料のオープンソースです。スポンサーシップは、ライブラリの動作を変えたりペイウォールを設けたりすることなく、メンテナンス、テスト、ドキュメントの資金になります。
-
-**開発者向けツールを作っていますか？** 30日間50米ドルから利用できる[スポンサーシップのオプションをご覧ください](SPONSORSHIP.md)。有料掲載は明確に表示され、製品デモより後に配置されます。
-
-<!-- 明確に表示された有効なスポンサー掲載はこの行の下に配置してください。コンパクトにまとめ、製品デモより下に置いてください。 -->
 
 ## コントリビューション
 

@@ -159,6 +159,11 @@ async def paginate(
 
             if type(next_offset) is int:
                 if next_offset <= offset:
+                    if has_total_count and offset + len(cast(list[object], items)) < total_count:
+                        raise BaseClientError(
+                            "Spotify pagination stopped advancing before totalCount; "
+                            "results may be incomplete"
+                        )
                     return
 
                 offset = next_offset

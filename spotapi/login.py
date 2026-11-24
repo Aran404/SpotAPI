@@ -15,8 +15,9 @@ from .types import BaseClientError, HTTPError
 class SavedSession:
     """Persist an sp_dc cookie in the operating system's credential store.
 
-    Requires ``spotapi[keyring]`` and a supported backend. No plaintext-file
-    fallback is used. This object never includes the cookie in repr or info().
+    Requires ``spotapi[keyring]`` and a secure backend. SpotAPI does not provide
+    a plaintext-file fallback; custom keyring backends are the caller's responsibility.
+    This object never includes the cookie in repr or info().
     Saving does not validate the session; open() authorizes it with Spotify.
     """
 
@@ -98,12 +99,12 @@ async def browser_login(
     async with module.async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=False)
         try:
-            context = await browser.new_context()
-            page = await context.new_page()
-            await page.goto(
-                "https://accounts.spotify.com/login?continue=https%3A%2F%2Fopen.spotify.com%2F"
-            )
             async with asyncio.timeout(timeout):
+                context = await browser.new_context()
+                page = await context.new_page()
+                await page.goto(
+                    "https://accounts.spotify.com/login?continue=https%3A%2F%2Fopen.spotify.com%2F"
+                )
                 while True:
                     if page.is_closed():
                         raise BaseClientError("Spotify login window was closed")
@@ -127,7 +128,10 @@ async def browser_login(
     try:
         if saved is not None:
             await asyncio.to_thread(saved.save, cookie)
-    except BaseException:
-        await client.close()
+    except BaseException as error:
+        try:
+            await client.close()
+        except Exception as cleanup:
+            raise error from cleanup
         raise
     return client
