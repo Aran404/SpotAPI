@@ -640,3 +640,12 @@ def test_get_dispatches_typed_resources(
 def test_parse_rejects_credentials_and_control_characters(value: str) -> None:
     with pytest.raises(ValueError):
         Public.parse_url(value)
+
+
+def test_all_public_exports_resolve() -> None:
+    import spotapi
+
+    assert set(spotapi.__all__) == set(spotapi._EXPORTS)
+    for name in spotapi.__all__:
+        assert name in dir(spotapi)
+        assert getattr(spotapi, name) is not None

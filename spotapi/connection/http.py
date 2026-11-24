@@ -634,11 +634,10 @@ def _parse_json_object(text: str) -> ObjectDict | None:
     """Parse ``text`` as a JSON object, returning ``None`` for anything else."""
     try:
         data = json.loads(text)
-    except ValueError:
-        return None
-
-    if isinstance(data, dict):
-        return ObjectDict.from_json(cast("dict[str, Any]", data))
+        if isinstance(data, dict):
+            return ObjectDict.from_json(cast("dict[str, Any]", data))
+    except (ValueError, RecursionError):
+        pass
 
     return None
 

@@ -432,3 +432,54 @@ async def test_mcp_can_like_a_supplied_track_without_a_player(
     with pytest.raises(Exception, match="open.spotify.com"):
         await server.call_tool("like", {"track": "https://example.com/track/test"})
     login.assert_not_awaited()
+
+
+async def test_mcp_public_reads_and_batch_limits(monkeypatch: pytest.MonkeyPatch) -> None:
+    pytest.importorskip("mcp")
+    from spotapi.mcp import build_server
+    from spotapi.public import Public
+
+    lookup = AsyncMock(return_value={"name": "Example"})
+    search = AsyncMock(return_value={"tracks": []})
+    fetch = AsyncMock(return_value=())
+    monkeypatch.setattr(Public, "get", lookup)
+    monkeypatch.setattr(Public, "search", search)
+    monkeypatch.setattr(Public, "fetch_many", fetch)
+    server = build_server()
+
+    await server.call_tool("get_resource", {"value": "spotify:track:abc"})
+    lookup.assert_awaited_once_with("spotify:track:abc")
+    await server.call_tool("search", {"query": "Example", "limit": 3})
+    search.assert_awaited_once_with("Example", types=("track", "artist"), limit=3)
+    await server.call_tool("batch", {"values": ["spotify:track:abc"], "concurrency": 2})
+    fetch.assert_awaited_once_with(["spotify:track:abc"], concurrency=2)
+    fetch.reset_mock()
+    with pytest.raises(Exception, match="at most 50"):
+        await server.call_tool("batch", {"values": ["spotify:track:abc"] * 51})
+    fetch.assert_not_awaited()
+
+
+async def test_mcp_playlist_read_closes_stream_and_catalogue(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pytest.importorskip("mcp")
+    from spotapi.mcp import build_server
+
+    closed: list[bool] = []
+
+    async def pages(value: str, *, limit: int) -> AsyncGenerator[tuple[dict[str, str], ...], None]:
+        assert value == "playlist" and limit == 2
+        try:
+            yield ({"uid": "one"}, {"uid": "two"})
+            raise AssertionError("Only the first page should be read")
+        finally:
+            closed.append(True)
+
+    catalogue = MagicMock()
+    catalogue.__aenter__ = AsyncMock(return_value=catalogue)
+    catalogue.__aexit__ = AsyncMock(return_value=False)
+    catalogue.get_playlist_items = pages
+    monkeypatch.setattr("spotapi.mcp.Catalogue", Mock(return_value=catalogue))
+    await build_server().call_tool("playlist_items", {"value": "playlist", "limit": 2})
+    assert closed == [True]
+    catalogue.__aexit__.assert_awaited_once()

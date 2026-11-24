@@ -313,3 +313,36 @@ async def test_login_rejection_is_preserved_when_failed_login_cleanup_also_fails
     assert caught.value.status_code == 401
     assert isinstance(caught.value.__cause__, ConnectionError)
     assert client.close.await_count >= 1
+
+
+async def test_cancelled_token_renewal_releases_lock_and_preserves_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = AuthSession(Mock(spec=AsyncClient))
+    original = AccessToken("client", "old", 0)
+    renewed = AccessToken("client", "new", int((time.time() + 3600) * 1000))
+    session._token = original
+    started = asyncio.Event()
+
+    async def stall() -> AccessToken:
+        started.set()
+        await asyncio.Future[None]()
+        raise AssertionError("Renewal should have been cancelled")
+
+    issue = AsyncMock(side_effect=stall)
+    monkeypatch.setattr(AuthSession, "_issue_token", issue)
+    task = asyncio.create_task(session.refresh(previous_token="old"))
+    await started.wait()
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert session.token is original
+    assert not session._auth_lock.locked()
+
+    issue.side_effect = None
+    issue.return_value = renewed
+    try:
+        async with asyncio.timeout(1):
+            assert await session.refresh(previous_token="old") is renewed
+    finally:
+        await session.stop_refresh()
