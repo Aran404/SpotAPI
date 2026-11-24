@@ -105,6 +105,10 @@ includes the challenge details. Password recovery uses the same protocol through
 `PasswordReset(client)`. Password changes, recovery emails and logout everywhere
 are explicit operations; constructing an account never triggers them.
 
+<!-- CapSolver: 30-day trial from publication; remove unless renewed. -->
+
+**Sponsored resource:** [CapSolver](https://dashboard.capsolver.com/passport/register?inviteCode=2aMq4nxxiQJX) is an optional third-party CAPTCHA service for authorized use. SpotAPI receives account credits for this placement and may earn a referral commission. No built-in integration or compatibility guarantee is provided.
+
 Subscription data comes from Spotify's account overview page because the old v1
 plan route no longer works. `is_premium` is inferred from the displayed plan name
 and can be `None` for an unrecognized localized name.

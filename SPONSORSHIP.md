@@ -64,9 +64,9 @@ If we cannot publish the agreed placement, we will arrange a refund or a new sta
 
 ## Placement and editorial standards
 
-Sponsor listings belong in the README **after the product introduction and usage examples**, not above installation or in the API reference. The README remains useful to developers first.
+Featured sponsor listings belong in the README **after the product introduction and usage examples**, not above installation. Separately agreed contextual sponsorships may appear as a brief, clearly disclosed text mention in a relevant documentation guide. They are limited to one sponsored mention per guide, quoted separately, and never inserted into the generated API reference, signatures, or code examples. Documentation mentions do not imply technical endorsement or compatibility. The documentation and README remain useful to developers first.
 
-- Every paid placement is clearly labeled **Sponsor**. Affiliate links, when used, are disclosed.
+- Every compensated placement is clearly labeled as sponsored, including placements paid with service credits. Affiliate links, when used, are disclosed.
 - Products must be relevant to the project's developer audience. We may decline misleading, unsafe, or unrelated promotions.
 - Sponsorship does not imply endorsement by Spotify, approval of the sponsor's claims, or a requirement to use any paid service with SpotAPI.
 - Category exclusivity covers only the agreed category and **paid README placements** for the stated term. It does not exclude open-source alternatives, user-supplied providers, neutral documentation, or unpaid references.
