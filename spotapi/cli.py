@@ -576,6 +576,8 @@ async def _run(args: argparse.Namespace) -> None:
         _display(await Public.get_track_credits(args.track), args)
         return
     if command == "playlist" and args.action == "items" and not args.private:
+        if args.profile is not None:
+            raise ValueError("Use --private with --profile to read a private playlist.")
         async with aclosing(Public.get_playlist_items(args.playlist, limit=args.limit)) as pages:
             _display((await anext(pages, ()))[: args.limit], args)
         return

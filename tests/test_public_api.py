@@ -625,3 +625,18 @@ def test_get_dispatches_typed_resources(
     asyncio.run(scenario())
 
     assert calls == [f"spotify:{resource_kind}:resource-id"]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://user:password@open.spotify.com/track/abc",
+        "https://open.spotify.com/track/a%00bc",
+        "https://open.spotify.com/track/a%7Fbc",
+        "https://open.spotify.com/track/a\nbc",
+        "spotify:track:a\x1bbc",
+    ],
+)
+def test_parse_rejects_credentials_and_control_characters(value: str) -> None:
+    with pytest.raises(ValueError):
+        Public.parse_url(value)
