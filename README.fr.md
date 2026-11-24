@@ -187,6 +187,15 @@ SpotAPI est gratuit et open source. Le parrainage finance la maintenance, les te
 
 <!-- Placez les parrainages actifs, clairement identifiés, sous cette ligne. Restez concis et positionnez-les après les démonstrations du produit. -->
 
+<details open>
+<summary><strong>Sponsors</strong></summary>
+
+**[RapidProxy](https://www.rapidproxy.io/?ref=spotapi)** — Proxys résidentiels fiables pour l'automatisation en Python et la collecte de données Web. Plus de 90 millions d'adresses IP, ciblage mondial, sessions rotatives et persistantes et prise en charge de HTTP(S)/SOCKS5.
+
+<sub>Sponsor rémunéré · Lien affilié. SpotAPI peut percevoir une commission sur les achats.</sub>
+
+</details>
+
 ## Contribuer
 
 Les signalements de bogues, les problèmes reproductibles et les contributions réfléchies sont les bienvenus. [Contribuer](CONTRIBUTING.md) · [Tests](tests/README.md) · [Mentions légales](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)

@@ -187,6 +187,15 @@ SpotAPI は無料のオープンソースです。スポンサーシップは、
 
 <!-- 明確に表示された有効なスポンサー掲載はこの行の下に配置してください。コンパクトにまとめ、製品デモより下に置いてください。 -->
 
+<details open>
+<summary><strong>スポンサー</strong></summary>
+
+**[RapidProxy](https://www.rapidproxy.io/?ref=spotapi)** — Python による自動化と Web データ収集向けの信頼性の高い住宅用プロキシ。9,000 万以上の IP、世界各地の地域指定、ローテーションと固定セッション、HTTP(S)/SOCKS5 に対応。
+
+<sub>有料スポンサー · アフィリエイトリンク。購入により SpotAPI が報酬を受け取る場合があります。</sub>
+
+</details>
+
 ## コントリビューション
 
 バグ報告、再現可能な Issue、よく考えられたコントリビューションを歓迎します。[コントリビューション](CONTRIBUTING.md) · [テスト](tests/README.md) · [法的通知](LEGAL_NOTICE.md) · [GPL-3.0](LICENSE)
