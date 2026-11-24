@@ -59,9 +59,7 @@ def test_session_rejects_invalid_cookie(keyring: Mock, cookie: str) -> None:
 
 
 def test_missing_keyring_is_actionable(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        "spotapi.login.importlib.import_module", Mock(side_effect=ImportError)
-    )
+    monkeypatch.setattr("spotapi.login.importlib.import_module", Mock(side_effect=ImportError))
     with pytest.raises(RuntimeError, match=r"spotapi\[keyring\]"):
         SavedSession().info()
 
@@ -95,9 +93,7 @@ async def test_browser_rejects_invalid_timeout(timeout: float) -> None:
 
 
 async def test_browser_requires_optional_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        "spotapi.login.importlib.import_module", Mock(side_effect=ImportError)
-    )
+    monkeypatch.setattr("spotapi.login.importlib.import_module", Mock(side_effect=ImportError))
     with pytest.raises(RuntimeError, match=r"spotapi\[browser\]"):
         await browser_login()
 
@@ -145,9 +141,7 @@ async def test_closed_login_window(
     keyring.set_password.assert_not_called()
 
 
-async def test_navigation_counts_toward_timeout(
-    browser: MagicMock, authorize: AsyncMock
-) -> None:
+async def test_navigation_counts_toward_timeout(browser: MagicMock, authorize: AsyncMock) -> None:
     async def stall(*args: object) -> None:
         await asyncio.sleep(10)
 
