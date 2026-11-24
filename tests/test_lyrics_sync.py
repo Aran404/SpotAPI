@@ -428,3 +428,42 @@ def test_lookup_without_album(track: sync.Track, monkeypatch: pytest.MonkeyPatch
     request = lookup.call_args.args[0]
     assert "album_name" not in request.full_url
     assert "duration=1" in request.full_url
+
+
+@pytest.mark.parametrize("flag", ["-y", "--yes"])
+def test_cli_yes(track: sync.Track, monkeypatch: pytest.MonkeyPatch, flag: str) -> None:
+    target = track.path.with_suffix(".lrc")
+    old = "[00:00.00] old\n"
+    lyrics = sync.Lyrics("[00:00.00] new\n", True)
+    target.write_text(old, encoding="utf-8")
+    monkeypatch.setattr(sync, "_lookup", Mock(return_value=lyrics))
+    monkeypatch.setattr(sync.sys.stdin, "isatty", lambda: False)
+    prompt = Mock(side_effect=AssertionError("unexpected prompt"))
+    monkeypatch.setattr("builtins.input", prompt)
+    args = ["lyrics-sync", str(track.path), flag]
+    assert main([*args, "--dry-run"]) == 0
+    assert target.read_text(encoding="utf-8") == old
+    assert main(args) == 0
+    assert target.read_text(encoding="utf-8") == lyrics.text
+    assert main(args) == 0
+    prompt.assert_not_called()
+    monkeypatch.setattr(sync, "_lookup", Mock(return_value=sync.Lyrics("plain\n", False)))
+    assert main(args) == 0
+    assert target.read_text(encoding="utf-8") == lyrics.text
+    assert not track.path.with_suffix(".txt").exists()
+
+
+def test_cli_recursion(track: sync.Track, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    album = tmp_path / "album"
+    album.mkdir()
+    nested = album / track.path.name
+    nested.write_bytes(track.path.read_bytes())
+    lookup = Mock(return_value=sync.Lyrics("hello\n", False))
+    monkeypatch.setattr(sync, "_lookup", lookup)
+    args = ["lyrics-sync", str(tmp_path), "--dry-run"]
+    assert main([*args, "--no-recursive"]) == 0
+    assert lookup.call_count == 1
+    lookup.reset_mock()
+    assert main([*args, "--recursive"]) == 0
+    assert lookup.call_count == 2
+    assert not list(tmp_path.rglob("*.txt"))

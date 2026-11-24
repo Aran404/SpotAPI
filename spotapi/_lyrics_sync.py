@@ -214,7 +214,7 @@ def _visible(text: str) -> str:
     )
 
 
-def _review(previous: str, lyrics: Lyrics, *, dry_run: bool) -> bool:
+def _review(previous: str, lyrics: Lyrics, *, dry_run: bool, yes: bool = False) -> bool:
     print(
         _visible(
             "\n".join(
@@ -228,7 +228,7 @@ def _review(previous: str, lyrics: Lyrics, *, dry_run: bool) -> bool:
             )
         )
     )
-    if dry_run:
+    if dry_run or yes:
         return True
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         return False
@@ -238,7 +238,15 @@ def _review(previous: str, lyrics: Lyrics, *, dry_run: bool) -> bool:
         return False
 
 
-def _save(track: Track, lyrics: Lyrics, destination: Path, *, embed: bool, dry_run: bool) -> str:
+def _save(
+    track: Track,
+    lyrics: Lyrics,
+    destination: Path,
+    *,
+    embed: bool,
+    dry_run: bool,
+    yes: bool = False,
+) -> str:
     # MP3 synchronized lyrics remain LRC sidecars; USLT is not a timed tag.
     embed = embed and (track.path.suffix.lower() == ".flac" or not lyrics.synced)
     lrc = _read_text(destination.with_suffix(".lrc"))
@@ -267,7 +275,7 @@ def _save(track: Track, lyrics: Lyrics, destination: Path, *, embed: bool, dry_r
                 return "Unchanged"
         else:
             print(f"  Review: {_visible(str(track.path))}")
-            if not _review(previous, lyrics, dry_run=dry_run):
+            if not _review(previous, lyrics, dry_run=dry_run, yes=yes):
                 return "Kept existing"
     if dry_run:
         return "Would embed" if embed else f"Would save {lyrics.suffix}"
@@ -278,16 +286,28 @@ def _save(track: Track, lyrics: Lyrics, destination: Path, *, embed: bool, dry_r
     return f"Saved {lyrics.suffix}"
 
 
-def run(path: Path, *, output: Path | None, embed: bool, dry_run: bool) -> int:
+def run(
+    path: Path,
+    *,
+    output: Path | None,
+    embed: bool,
+    dry_run: bool,
+    recursive: bool = True,
+    yes: bool = False,
+) -> int:
     """Process a file or directory, preserving existing lyrics by default."""
     if importlib.util.find_spec("mutagen") is None:
         raise RuntimeError('Install lyrics sync with: pip install "spotapi[media]"')
     if not path.exists() or path.is_symlink():
         raise ValueError(f"not a local audio file or directory: {path}")
     root = path if path.is_dir() else path.parent
+    if path.is_dir():
+        candidates = path.rglob("*") if recursive else path.iterdir()
+    else:
+        candidates = iter((path,))
     files = sorted(
         file
-        for file in (path.rglob("*") if path.is_dir() else (path,))
+        for file in candidates
         if file.is_file() and not file.is_symlink() and file.suffix.lower() in _SUFFIXES
     )
     if not files:
@@ -318,7 +338,7 @@ def run(path: Path, *, output: Path | None, embed: bool, dry_run: bool) -> int:
             status = (
                 "Not found"
                 if lyrics is None
-                else _save(track, lyrics, destination, embed=embed, dry_run=dry_run)
+                else _save(track, lyrics, destination, embed=embed, dry_run=dry_run, yes=yes)
             )
         except (OSError, ValueError) as error:
             status = "Skipped"

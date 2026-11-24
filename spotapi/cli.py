@@ -286,6 +286,13 @@ def _parser() -> argparse.ArgumentParser:
         commands.add_parser(name, help=help_text).add_argument("resource")
     sync = commands.add_parser("lyrics-sync", help="find lyrics for local MP3 and FLAC files")
     sync.add_argument("path", type=Path, help="audio file or directory")
+    sync.add_argument(
+        "--recursive",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="scan subdirectories (default: enabled)",
+    )
+    sync.add_argument("-y", "--yes", action="store_true", help="approve lyric changes")
     storage = sync.add_mutually_exclusive_group()
     storage.add_argument("--embed", action="store_true", help="embed lyrics where supported")
     storage.add_argument("--output", type=Path, help="save sidecars in a separate directory")
@@ -621,7 +628,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             case "lyrics-sync":
                 from ._lyrics_sync import run
 
-                return run(args.path, output=args.output, embed=args.embed, dry_run=args.dry_run)
+                return run(
+                    args.path,
+                    output=args.output,
+                    embed=args.embed,
+                    dry_run=args.dry_run,
+                    recursive=args.recursive,
+                    yes=args.yes,
+                )
             case "discover":
                 dependencies = ("textual", "textual_image", "PIL", "httpx")
                 if any(importlib.util.find_spec(name) is None for name in dependencies):
