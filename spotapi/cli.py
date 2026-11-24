@@ -74,7 +74,7 @@ _ALL_COMMANDS = tuple(name for _, entries in _COMMAND_GROUPS for name, _ in entr
 
 
 def _subcommands(parser: argparse.ArgumentParser) -> dict[str, argparse.ArgumentParser]:
-    """Find child parsers via the public Action.choices interface."""
+    """Find subcommand parsers among argparse actions."""
     children: dict[str, argparse.ArgumentParser] = {}
     for action in parser._actions:
         choices: object = action.choices
@@ -174,10 +174,13 @@ def _human(value: object) -> str:
             for number, entry in enumerate(entries, 1):
                 if isinstance(entry, dict):
                     fields = cast("dict[str, object]", entry)
-                    title = fields.get("name") or fields.get("title") or fields.get("uri")
-                    lines.append("  " * depth + f"{number}. {title or 'Item'}")
+                    heading = next(
+                        (key for key in ("name", "title", "uri") if fields.get(key)), None
+                    )
+                    title = fields[heading] if heading is not None else "Item"
+                    lines.append("  " * depth + f"{number}. {title}")
                     for key, subvalue in fields.items():
-                        if title is not None and key in {"name", "title"}:
+                        if key == heading and heading != "uri":
                             continue
                         visit(subvalue, depth + 1, key.replace("_", " "))
                 else:

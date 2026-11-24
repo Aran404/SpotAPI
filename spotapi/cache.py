@@ -86,16 +86,8 @@ class ResponseCache:
         )
         return hashlib.sha256(source.encode()).hexdigest()
 
-    def get(self, key: str) -> ObjectDict | None:
-        self._validate_key(key)
-        with self._lock:
-            encoded = self._memory.get(key)
-            if encoded is not None:
-                self._memory.move_to_end(key)
+    def _decode(self, encoded: str | None) -> ObjectDict | None:
         try:
-            if encoded is None and self.directory is not None:
-                with (self.directory / (key + ".json")).open(encoding="utf-8") as source:
-                    encoded = source.read(self.max_bytes + 1025)
             if encoded is None or len(encoded.encode()) > self.max_bytes + 1024:
                 return None
             envelope: Any = json.loads(encoded)
@@ -106,18 +98,39 @@ class ResponseCache:
                 return None
             document = cast(dict[str, Any], envelope)
             expires: object = document.get("expires")
+            now = time.time()
             if (
                 isinstance(expires, bool)
                 or not isinstance(expires, (int, float))
                 or not math.isfinite(expires)
-                or expires <= time.time()
-                or expires > time.time() + self.ttl + 1
+                or expires <= now
+                or expires > now + self.ttl + 1
             ):
                 return None
             payload: Any = document.get("data")
             return ObjectDict(cast(dict[str, Any], payload)) if isinstance(payload, dict) else None
-        except (OSError, ValueError, TypeError, RecursionError):
+        except (ValueError, TypeError, RecursionError, OverflowError):
             return None
+
+    def get(self, key: str) -> ObjectDict | None:
+        self._validate_key(key)
+        with self._lock:
+            encoded = self._memory.get(key)
+            if encoded is not None:
+                self._memory.move_to_end(key)
+
+        result = self._decode(encoded)
+        if result is not None:
+            return result
+
+        # Another process may have replaced an expired in-memory entry on disk.
+        if self.directory is not None:
+            try:
+                with (self.directory / (key + ".json")).open(encoding="utf-8") as source:
+                    return self._decode(source.read(self.max_bytes + 1025))
+            except (OSError, UnicodeError):
+                pass
+        return None
 
     def put(self, key: str, data: ObjectDict) -> None:
         self._validate_key(key)

@@ -15,8 +15,9 @@ from .types import BaseClientError, HTTPError
 class SavedSession:
     """Persist an sp_dc cookie in the operating system's credential store.
 
-    Requires ``spotapi[keyring]`` and a supported backend. No plaintext-file
-    fallback is used. This object never includes the cookie in repr or info().
+    Requires ``spotapi[keyring]`` and a secure backend. SpotAPI does not provide
+    a plaintext-file fallback; custom keyring backends are the caller's responsibility.
+    This object never includes the cookie in repr or info().
     Saving does not validate the session; open() authorizes it with Spotify.
     """
 

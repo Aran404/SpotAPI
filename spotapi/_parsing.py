@@ -14,7 +14,7 @@ def mapping(value: object) -> Mapping[str, Any]:
 
 
 def records(value: object) -> tuple[Mapping[str, Any], ...]:
-    """Return mapping-shaped entries from a sequence, or an empty tuple."""
+    """Preserve sequence positions, replacing non-mapping entries with empty mappings."""
     if not isinstance(value, (list, tuple)):
         return ()
 
