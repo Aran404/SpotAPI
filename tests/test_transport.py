@@ -333,7 +333,10 @@ async def test_invalid_backoff_callback_does_not_retry(
 ) -> None:
     raw = RawResponse(503)
     http, transport = client(monkeypatch, [raw])
-    http._backoff = lambda attempt: delay
+    def backoff(attempt: int) -> float:
+        return delay
+
+    http._backoff = backoff
     with pytest.raises(ValueError, match="backoff"):
         await http.get("https://example.test/")
     assert raw.closed and transport.calls == 1

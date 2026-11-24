@@ -386,9 +386,7 @@ def test_lyrics_identifies_installed_release(monkeypatch: pytest.MonkeyPatch) ->
     assert _studio_user_agent() == ("SpotAPI Studio v2.7.3 (https://github.com/Aran404/SpotAPI)")
 
 
-def test_native_app_closes_loop_even_when_shutdown_fails(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_native_app_closes_loop_even_when_shutdown_fails(monkeypatch: pytest.MonkeyPatch) -> None:
     from spotapi._studio import desktop
 
     loop = asyncio.new_event_loop()
