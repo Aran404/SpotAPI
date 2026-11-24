@@ -124,7 +124,7 @@ Les sponsors contribuent à maintenir SpotAPI gratuit et financent la maintenanc
 <table>
   <tr>
     <td width="100%">
-      <p><strong><a href="https://www.rapidproxy.io/?code=Z89BQULDV">RapidProxy</a></strong></p>
+      <p align="center"><a href="https://www.rapidproxy.io/?code=Z89BQULDV"><img src="assets/sponsors/rapidproxy.webp" width="220" alt="RapidProxy"></a></p>
       <p>Proxys résidentiels fiables pour l'automatisation en Python et la collecte de données Web. Plus de 90 millions d'adresses IP, ciblage mondial, sessions rotatives et persistantes et prise en charge de HTTP(S)/SOCKS5.</p>
       <sub>Sponsor rémunéré · Lien affilié. SpotAPI peut percevoir une commission sur les achats.</sub>
     </td>
