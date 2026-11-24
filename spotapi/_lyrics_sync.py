@@ -187,10 +187,11 @@ def _embed(track: Track, lyrics: Lyrics) -> None:
                 audio["lyrics"] = [lyrics.text.rstrip("\n")]
             else:
                 id3: Any = importlib.import_module("mutagen.id3")
-                if audio.tags is None:
-                    audio.add_tags()
-                audio.tags.delall("USLT")
-                audio.tags.add(id3.USLT(encoding=3, lang="und", desc="", text=lyrics.text))
+                tags: Any = audio.tags
+                if tags is None:
+                    raise ValueError("audio tags disappeared since review")
+                tags.delall("USLT")
+                tags.add(id3.USLT(encoding=3, lang="und", desc="", text=lyrics.text))
             audio.save()
         except mutagen.MutagenError as error:
             raise ValueError(f"cannot embed lyrics: {error}") from error

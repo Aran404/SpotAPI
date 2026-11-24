@@ -7,6 +7,7 @@ import importlib
 import io
 import json
 from dataclasses import replace
+from email.message import Message
 from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
@@ -85,7 +86,7 @@ def test_lookup(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.parametrize("code", [404, 429, 503])
 def test_http_status(track: sync.Track, monkeypatch: pytest.MonkeyPatch, code: int) -> None:
     def fail(*args: object, **kwargs: object) -> Any:
-        raise HTTPError("https://lrclib.net", code, "error", None, None)
+        raise HTTPError("https://lrclib.net", code, "error", Message(), None)
 
     monkeypatch.setattr(sync, "urlopen", fail)
     if code == 404:
@@ -306,3 +307,81 @@ def test_changed_audio_is_not_replaced(track: sync.Track) -> None:
     with pytest.raises(ValueError, match="audio changed"):
         sync._embed(track, sync.Lyrics("hello\n", False))
     assert track.path.read_bytes() == changed
+
+
+def test_untagged_audio(tmp_path: Path) -> None:
+    path = tmp_path / "untagged.flac"
+    path.write_bytes(base64.b64decode(_FLAC))
+    with pytest.raises(ValueError, match="missing title"):
+        sync._read_track(path)
+
+
+def test_unsupported_audio(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
+    mutagen: Any = importlib.import_module("mutagen")
+    monkeypatch.setattr(mutagen, "File", Mock(return_value=None))
+    with pytest.raises(ValueError, match="unsupported audio"):
+        sync._read_track(track.path)
+    with pytest.raises(ValueError, match="unsupported audio"):
+        sync._embed(track, sync.Lyrics("hello\n", False))
+
+
+def test_failed_embed_preserves_audio(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
+    mutagen: Any = importlib.import_module("mutagen")
+    original = track.path.read_bytes()
+    monkeypatch.setattr(mutagen, "File", Mock(side_effect=mutagen.MutagenError("invalid tags")))
+    with pytest.raises(ValueError, match="cannot embed"):
+        sync._embed(track, sync.Lyrics("hello\n", False))
+    assert track.path.read_bytes() == original
+    assert list(track.path.parent.iterdir()) == [track.path]
+
+
+def test_audio_changes_during_embed(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
+    mutagen: Any = importlib.import_module("mutagen")
+    open_audio: Any = mutagen.File
+    changed = track.path.read_bytes() + b"concurrent change"
+
+    def modify(path: Path) -> Any:
+        track.path.write_bytes(changed)
+        return open_audio(path)
+
+    monkeypatch.setattr(mutagen, "File", modify)
+    with pytest.raises(ValueError, match="audio changed"):
+        sync._embed(track, sync.Lyrics("hello\n", False))
+    assert track.path.read_bytes() == changed
+
+
+def test_embed_identical_sidecar(track: sync.Track) -> None:
+    lyrics = sync.Lyrics("hello\n", False)
+    sidecar = track.path.with_suffix(".txt")
+    sidecar.write_text(lyrics.text, encoding="utf-8")
+    assert sync._save(track, lyrics, track.path, embed=True, dry_run=False) == "Embedded"
+    assert sync._read_track(track.path).embedded == ("hello",)
+    assert sidecar.read_text(encoding="utf-8") == lyrics.text
+
+
+def test_preserve_existing_timed_tags(track: sync.Track) -> None:
+    timed = replace(track, timed=True)
+    lyrics = sync.Lyrics("[00:00.00] hello\n", True)
+    assert sync._save(timed, lyrics, track.path, embed=False, dry_run=False) == "Kept embedded"
+    assert not track.path.with_suffix(".lrc").exists()
+
+
+def test_output_symlink_escape(
+    track: sync.Track, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    album = tmp_path / "album"
+    album.mkdir()
+    track.path.rename(album / track.path.name)
+    output = tmp_path / "output"
+    output.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    try:
+        (output / "album").symlink_to(outside, target_is_directory=True)
+    except OSError:
+        pytest.skip("symbolic links are unavailable")
+    lookup = Mock(return_value=sync.Lyrics("hello\n", False))
+    monkeypatch.setattr(sync, "_lookup", lookup)
+    assert sync.run(tmp_path, output=output, embed=False, dry_run=False) == 1
+    lookup.assert_not_called()
+    assert not list(outside.iterdir())
