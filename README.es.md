@@ -22,6 +22,10 @@
 </p>
 
 <p align="center">
+  <a href="https://discord.gg/vcFvvTuQzn"><img src="https://img.shields.io/badge/Discord-Join_The_Open_Odyssey-5865F2?style=for-the-badge&amp;logo=discord&amp;logoColor=white" alt="Únete a la comunidad The Open Odyssey en Discord"></a>
+</p>
+
+<p align="center">
   <strong>Idioma:</strong> <a href="README.md">English</a> · <a href="README.pt-BR.md">Português (Brasil)</a> · Español · <a href="README.fr.md">Français</a> · <a href="README.ja.md">日本語</a>
 </p>
 
