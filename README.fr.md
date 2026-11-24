@@ -114,6 +114,23 @@ python -m spotapi studio
 
 Studio utilise une WebView native. La [configuration de Studio](https://spotapi.readthedocs.io/en/latest/studio/) décrit les prérequis de chaque plateforme et la connexion à Spotify. La disponibilité des paroles dépend de leur source et des droits du compte ; se déplacer dans un morceau nécessite un lecteur authentifié et contrôlable.
 
+## Soutenir SpotAPI
+
+SpotAPI est gratuit et open source. Le parrainage finance la maintenance, les tests et la documentation sans modifier le fonctionnement de la bibliothèque ni ajouter de fonctionnalités payantes.
+
+**Vous créez des outils pour les développeurs ?** [Découvrez les possibilités de parrainage](SPONSORSHIP.md) dès 50 USD pour 30 jours. Les emplacements payants sont clairement signalés et placés après les démonstrations du produit.
+
+<!-- Placez les parrainages actifs, clairement identifiés, sous cette ligne. Restez concis et positionnez-les après les démonstrations du produit. -->
+
+<details open>
+<summary><strong>Sponsors</strong></summary>
+
+**[RapidProxy](https://www.rapidproxy.io/?ref=spotapi)** — Proxys résidentiels fiables pour l'automatisation en Python et la collecte de données Web. Plus de 90 millions d'adresses IP, ciblage mondial, sessions rotatives et persistantes et prise en charge de HTTP(S)/SOCKS5.
+
+<sub>Sponsor rémunéré · Lien affilié. SpotAPI peut percevoir une commission sur les achats.</sub>
+
+</details>
+
 ## Développer avec Python
 
 Les démonstrations en terminal sont des exemples. **SpotAPI est avant tout une bibliothèque Python :** opérations asynchrones, résultats typés, appels réseau explicites et sessions réutilisables.
@@ -178,23 +195,6 @@ SpotAPI utilise des points de terminaison non officiels du lecteur Web de Spotif
 [Démarrage rapide](https://spotapi.readthedocs.io/en/latest/quickstart/) · [Référence de l'API](https://spotapi.readthedocs.io/en/latest/reference/) · [Migration depuis Spotipy](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [CLI et découverte](https://spotapi.readthedocs.io/en/latest/discovery/) · [Dépannage](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
 
 **Vous venez de la v1 ?** SpotAPI 2 privilégie l'asynchrone et comporte des changements incompatibles. Les applications v1 existantes peuvent fixer la version `spotapi==1.2.8` pendant la migration, ou utiliser `SyncCatalogue` pour de nouveaux scripts synchrones. Lisez le [guide de migration](MIGRATION.md).
-
-## Soutenir SpotAPI
-
-SpotAPI est gratuit et open source. Le parrainage finance la maintenance, les tests et la documentation sans modifier le fonctionnement de la bibliothèque ni ajouter de fonctionnalités payantes.
-
-**Vous créez des outils pour les développeurs ?** [Découvrez les possibilités de parrainage](SPONSORSHIP.md) dès 50 USD pour 30 jours. Les emplacements payants sont clairement signalés et placés après les démonstrations du produit.
-
-<!-- Placez les parrainages actifs, clairement identifiés, sous cette ligne. Restez concis et positionnez-les après les démonstrations du produit. -->
-
-<details open>
-<summary><strong>Sponsors</strong></summary>
-
-**[RapidProxy](https://www.rapidproxy.io/?ref=spotapi)** — Proxys résidentiels fiables pour l'automatisation en Python et la collecte de données Web. Plus de 90 millions d'adresses IP, ciblage mondial, sessions rotatives et persistantes et prise en charge de HTTP(S)/SOCKS5.
-
-<sub>Sponsor rémunéré · Lien affilié. SpotAPI peut percevoir une commission sur les achats.</sub>
-
-</details>
 
 ## Contribuer
 

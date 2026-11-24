@@ -114,6 +114,23 @@ python -m spotapi studio
 
 Studio uses a native WebView. [Studio setup](https://spotapi.readthedocs.io/en/latest/studio/) explains platform requirements and Spotify sign-in. Lyric availability depends on the source and account entitlements; seeking needs an authenticated, controllable player.
 
+## Support SpotAPI
+
+SpotAPI is free and open source. Sponsorship helps fund maintenance, testing and documentation without changing the library's behavior or adding paywalls.
+
+**Build developer tools?** [Explore sponsorship options](SPONSORSHIP.md) starting at $50 for 30 days. Paid placements are clearly labeled and kept below the product demos.
+
+<!-- Active, clearly labeled sponsor placements go below this line. Keep them compact and below the product demos. -->
+
+<details open>
+<summary><strong>Sponsors</strong></summary>
+
+**[RapidProxy](https://www.rapidproxy.io/?ref=spotapi)** — Reliable residential proxies for Python automation and web data collection. 90M+ IPs, global targeting, rotating & sticky sessions, and HTTP(S)/SOCKS5 support.
+
+<sub>Paid sponsor · Affiliate link. SpotAPI may earn a commission from purchases.</sub>
+
+</details>
+
 ## Build with Python
 
 The terminal demos are examples. **SpotAPI is a Python library first:** async operations, typed results, explicit network calls and reusable sessions.
@@ -178,23 +195,6 @@ SpotAPI uses unofficial Spotify web-player endpoints, so behavior can change whe
 [Quickstart](https://spotapi.readthedocs.io/en/latest/quickstart/) · [API reference](https://spotapi.readthedocs.io/en/latest/reference/) · [Coming from Spotipy](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [CLI and discovery](https://spotapi.readthedocs.io/en/latest/discovery/) · [Troubleshooting](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
 
 **Upgrading from v1?** SpotAPI 2 is async-first and contains breaking changes. Existing v1 apps can pin `spotapi==1.2.8` while migrating, or use `SyncCatalogue` for new synchronous scripts. Read the [migration guide](MIGRATION.md).
-
-## Support SpotAPI
-
-SpotAPI is free and open source. Sponsorship helps fund maintenance, testing and documentation without changing the library's behavior or adding paywalls.
-
-**Build developer tools?** [Explore sponsorship options](SPONSORSHIP.md) starting at $50 for 30 days. Paid placements are clearly labeled and kept below the product demos.
-
-<!-- Active, clearly labeled sponsor placements go below this line. Keep them compact and below the product demos. -->
-
-<details open>
-<summary><strong>Sponsors</strong></summary>
-
-**[RapidProxy](https://www.rapidproxy.io/?ref=spotapi)** — Reliable residential proxies for Python automation and web data collection. 90M+ IPs, global targeting, rotating & sticky sessions, and HTTP(S)/SOCKS5 support.
-
-<sub>Paid sponsor · Affiliate link. SpotAPI may earn a commission from purchases.</sub>
-
-</details>
 
 ## Contributing
 
