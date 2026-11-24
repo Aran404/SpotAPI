@@ -91,7 +91,7 @@ class _CommandParser(argparse.ArgumentParser):
 
     def error(self, message: str) -> NoReturn:
         if "invalid choice:" in message and (
-            message.startswith("argument command:") or message.startswith("argument action:")
+            message.startswith(("argument command:", "argument <command>:", "argument action:"))
         ):
             invalid = message.partition("invalid choice: ")[2].split(" (choose from", 1)[0]
             command = invalid.strip().strip("'\"")
