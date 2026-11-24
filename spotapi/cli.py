@@ -13,6 +13,7 @@ import sys
 from collections.abc import AsyncGenerator, Awaitable, Callable, Sequence
 from contextlib import aclosing, asynccontextmanager
 from importlib.metadata import version as package_version
+from pathlib import Path
 from typing import NoReturn, cast
 
 from .account import Private
@@ -46,6 +47,7 @@ _COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
             ("get", "Look up a Spotify URL or URI"),
             ("credits", "Track credits"),
             ("lyrics", "Lyrics (account required)"),
+            ("lyrics-sync", "Find lyrics for local music"),
             ("transcript", "Episode transcripts"),
         ),
     ),
@@ -142,7 +144,7 @@ def _add_output_options(parser: argparse.ArgumentParser) -> None:
         for child in children.values():
             _add_output_options(child)
         return
-    if parser.prog.split()[-1] in {"studio", "discover", "connect"}:
+    if parser.prog.split()[-1] in {"studio", "discover", "connect", "lyrics-sync"}:
         return
     if not any("--json" in action.option_strings for action in parser._actions):
         parser.add_argument("--json", action="store_true", help="output raw JSON for scripts")
@@ -282,6 +284,12 @@ def _parser() -> argparse.ArgumentParser:
         ("lyrics", "read entitled lyrics using SPOTIFY_COOKIE"),
     ):
         commands.add_parser(name, help=help_text).add_argument("resource")
+    sync = commands.add_parser("lyrics-sync", help="find lyrics for local MP3 and FLAC files")
+    sync.add_argument("path", type=Path, help="audio file or directory")
+    storage = sync.add_mutually_exclusive_group()
+    storage.add_argument("--embed", action="store_true", help="embed lyrics where supported")
+    storage.add_argument("--output", type=Path, help="save sidecars in a separate directory")
+    sync.add_argument("--dry-run", action="store_true", help="preview without changing files")
     commands.add_parser("charts", help="list editorial chart shortcuts")
     _configure_download(
         commands.add_parser("download", help="save published preview, cover or Canvas assets")
@@ -610,6 +618,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 profile_name(args.profile)
                 controller = importlib.import_module("spotapi._connect.app")
                 asyncio.run(controller.run_connect(args.profile, force=args.force))
+            case "lyrics-sync":
+                from ._lyrics_sync import run
+
+                return run(args.path, output=args.output, embed=args.embed, dry_run=args.dry_run)
             case "discover":
                 dependencies = ("textual", "textual_image", "PIL", "httpx")
                 if any(importlib.util.find_spec(name) is None for name in dependencies):
