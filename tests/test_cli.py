@@ -347,3 +347,13 @@ def test_cli_suggests_close_command(capsys: pytest.CaptureFixture[str]) -> None:
         main(["serach"])
     assert exit_info.value.code == 2
     assert "Did you mean 'search'?" in capsys.readouterr().err
+
+
+def test_public_playlist_rejects_ignored_profile(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    lookup = Mock()
+    monkeypatch.setattr(Public, "get_playlist_items", lookup)
+    assert main(["playlist", "items", "abc", "--profile", "work"]) == 1
+    assert "Use --private with --profile" in capsys.readouterr().err
+    lookup.assert_not_called()

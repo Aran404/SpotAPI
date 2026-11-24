@@ -34,6 +34,8 @@ def parse_spotify_resource(
 
     if not value:
         raise ValueError("Spotify resource must not be empty")
+    if any(ord(char) < 32 or ord(char) == 127 for char in value):
+        raise ValueError("Spotify resources must not contain control characters")
 
     parsed_kind: str
     resource_id: str
@@ -56,6 +58,9 @@ def parse_spotify_resource(
 
         if parsed.scheme in {"http", "https"}:
             hostname = (parsed.hostname or "").casefold()
+
+            if parsed.username is not None or parsed.password is not None:
+                raise ValueError("Spotify resource URLs must not contain credentials")
 
             if hostname not in {"open.spotify.com", "www.open.spotify.com"}:
                 if hostname in {"spotify.link", "www.spotify.link", "spoti.fi"}:
@@ -96,7 +101,10 @@ def parse_spotify_resource(
     if (
         not resource_id
         or len(resource_id) > 128
-        or any(character.isspace() or character in "/?:#" for character in resource_id)
+        or any(
+            not character.isprintable() or character.isspace() or character in "/?:#"
+            for character in resource_id
+        )
     ):
         raise ValueError(f"Invalid Spotify resource ID: {resource_id!r}")
 

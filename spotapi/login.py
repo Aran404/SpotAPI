@@ -99,12 +99,12 @@ async def browser_login(
     async with module.async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=False)
         try:
-            context = await browser.new_context()
-            page = await context.new_page()
-            await page.goto(
-                "https://accounts.spotify.com/login?continue=https%3A%2F%2Fopen.spotify.com%2F"
-            )
             async with asyncio.timeout(timeout):
+                context = await browser.new_context()
+                page = await context.new_page()
+                await page.goto(
+                    "https://accounts.spotify.com/login?continue=https%3A%2F%2Fopen.spotify.com%2F"
+                )
                 while True:
                     if page.is_closed():
                         raise BaseClientError("Spotify login window was closed")
@@ -128,7 +128,10 @@ async def browser_login(
     try:
         if saved is not None:
             await asyncio.to_thread(saved.save, cookie)
-    except BaseException:
-        await client.close()
+    except BaseException as error:
+        try:
+            await client.close()
+        except Exception as cleanup:
+            raise error from cleanup
         raise
     return client
