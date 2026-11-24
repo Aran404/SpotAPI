@@ -180,6 +180,7 @@ def main() -> None:
     webview = cast(WebView, import_module("webview"))
     loop = asyncio.new_event_loop()
     studio = Studio()
+
     def run_loop() -> None:
         try:
             loop.run_forever()

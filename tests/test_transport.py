@@ -333,6 +333,7 @@ async def test_invalid_backoff_callback_does_not_retry(
 ) -> None:
     raw = RawResponse(503)
     http, transport = client(monkeypatch, [raw])
+
     def backoff(attempt: int) -> float:
         return delay
 
