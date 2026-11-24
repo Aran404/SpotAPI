@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from difflib import unified_diff
 from importlib.metadata import version
 from pathlib import Path
+from time import sleep
 from typing import Any, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -67,6 +68,8 @@ def _read_track(path: Path) -> Track:
         duration = float(audio.info.length)
         if not title or not artist or not math.isfinite(duration) or duration <= 0:
             raise ValueError("missing title, artist or duration")
+        if duration > 3600:
+            raise ValueError("duration exceeds LRCLIB's one-hour limit")
 
         if path.suffix.lower() == ".flac":
             embedded = tuple(str(value) for value in raw.get("lyrics", []))
@@ -117,24 +120,29 @@ def _match(record: dict[str, object], track: Track) -> Lyrics | None:
 
 
 def _lookup(track: Track) -> Lyrics | None:
-    query = urlencode(
-        {
-            "track_name": track.title,
-            "artist_name": track.artist,
-            "album_name": track.album,
-            "duration": round(track.duration),
-        }
-    )
+    params: dict[str, str | int] = {
+        "track_name": track.title,
+        "artist_name": track.artist,
+        "duration": max(1, round(track.duration)),
+    }
+    if track.album:
+        params["album_name"] = track.album
+    query = urlencode(params)
     agent = f"SpotAPI/{version('spotapi')} (https://github.com/Aran404/SpotAPI)"
     request = Request(f"https://lrclib.net/api/get?{query}", headers={"User-Agent": agent})
     try:
         with urlopen(request, timeout=20) as response:
+            if response.headers.get_content_type() != "application/json":
+                raise ValueError("LRCLIB returned a non-JSON response")
             body = response.read(1_000_001)
     except HTTPError as error:
         if error.code == 404:
             return None
-        if error.code == 429:
-            raise RuntimeError("LRCLIB rate limit reached; try again later") from error
+        if error.code in {429, 503}:
+            retry = error.headers.get("Retry-After")
+            reason = "rate limit reached" if error.code == 429 else "temporarily unavailable"
+            delay = f" (Retry-After: {_visible(retry)})" if retry else ""
+            raise RuntimeError(f"LRCLIB {reason}; try again later{delay}") from error
         raise RuntimeError(f"LRCLIB returned HTTP {error.code}") from error
     except URLError as error:
         raise RuntimeError(f"LRCLIB is unavailable: {error.reason}") from error
@@ -288,6 +296,7 @@ def run(path: Path, *, output: Path | None, embed: bool, dry_run: bool) -> int:
     destinations = [output / file.relative_to(root) if output else file for file in files]
     stems = Counter(str(file.with_suffix("")).casefold() for file in destinations)
     counts: Counter[str] = Counter()
+    requested = False
     print(f"LRCLIB | {len(files)} track{'s' if len(files) != 1 else ''}")
     if dry_run:
         print("Dry run: no files will be changed.")
@@ -301,6 +310,10 @@ def run(path: Path, *, output: Path | None, embed: bool, dry_run: bool) -> int:
             if not destination.parent.resolve().is_relative_to((output or root).resolve()):
                 raise ValueError("output path escapes the destination directory")
             track = _read_track(file)
+            # LRCLIB asks batch clients to space requests and avoid concurrency.
+            if requested:
+                sleep(0.75)
+            requested = True
             lyrics = _lookup(track)
             status = (
                 "Not found"

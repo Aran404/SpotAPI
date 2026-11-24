@@ -19,6 +19,6 @@ The command queries [LRCLIB](https://lrclib.net/) using the title, artist, album
 
 Synced lyrics use `.lrc`; unsynced lyrics use `.txt`. Files are saved beside each track unless `--output` is specified, in which case the original relative directory structure is preserved. Existing lyrics are compared before changes; different lyrics require interactive approval. Redirected or noninteractive runs leave existing lyrics unchanged. A synced version never gets replaced by plain text. When upgrading a `.txt` file, its existing contents are retained.
 
-`--embed` writes FLAC lyrics and unsynced MP3 lyrics; synced MP3 lyrics are saved as `.lrc` sidecars instead. The audio is staged before replacing the original. The command skips ambiguous filenames and invalid metadata, does not reorganize your music library, and stops when the provider is unavailable or rate limited.
+`--embed` writes FLAC lyrics and unsynced MP3 lyrics; synced MP3 lyrics are saved as `.lrc` sidecars instead. The audio is staged before replacing the original. The command skips ambiguous filenames and invalid metadata, does not reorganize your music library, and stops when the provider is unavailable or rate limited. Lookups are intentionally sequential and spaced apart to respect LRCLIB's batch-client guidelines.
 
 The original `spotapi lyrics` command continues to read entitled Spotify lyrics for a Spotify track.

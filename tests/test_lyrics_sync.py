@@ -25,6 +25,18 @@ _FLAC = (
 )
 
 
+class _Response(io.BytesIO):
+    def __init__(self, body: bytes, content_type: str = "application/json") -> None:
+        super().__init__(body)
+        self.headers = Message()
+        self.headers["Content-Type"] = content_type
+
+
+@pytest.fixture(autouse=True)
+def no_network_delay(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sync, "sleep", Mock())
+
+
 @pytest.fixture
 def track(tmp_path: Path) -> sync.Track:
     path = tmp_path / "été.flac"
@@ -78,7 +90,7 @@ def test_reject_mismatch(track: sync.Track, changes: dict[str, object]) -> None:
 
 def test_lookup(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        sync, "urlopen", Mock(return_value=io.BytesIO(json.dumps(_record(track)).encode()))
+        sync, "urlopen", Mock(return_value=_Response(json.dumps(_record(track)).encode()))
     )
     assert sync._lookup(track) == sync.Lyrics("[00:00.00] hello\n", True)
 
@@ -86,7 +98,9 @@ def test_lookup(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.parametrize("code", [404, 429, 503])
 def test_http_status(track: sync.Track, monkeypatch: pytest.MonkeyPatch, code: int) -> None:
     def fail(*args: object, **kwargs: object) -> Any:
-        raise HTTPError("https://lrclib.net", code, "error", Message(), None)
+        headers = Message()
+        headers["Retry-After"] = "10"
+        raise HTTPError("https://lrclib.net", code, "error", headers, None)
 
     monkeypatch.setattr(sync, "urlopen", fail)
     if code == 404:
@@ -107,7 +121,7 @@ def test_network_failure(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> 
 
 @pytest.mark.parametrize("body", [b"[]", b"x" * 1_000_001, b"invalid json"])
 def test_invalid_response(track: sync.Track, monkeypatch: pytest.MonkeyPatch, body: bytes) -> None:
-    monkeypatch.setattr(sync, "urlopen", Mock(return_value=io.BytesIO(body)))
+    monkeypatch.setattr(sync, "urlopen", Mock(return_value=_Response(body)))
     with pytest.raises(ValueError):
         sync._lookup(track)
 
@@ -385,3 +399,32 @@ def test_output_symlink_escape(
     assert sync.run(tmp_path, output=output, embed=False, dry_run=False) == 1
     lookup.assert_not_called()
     assert not list(outside.iterdir())
+
+
+def test_non_json_response(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sync, "urlopen", Mock(return_value=_Response(b"html", "text/html")))
+    with pytest.raises(ValueError, match="non-JSON"):
+        sync._lookup(track)
+
+
+def test_batch_spacing(track: sync.Track, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    second = tmp_path / "second.flac"
+    second.write_bytes(track.path.read_bytes())
+    lookup = Mock(return_value=sync.Lyrics("hello\n", False))
+    delay = Mock()
+    monkeypatch.setattr(sync, "_lookup", lookup)
+    monkeypatch.setattr(sync, "sleep", delay)
+    assert sync.run(tmp_path, output=None, embed=False, dry_run=False) == 0
+    assert lookup.call_count == 2
+    delay.assert_called_once_with(0.75)
+
+
+def test_lookup_without_album(track: sync.Track, monkeypatch: pytest.MonkeyPatch) -> None:
+    track = replace(track, album="")
+    response = _Response(json.dumps(_record(track)).encode())
+    lookup = Mock(return_value=response)
+    monkeypatch.setattr(sync, "urlopen", lookup)
+    assert sync._lookup(track) is not None
+    request = lookup.call_args.args[0]
+    assert "album_name" not in request.full_url
+    assert "duration=1" in request.full_url
