@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.3 - Pending release
+## 2.1.3 - 2026-11-22
 
 - Decode object-shaped album pre-release timestamps as typed dates without breaking
   previous string or null values (#105).

@@ -37,13 +37,16 @@ python -m spotapi connect --help
 
 The [CI workflows](https://github.com/Aran404/SpotAPI/tree/main/.github/workflows)
 exercise offline contracts across Python 3.11-3.13 and supported desktop OSes,
-plus wheel installation checks and frontend browser tests.
+plus wheel installation checks and frontend browser tests. Offline CI enforces a
+70% branch-aware coverage floor; the Linux 3.12 job also installs the real MCP
+and media extras.
 
 **Publishing preflight:** The [release workflow](https://github.com/Aran404/SpotAPI/actions/workflows/publish.yml)
 also runs its **exact tagged-release build and test steps** on every pull request and
 every push to `main`. This matters because `build` and `twine` introduce dependencies
 that the ordinary development test environment might not have. It builds and checks
-the distributions, installs the wheel, and smoke-tests it outside the checkout.
+the distributions, installs both in separate clean virtual environments, and
+smoke-tests them outside the checkout.
 The PyPI upload job is **skipped** unless the event is a matching `v*` tag push.
 
 Before tagging, verify a **successful release preflight on the exact `main` commit**

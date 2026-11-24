@@ -53,9 +53,10 @@ saved under that profile name in your operating system's keyring. A failed or
 cancelled login does not overwrite a stored profile. Profile names are selected
 at launch; the terminal does not silently switch accounts while connected.
 
-The keyring is deliberate: Connect never creates or modifies a plaintext
-`.env` file. If you prefer `.env`, load `SPOTIFY_COOKIE` into the process
-*explicitly* before launching Connect. Never commit credentials to Git.
+Connect never creates or modifies a plaintext `.env` file. Saved profiles use
+Python keyring's configured backend; use a secure OS-backed credential store,
+not a third-party plaintext backend. If you prefer an environment variable,
+load `SPOTIFY_COOKIE` into the process explicitly. Never commit credentials to Git.
 
 The browser login uses a lazy Playwright import. On a system without Playwright
 or Chromium, existing shell cookies and saved keyring profiles still work.

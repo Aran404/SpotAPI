@@ -28,8 +28,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install -e '.[dev,demo]'
+      - if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        run: python -m pip install -e '.[mcp,media]'
       - run: python -m coverage run -m pytest -m 'not live'
-      - run: python -m coverage report
+      - run: python -m coverage report --fail-under=70
       - run: python -m coverage xml
       - uses: actions/upload-artifact@v6
         with:
@@ -57,9 +59,15 @@ jobs:
         shell: pwsh
         run: |
           $wheel = (Get-ChildItem dist/*.whl).FullName
-          python -m pip install "$($wheel)[connect]"
+          python -m pip install "$wheel"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Set-Location $env:RUNNER_TEMP
+          python -m pip check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -I -m spotapi search --help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install "$($wheel)[connect]"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           spotapi --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -I -m spotapi --version

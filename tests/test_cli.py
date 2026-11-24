@@ -17,7 +17,7 @@ from spotapi import (
     SearchResults,
     SpotAPIError,
 )
-from spotapi.cli import _parser, main
+from spotapi.cli import _human, _parser, main
 from spotapi.login import SavedSession
 from spotapi.types import BaseClientError
 
@@ -318,3 +318,32 @@ def test_cli_reports_missing_secure_keyring_backend(
     assert "Set SPOTIFY_COOKIE" in captured.err
     assert "keyring backend" in captured.err
     assert "No recommended backend" not in captured.err
+
+
+def test_human_output_preserves_distinct_name_and_title() -> None:
+    output = _human([{"name": "Artist", "title": "Track", "uri": "spotify:track:one"}])
+    assert output == "1. Artist\n  title: Track\n  uri: spotify:track:one"
+
+
+def test_human_output_preserves_empty_name_when_title_is_used() -> None:
+    output = _human([{"name": "", "title": "Track"}])
+    assert output == "1. Track\n  name: "
+
+
+def test_root_help_lists_every_command(capsys: pytest.CaptureFixture[str]) -> None:
+    from spotapi.cli import _subcommands
+
+    parser = _parser()
+    with pytest.raises(SystemExit) as exit_info:
+        main(["--help"])
+    assert exit_info.value.code == 0
+    output = capsys.readouterr().out
+    for command in _subcommands(parser):
+        assert f"  {command} " in output
+
+
+def test_cli_suggests_close_command(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exit_info:
+        main(["serach"])
+    assert exit_info.value.code == 2
+    assert "Did you mean 'search'?" in capsys.readouterr().err
