@@ -194,3 +194,43 @@ async def test_pagination_with_explicit_total_is_not_limited_by_fallback(
 
     pages = [page async for page in paginate(request, {"limit": 1})]
     assert len(pages) == 3
+
+
+@pytest.mark.parametrize("next_offset", [0, -1])
+async def test_pagination_reports_a_stalled_offset_before_total(next_offset: int) -> None:
+    async def request(variables: dict[str, Any]) -> ObjectDict:
+        return ObjectDict(
+            {"items": ["first"], "totalCount": 3, "pagingInfo": {"nextOffset": next_offset}}
+        )
+
+    pages: list[ObjectDict] = []
+    with pytest.raises(BaseClientError, match="results may be incomplete"):
+        async for page in paginate(request, {"limit": 1}):
+            pages.append(page)
+    assert len(pages) == 1
+
+
+async def test_pagination_accepts_terminal_offset_after_all_items() -> None:
+    async def request(variables: dict[str, Any]) -> ObjectDict:
+        return ObjectDict({"items": ["last"], "totalCount": 1, "pagingInfo": {"nextOffset": 0}})
+
+    assert len([page async for page in paginate(request, {"limit": 1})]) == 1
+
+
+async def test_pagination_respects_server_offset_and_keeps_original_variables() -> None:
+    requested: list[dict[str, Any]] = []
+    variables = {"limit": 2, "offset": 1}
+
+    async def request(values: dict[str, Any]) -> ObjectDict:
+        requested.append(values)
+        return ObjectDict(
+            {
+                "items": ["item"],
+                "totalCount": 5,
+                "pagingInfo": {"nextOffset": 4 if values["offset"] == 1 else None},
+            }
+        )
+
+    assert len([page async for page in paginate(request, variables)]) == 2
+    assert requested == [{"limit": 2, "offset": 1}, {"limit": 2, "offset": 4}]
+    assert variables == {"limit": 2, "offset": 1}

@@ -293,3 +293,47 @@ async def test_spotify_json_media_type_is_not_binary(monkeypatch: pytest.MonkeyP
     result = await http.get("https://example.test/")
     assert result.json is not None and result.json["items"] == []
     assert result.body == b""
+
+
+async def test_excessively_nested_json_is_rejected_without_leaking_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    body = '{"nested":' + "[" * 2000 + "0" + "]" * 2000 + "}"
+    raw = RawResponse(body=body)
+    http, transport = client(monkeypatch, [raw])
+    response = await http.get("https://example.test/")
+    assert response.json is None
+    assert raw.closed and transport.calls == 1
+
+
+@pytest.mark.parametrize("status", [429, 500, 502, 503, 504])
+async def test_failed_mutation_response_is_never_replayed(
+    monkeypatch: pytest.MonkeyPatch, status: int
+) -> None:
+    raw = RawResponse(status, headers=[(b"retry-after", b"0")])
+    http, transport = client(monkeypatch, [raw])
+    response = await http.post("https://example.test/")
+    assert response.status_code.as_int() == status
+    assert raw.closed and transport.calls == 1
+
+
+@pytest.mark.parametrize("attempts", [0, -1, True])
+async def test_invalid_attempt_limit_precedes_transport(
+    monkeypatch: pytest.MonkeyPatch, attempts: int
+) -> None:
+    http, transport = client(monkeypatch, [])
+    with pytest.raises(ValueError, match="max_attempts"):
+        await http.get("https://example.test/", max_attempts=attempts)
+    assert transport.calls == 0
+
+
+@pytest.mark.parametrize("delay", [-1.0, float("nan"), float("inf")])
+async def test_invalid_backoff_callback_does_not_retry(
+    monkeypatch: pytest.MonkeyPatch, delay: float
+) -> None:
+    raw = RawResponse(503)
+    http, transport = client(monkeypatch, [raw])
+    http._backoff = lambda attempt: delay
+    with pytest.raises(ValueError, match="backoff"):
+        await http.get("https://example.test/")
+    assert raw.closed and transport.calls == 1

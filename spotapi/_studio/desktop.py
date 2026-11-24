@@ -180,7 +180,13 @@ def main() -> None:
     webview = cast(WebView, import_module("webview"))
     loop = asyncio.new_event_loop()
     studio = Studio()
-    worker = threading.Thread(target=loop.run_forever, name="spotapi-studio", daemon=True)
+    def run_loop() -> None:
+        try:
+            loop.run_forever()
+        finally:
+            loop.close()
+
+    worker = threading.Thread(target=run_loop, name="spotapi-studio", daemon=True)
 
     def notify(status: str) -> None:
         """Notify the page using fixed scripts with no embedded account values."""
@@ -227,12 +233,16 @@ def main() -> None:
             await loop.shutdown_asyncgens()
             await loop.shutdown_default_executor()
 
+        cleanup = asyncio.run_coroutine_threadsafe(shutdown(), loop)
         try:
-            asyncio.run_coroutine_threadsafe(shutdown(), loop).result(timeout=15)
+            cleanup.result(timeout=15)
         finally:
+            if not cleanup.done():
+                cleanup.cancel()
             loop.call_soon_threadsafe(loop.stop)
             worker.join(timeout=5)
-            loop.close()
+            if worker.is_alive():
+                raise RuntimeError("Studio worker did not stop after shutdown")
 
 
 if __name__ == "__main__":

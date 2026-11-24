@@ -128,7 +128,7 @@ class _RootParser(_CommandParser):
                 "",
                 "Run 'spotapi <command> --help' for command-specific options.",
                 "Use --json after a command for machine-readable output.",
-                "Default output remains JSON when redirected or piped.",
+                "Most reads output JSON when redirected; search requires --json.",
                 "",
             )
         )

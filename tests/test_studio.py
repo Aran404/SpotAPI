@@ -384,3 +384,21 @@ async def test_studio_shutdown_drains_public_reads_before_closing_catalogue(
 def test_lyrics_identifies_installed_release(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("spotapi._studio.lyrics.package_version", Mock(return_value="2.7.3"))
     assert _studio_user_agent() == ("SpotAPI Studio v2.7.3 (https://github.com/Aran404/SpotAPI)")
+
+
+def test_native_app_closes_loop_even_when_shutdown_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from spotapi._studio import desktop
+
+    loop = asyncio.new_event_loop()
+    backend = Mock()
+    monkeypatch.setattr("dotenv.load_dotenv", Mock())
+    monkeypatch.delenv("SPOTIFY_COOKIE", raising=False)
+    monkeypatch.setattr(desktop, "import_module", Mock(return_value=backend))
+    monkeypatch.setattr(desktop.asyncio, "new_event_loop", Mock(return_value=loop))
+    monkeypatch.setattr(Studio, "close", AsyncMock(side_effect=RuntimeError("cleanup failed")))
+
+    with pytest.raises(RuntimeError, match="cleanup failed"):
+        desktop.main()
+    assert loop.is_closed()
