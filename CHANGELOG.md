@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Accept the object-shaped profile `avatar` (`{"sources": [...]}`) that Spotify now
+  returns, reducing it to the largest image URL. Previously it raised and broke every
+  playlist mutation that resolves the username (for example `create_playlist`).
+
 ## 2.1.3 - 2026-11-22
 
 - Decode object-shaped album pre-release timestamps as typed dates without breaking
