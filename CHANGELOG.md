@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Sync lyrics for local MP3 and FLAC files with LRCLIB, including recursive scans,
+  dry runs, diff previews, optional embedding and explicit batch approval (`--yes`).
 - Accept the object-shaped profile `avatar` (`{"sources": [...]}`) that Spotify now
   returns, reducing it to the largest image URL. Previously it raised and broke every
   playlist mutation that resolves the username (for example `create_playlist`).

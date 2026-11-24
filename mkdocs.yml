@@ -37,6 +37,7 @@ nav:
       - Accounts and playlists: account.md
       - Player controls and events: player.md
       - Studio: studio.md
+      - Local lyrics: lyrics-sync.md
   - Reference:
       - Python API: reference.md
       - Request and retry policy: transport.md
