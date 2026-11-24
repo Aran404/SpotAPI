@@ -1302,3 +1302,41 @@ async def test_late_like_response_does_not_overwrite_a_newer_server_unlike(
 
     assert observed == [False, True, False]
     await player.close()
+
+
+async def test_unchanged_playback_options_do_not_send_commands(
+    session: Mock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    player = Player(session)
+    state = PlayerState.from_cluster(packet(2)["payloads"][0]["cluster"])
+    command = AsyncMock()
+    monkeypatch.setattr(Player, "command", command)
+    monkeypatch.setattr(Player, "_selected_state", Mock(return_value=state))
+
+    await player.shuffle(state.shuffle)
+    await player.repeat(state.repeat_mode)
+    command.assert_not_awaited()
+
+
+@pytest.mark.parametrize(
+    ("value", "position", "offset", "track"),
+    [
+        ("spotify:track:abc", -1, None, None),
+        ("spotify:track:abc", 0, -1, None),
+        ("spotify:track:abc", 0, 1, "spotify:track:def"),
+        ("spotify:user:listener", 0, None, None),
+    ],
+)
+async def test_invalid_play_request_never_sends_command(
+    session: Mock,
+    monkeypatch: pytest.MonkeyPatch,
+    value: str,
+    position: int,
+    offset: int | None,
+    track: str | None,
+) -> None:
+    command = AsyncMock()
+    monkeypatch.setattr(Player, "command", command)
+    with pytest.raises(ValueError):
+        await Player(session).play(value, position_ms=position, offset=offset, track=track)
+    command.assert_not_awaited()
