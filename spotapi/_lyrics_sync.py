@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import json
 import math
 import os
@@ -53,9 +54,9 @@ def _read_track(path: Path) -> Track:
         raw: Any = mutagen.File(path)
         if audio is None or raw is None:
             raise ValueError("unsupported audio file")
-        title = str(audio.get("title", [""])[0]).strip()
-        artist = str(audio.get("artist", [""])[0]).strip()
-        album = str(audio.get("album", [""])[0]).strip()
+        title = str((audio.get("title") or [""])[0]).strip()
+        artist = str((audio.get("artist") or [""])[0]).strip()
+        album = str((audio.get("album") or [""])[0]).strip()
         duration = float(audio.info.length)
         if not title or not artist or not math.isfinite(duration) or duration <= 0:
             raise ValueError("missing title, artist or duration")
@@ -82,7 +83,9 @@ def _match(record: dict[str, object], track: Track) -> Lyrics | None:
     if record.get("instrumental") is True:
         return None
     duration = record.get("duration")
-    if not isinstance(duration, (int, float)) or not math.isfinite(duration):
+    if isinstance(duration, bool) or not isinstance(duration, (int, float)):
+        return None
+    if not math.isfinite(duration):
         return None
     if abs(duration - track.duration) > 2:
         return None
@@ -194,7 +197,9 @@ def _embed(path: Path, lyrics: Lyrics) -> None:
 
 
 def _visible(text: str) -> str:
-    return "".join(char if char.isprintable() or char == "\n" else repr(char)[1:-1] for char in text)
+    return "".join(
+        char if char.isprintable() or char == "\n" else repr(char)[1:-1] for char in text
+    )
 
 
 def _review(previous: str, lyrics: Lyrics, *, dry_run: bool) -> bool:
@@ -221,9 +226,7 @@ def _review(previous: str, lyrics: Lyrics, *, dry_run: bool) -> bool:
         return False
 
 
-def _save(
-    track: Track, lyrics: Lyrics, destination: Path, *, embed: bool, dry_run: bool
-) -> str:
+def _save(track: Track, lyrics: Lyrics, destination: Path, *, embed: bool, dry_run: bool) -> str:
     # MP3 synchronized lyrics remain LRC sidecars; USLT is not a timed tag.
     embed = embed and (track.path.suffix.lower() == ".flac" or not lyrics.synced)
     lrc = _read_text(destination.with_suffix(".lrc"))
@@ -235,8 +238,8 @@ def _save(
 
     target = destination.with_suffix(lyrics.suffix)
     existing = lrc if lyrics.synced else plain
-    if embed:
-        previous = track.embedded[0] if track.embedded else None
+    if embed and track.embedded:
+        previous = track.embedded[0]
     else:
         previous = existing
         if previous is None:
@@ -246,9 +249,12 @@ def _save(
 
     if previous is not None:
         if previous.strip() == lyrics.text.strip():
-            return "Unchanged"
-        if not _review(previous, lyrics, dry_run=dry_run):
-            return "Kept existing"
+            if not embed or track.embedded:
+                return "Unchanged"
+        else:
+            print(f"  Review: {_visible(str(track.path))}")
+            if not _review(previous, lyrics, dry_run=dry_run):
+                return "Kept existing"
     if dry_run:
         return "Would embed" if embed else f"Would save {lyrics.suffix}"
     if embed:
@@ -290,10 +296,11 @@ def run(path: Path, *, output: Path | None, embed: bool, dry_run: bool) -> int:
                 raise ValueError("output path escapes the destination directory")
             track = _read_track(file)
             lyrics = _lookup(track)
-            if lyrics is None:
-                status = "Not found"
-            else:
-                status = _save(track, lyrics, destination, embed=embed, dry_run=dry_run)
+            status = (
+                "Not found"
+                if lyrics is None
+                else _save(track, lyrics, destination, embed=embed, dry_run=dry_run)
+            )
         except (OSError, ValueError) as error:
             status = "Skipped"
             label += f" ({_visible(str(error))})"
