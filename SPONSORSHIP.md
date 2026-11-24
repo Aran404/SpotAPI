@@ -4,7 +4,7 @@
 
 [SpotAPI](https://github.com/Aran404/SpotAPI) is a free, open-source Spotify library with a typed async API, a terminal interface, and a desktop Studio. Sponsorship pays for maintenance, regression testing, documentation, and keeping the project useful as upstream APIs evolve.
 
-**A low-risk first test:** a 30-day README text link starts at **$50**. The first two paid featured partners can book a 30-day logo placement for **$79**; subsequent bookings are **$149**. [Email to reserve a placement](mailto:aran.inbox.personal@gmail.com?subject=SpotAPI%20sponsorship) with your product URL and preferred option. No long-term commitment.
+**A low-risk first test:** a 30-day README text link starts at **$50**. The first two paid featured partners can book a 30-day logo placement for **$79**; subsequent bookings are **$149**. [Discuss a placement](https://the-open-odyssey.pages.dev/sponsor/#inquiry) with your product URL and preferred option. No long-term commitment.
 
 ## Who you reach
 
@@ -14,7 +14,7 @@ SpotAPI's README and examples serve developers interested in:
 - Building applications with music search, playlists, metadata, and connected-player controls.
 - Developer tools that make shipping, testing, and maintaining Python applications easier.
 
-**Dated traffic snapshot (November 21, 2026):** GitHub Insights showed **3,689 repository views, 2,465 unique visitors, 1,071 clones and 468 unique cloners over the preceding 14 days**. These are maintainer-provided GitHub Insights figures, not ad impressions, completed installs, or a forecast. A recent Reddit spike contributed to the period; future traffic may be lower. The original dated screenshots are available on request.
+**Current audience evidence:** [Request a dated traffic report](https://the-open-odyssey.pages.dev/sponsor/#inquiry) for available GitHub Insights and website analytics. We share the reporting window, source and relevant context, including traffic spikes where applicable. Repository traffic is not website traffic or measured advertisement impressions.
 
 The [repository](https://github.com/Aran404/SpotAPI) displays public stars, forks, and activity. See recent community discussions on [r/ReverseEngineering](https://www.reddit.com/r/ReverseEngineering/comments/1xz8cb0/i_reverseengineered_spotifys_private_api_and/) and [r/BestGitHubRepos](https://www.reddit.com/r/BestGitHubRepos/comments/1xx0iqk/i_waited_3_months_to_post_here_i_built_a_spotify/). Ask for a dated snapshot of available GitHub traffic (views, unique visitors, referral sources) and package-download information. Stars and downloads are **not** unique people or guaranteed sponsor impressions. No reach or conversion figure is promised.
 
@@ -30,7 +30,7 @@ All prices are **USD** for **30 consecutive days**, starting only when the agree
 | **Category Exclusive** | **$199** | A featured placement plus no competing **paid README placements** in one agreed product category during the term. |
 | **Exclusive Integration Partner** | **Custom quote** | A separately scoped, optional provider adapter and documentation, plus any agreed advertising and limited-term exclusivity. Engineering and ongoing maintenance are priced separately. |
 
-The **$79 founding rate** applies to the first two paid featured partners' initial 30-day bookings only. Slots are reserved after scope and payment are agreed, not by sending an inquiry. Once those slots are booked, the $149 standard rate applies. We will update this page when availability changes.
+The **$79 founding rate** applies to the first two paid featured partners' initial 30-day bookings only. Slots are reserved after scope and payment are agreed, not by sending an inquiry. Once those slots are booked, the $149 standard rate applies. Ask us to confirm current founding-rate eligibility and availability before booking.
 
 We keep at most **three featured logos** in the README at once to preserve readability; Supporters use text links. All paid listings remain below the product introduction and working examples. Sponsor content is reviewed for relevance; payment never changes core library behavior or implies endorsement.
 
@@ -52,9 +52,13 @@ Commercial terms are quoted after technical review and normally include:
 
 No exclusivity is perpetual or implied beyond the written term. An expired sponsorship removes promotional placement and exclusive status, **not released code or user functionality**. We will not remove compatibility with custom provider implementations, guarantee third-party challenge acceptance, or claim a provider is necessary when it isn't. Development and exclusivity start only after separate technical and commercial agreement.
 
+## Website and documentation sponsorships
+
+[The Open Odyssey media kit](https://the-open-odyssey.pages.dev/sponsor/) lists individual website placements, contextual documentation sponsorships and combined campaigns. These are separately booked and do not automatically form part of a README package. Rates are introductory offers, not measured traffic valuations. We quote each campaign in writing and review available aggregate traffic and sponsor-provided referral results before renewal.
+
 ## How booking works
 
-1. **Email [aran.inbox.personal@gmail.com](mailto:aran.inbox.personal@gmail.com?subject=SpotAPI%20sponsorship)** with your company/product URL, preferred package, and ideal start date. For an exclusive integration, briefly describe the API/service and requested category.
+1. **Use the [sponsorship inquiry page](https://the-open-odyssey.pages.dev/sponsor/#inquiry) or email [aran.inbox.personal@gmail.com](mailto:aran.inbox.personal@gmail.com?subject=SpotAPI%20sponsorship)** with your company/product URL, preferred package, and ideal start date. For an exclusive integration, briefly describe the API/service and requested category.
 2. We'll confirm fit, availability, the exact placement, price, and start/end dates **in writing** before any payment.
 3. Send your brand name, destination URL (a tracked link is fine), a short description, and, for featured packages, a logo (preferably SVG or transparent PNG). Sponsored claims and links are reviewed before publication.
 4. After the scope is agreed, payment is collected **upfront by PayPal invoice**. The 30-day term begins only when the listing is published on the default branch.
@@ -75,6 +79,6 @@ Featured sponsor listings belong in the README **after the product introduction 
 
 ## Contact
 
-**[Email about sponsoring SpotAPI](mailto:aran.inbox.personal@gmail.com?subject=SpotAPI%20sponsorship)** · [View the repository](https://github.com/Aran404/SpotAPI)
+**[Discuss a sponsorship](https://the-open-odyssey.pages.dev/sponsor/#inquiry)** · [Email directly](mailto:aran.inbox.personal@gmail.com?subject=SpotAPI%20sponsorship) · [View the repository](https://github.com/Aran404/SpotAPI)
 
 For a quick reply, include your product URL, **Supporter / Founding Featured / Featured / Category Exclusive / Exclusive Integration Partner**, and your preferred start date. We'll confirm the agreed scope and invoice details directly by email.
