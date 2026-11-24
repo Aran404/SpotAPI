@@ -161,6 +161,53 @@ def test_profile_attributes_accept_native_keys_and_missing_optional_fields() -> 
     assert profile.avatar is None and profile.social_handle is None
 
 
+def test_profile_attributes_accept_avatar_image_object() -> None:
+    profile = Profile.from_dict(
+        {
+            "accountId": "account",
+            "name": "Listener",
+            "username": "listener",
+            "uri": "spotify:user:listener",
+            "avatar": {
+                "sources": [
+                    {"url": "https://i.scdn.co/small", "width": 64, "height": 64},
+                    {"url": "https://i.scdn.co/large", "width": 300, "height": 300},
+                ]
+            },
+            "avatarBackgroundColor": 123,
+        }
+    )
+    assert profile.avatar == "https://i.scdn.co/large"
+    assert profile.avatar_background_color == 123
+
+
+@pytest.mark.parametrize("avatar", [{}, {"sources": []}, {"sources": [{"url": ""}]}])
+def test_profile_attributes_treat_empty_avatar_object_as_missing(avatar: object) -> None:
+    profile = Profile.from_dict(
+        {
+            "accountId": "account",
+            "name": "Listener",
+            "username": "listener",
+            "uri": "spotify:user:listener",
+            "avatar": avatar,
+        }
+    )
+    assert profile.avatar is None
+
+
+def test_profile_attributes_keep_string_avatar() -> None:
+    profile = Profile.from_dict(
+        {
+            "accountId": "account",
+            "name": "Listener",
+            "username": "listener",
+            "uri": "spotify:user:listener",
+            "avatar": "https://i.scdn.co/plain",
+        }
+    )
+    assert profile.avatar == "https://i.scdn.co/plain"
+
+
 @pytest.mark.parametrize("value", [None, 123, False])
 def test_profile_attributes_reject_invalid_required_names(value: object) -> None:
     with pytest.raises(BaseClientError, match="profile attributes"):
