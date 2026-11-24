@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  A typed, async Python library for Spotify's public catalogue, playlists, and connected players.<br>
+  Use SpotAPI for Spotify's public catalogue, playlists and connected players.<br>
   <strong>No developer app or API key for public data.</strong>
 </p>
 
@@ -38,7 +38,7 @@ python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-**Python API first.** The same installation returns typed results to your own app; no terminal UI or Spotify developer credentials are needed:
+Use the same API in Python:
 
 ```python
 import asyncio
@@ -54,13 +54,9 @@ asyncio.run(main())
 
 [More Python examples](#build-with-python) · [Playlist audit and CSV export](examples/playlist_audit.py) · [No-API-key Python guide](docs/no-api-key.md)
 
-![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
+The first request may be slower while SpotAPI discovers and caches the current web-player queries.
 
-<p align="center"><sub>Connect · Search, navigate and control an existing Spotify player from your terminal. Spotify plays the audio; SpotAPI sends the controls.</sub></p>
-
-The terminal Connect demo is built on the same library. Public search, Spotify links, credits and public playlist metadata need no developer app. The first request may be slower while SpotAPI discovers and caches the current web-player queries.
-
-**Want something you can browse?** Open the interactive terminal explorer:
+Try the interactive terminal explorer:
 
 ```bash
 python -m pip install "spotapi[demo]"
@@ -85,7 +81,11 @@ These work without a developer API key. Account operations—liked music, privat
 
 Connect brings searching, device selection, up-next, playback and a live activity log into one keyboard-friendly terminal session. It operates an existing signed-in Spotify player; it does **not** stream, download or decrypt tracks.
 
-Launch Connect with the optional terminal interface:
+![SpotAPI Connect controlling a real Spotify player from the terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Search, navigate and control an existing Spotify player from your terminal. Spotify plays the audio; SpotAPI sends the controls.</sub></p>
+
+Launch Connect:
 
 ```bash
 python -m pip install "spotapi[connect,browser]"
@@ -95,9 +95,7 @@ python -m spotapi connect
 
 First-time browser sign-in is covered by these commands. Already use `SPOTIFY_COOKIE` or a saved Connect profile? Install only `spotapi[connect]` and skip the browser download.
 
-Use `search Daft Punk` to find music, `queue 1` to add a result, or `pause`, `next`, and `seek 1:30` to control playback. Open `/devices` to browse available players; `/use 2` selects one without transferring playback, while `/transfer 2` transfers playback. `Ctrl+P` opens the command palette.
-
-Connect requires your Spotify session for player controls. For browser-based sign-in, you may also need the `browser` extra and Playwright's Chromium installation; see the [Connect guide](docs/connect.md) for setup.
+Use `search Daft Punk`, `queue 1`, `pause`, `next` or `seek 1:30`. `Ctrl+P` opens the command palette. See the [Connect guide](docs/connect.md) for device selection and setup.
 
 ## See what else it can do
 
@@ -116,40 +114,28 @@ Studio uses a native WebView. [Studio setup](https://spotapi.readthedocs.io/en/l
 
 ## Support SpotAPI
 
-SpotAPI is free and open source. Sponsorship helps fund maintenance, testing and documentation without changing the library's behavior or adding paywalls.
-
-**Build developer tools?** [Explore sponsorship options](SPONSORSHIP.md) starting at $50 for 30 days. Paid placements are clearly labeled and kept below the product demos.
-
-<!-- Active, clearly labeled sponsor placements go below this line. Keep them compact and below the product demos. -->
+Sponsors help keep SpotAPI free and fund maintenance, testing and documentation. [Become a sponsor](SPONSORSHIP.md).
 
 <details open>
 <summary><strong>Sponsors</strong></summary>
 
-**[RapidProxy](https://www.rapidproxy.io/?code=Z89BQULDV)** — Reliable residential proxies for Python automation and web data collection. 90M+ IPs, global targeting, rotating & sticky sessions, and HTTP(S)/SOCKS5 support.
+<!-- Each sponsor gets a separate table. Add new cards before the closing details tag. -->
 
-<sub>Paid sponsor · Affiliate link. SpotAPI may earn a commission from purchases.</sub>
+<table>
+  <tr>
+    <td width="100%">
+      <p><strong><a href="https://www.rapidproxy.io/?code=Z89BQULDV">RapidProxy</a></strong></p>
+      <p>Reliable residential proxies for Python automation and web data collection. 90M+ IPs, global targeting, rotating &amp; sticky sessions, and HTTP(S)/SOCKS5 support.</p>
+      <sub>Paid sponsor · Affiliate link. SpotAPI may earn a commission from purchases.</sub>
+    </td>
+  </tr>
+</table>
 
 </details>
 
 ## Build with Python
 
-The terminal demos are examples. **SpotAPI is a Python library first:** async operations, typed results, explicit network calls and reusable sessions.
-
-```python
-import asyncio
-from spotapi import Public
-
-
-async def main() -> None:
-    results = await Public.search("Daft Punk", limit=5)
-    for track in results.tracks:
-        print(track.name, track.uri)
-
-
-asyncio.run(main())
-```
-
-For several related operations, reuse one catalogue session:
+Reuse a catalogue session for related operations:
 
 ```python
 import asyncio

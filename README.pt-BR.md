@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  Uma biblioteca Python tipada e assíncrona para o catálogo público, playlists e players conectados do Spotify.<br>
+  Use o SpotAPI para o catálogo público, playlists e players conectados do Spotify.<br>
   <strong>Sem aplicativo de desenvolvedor nem chave de API para dados públicos.</strong>
 </p>
 
@@ -38,7 +38,7 @@ python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-**Primeiro, a API Python.** A mesma instalação oferece resultados tipados para o seu aplicativo, sem interface de terminal nem credenciais de desenvolvedor do Spotify:
+Use a mesma API em Python:
 
 ```python
 import asyncio
@@ -54,13 +54,9 @@ asyncio.run(main())
 
 [Mais exemplos em Python](#desenvolva-com-python) · [Auditoria de playlists e exportação CSV](examples/playlist_audit.py) · [Guia de Python sem chave de API](docs/no-api-key.md)
 
-![SpotAPI Connect controlando um player real do Spotify pelo terminal](assets/cli-connect-demo.gif)
+A primeira requisição pode demorar mais enquanto o SpotAPI descobre e armazena em cache as consultas atuais do web player.
 
-<p align="center"><sub>Connect · Pesquise, navegue e controle um player existente do Spotify pelo terminal. O Spotify reproduz o áudio; o SpotAPI envia os comandos.</sub></p>
-
-A demonstração do Connect usa a mesma biblioteca. Buscas públicas, links do Spotify, créditos e metadados de playlists públicas não exigem aplicativo de desenvolvedor. A primeira requisição pode demorar mais enquanto o SpotAPI descobre e armazena em cache as consultas atuais do web player.
-
-**Quer navegar por uma interface?** Abra o explorador interativo no terminal:
+Experimente o explorador interativo no terminal:
 
 ```bash
 python -m pip install "spotapi[demo]"
@@ -85,7 +81,11 @@ Esses comandos funcionam sem chave de API de desenvolvedor. Operações de conta
 
 O Connect reúne busca, seleção de dispositivo, fila de próximas músicas, reprodução e registro de atividades em tempo real numa sessão de terminal fácil de usar pelo teclado. Ele controla um player existente com login no Spotify; **não** transmite, baixa nem descriptografa faixas.
 
-Inicie o Connect com a interface opcional de terminal:
+![SpotAPI Connect controlando um player real do Spotify pelo terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Pesquise, navegue e controle um player existente do Spotify pelo terminal. O Spotify reproduz o áudio; o SpotAPI envia os comandos.</sub></p>
+
+Inicie o Connect:
 
 ```bash
 python -m pip install "spotapi[connect,browser]"
@@ -95,9 +95,7 @@ python -m spotapi connect
 
 Esses comandos incluem o primeiro login pelo navegador. Já usa `SPOTIFY_COOKIE` ou tem um perfil salvo no Connect? Instale apenas `spotapi[connect]` e pule o download do navegador.
 
-Use `search Daft Punk` para encontrar músicas, `queue 1` para adicionar um resultado à fila ou `pause`, `next` e `seek 1:30` para controlar a reprodução. Abra `/devices` para ver os players disponíveis; `/use 2` seleciona um sem transferir a reprodução, enquanto `/transfer 2` transfere a reprodução. `Ctrl+P` abre a paleta de comandos.
-
-O Connect exige sua sessão do Spotify para controlar o player. Para entrar pelo navegador, talvez você também precise do extra `browser` e de instalar o Chromium do Playwright; consulte o [guia do Connect](docs/connect.md) para configurar.
+Use `search Daft Punk`, `queue 1`, `pause`, `next` ou `seek 1:30`. `Ctrl+P` abre a paleta de comandos. Consulte o [guia do Connect](docs/connect.md) para selecionar dispositivos e configurar.
 
 ## Veja o que mais ele faz
 
@@ -116,40 +114,28 @@ O Studio usa uma WebView nativa. A [configuração do Studio](https://spotapi.re
 
 ## Apoie o SpotAPI
 
-O SpotAPI é gratuito e de código aberto. Os patrocínios ajudam a financiar manutenção, testes e documentação sem alterar o comportamento da biblioteca nem criar barreiras de pagamento.
-
-**Desenvolve ferramentas para programadores?** [Conheça as opções de patrocínio](SPONSORSHIP.md) a partir de US$ 50 por 30 dias. Os espaços pagos são claramente identificados e ficam abaixo das demonstrações do produto.
-
-<!-- Os patrocínios ativos, claramente identificados, ficam abaixo desta linha. Mantenha-os compactos e abaixo das demonstrações do produto. -->
+Os patrocinadores ajudam a manter o SpotAPI gratuito e financiam manutenção, testes e documentação. [Torne-se um patrocinador](SPONSORSHIP.md).
 
 <details open>
 <summary><strong>Patrocinadores</strong></summary>
 
-**[RapidProxy](https://www.rapidproxy.io/?code=Z89BQULDV)** — Proxies residenciais confiáveis para automação em Python e coleta de dados da web. Mais de 90 milhões de IPs, segmentação global, sessões rotativas e persistentes e suporte a HTTP(S)/SOCKS5.
+<!-- Each sponsor gets a separate table. Add new cards before the closing details tag. -->
 
-<sub>Patrocínio pago · Link de afiliado. O SpotAPI pode receber uma comissão pelas compras.</sub>
+<table>
+  <tr>
+    <td width="100%">
+      <p><strong><a href="https://www.rapidproxy.io/?code=Z89BQULDV">RapidProxy</a></strong></p>
+      <p>Proxies residenciais confiáveis para automação em Python e coleta de dados da web. Mais de 90 milhões de IPs, segmentação global, sessões rotativas e persistentes e suporte a HTTP(S)/SOCKS5.</p>
+      <sub>Patrocínio pago · Link de afiliado. O SpotAPI pode receber uma comissão pelas compras.</sub>
+    </td>
+  </tr>
+</table>
 
 </details>
 
 ## Desenvolva com Python
 
-As demonstrações de terminal são exemplos. **O SpotAPI é, antes de tudo, uma biblioteca Python:** operações assíncronas, resultados tipados, chamadas de rede explícitas e sessões reutilizáveis.
-
-```python
-import asyncio
-from spotapi import Public
-
-
-async def main() -> None:
-    results = await Public.search("Daft Punk", limit=5)
-    for track in results.tracks:
-        print(track.name, track.uri)
-
-
-asyncio.run(main())
-```
-
-Para várias operações relacionadas, reutilize uma sessão do catálogo:
+Reutilize uma sessão do catálogo para operações relacionadas:
 
 ```python
 import asyncio

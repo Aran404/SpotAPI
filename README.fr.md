@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  Une bibliothèque Python typée et asynchrone pour le catalogue public, les playlists et les lecteurs connectés de Spotify.<br>
+  Utilisez SpotAPI pour le catalogue public, les playlists et les lecteurs connectés de Spotify.<br>
   <strong>Aucune application développeur ni clé API requise pour les données publiques.</strong>
 </p>
 
@@ -38,7 +38,7 @@ python -m pip install spotapi
 python -m spotapi search "Daft Punk"
 ```
 
-**L'API Python d'abord.** La même installation renvoie des résultats typés à votre application, sans interface de terminal ni identifiants développeur Spotify :
+Utilisez la même API en Python :
 
 ```python
 import asyncio
@@ -54,13 +54,9 @@ asyncio.run(main())
 
 [Autres exemples Python](#développer-avec-python) · [Audit de playlists et export CSV](examples/playlist_audit.py) · [Guide Python sans clé API](docs/no-api-key.md)
 
-![SpotAPI Connect pilotant un véritable lecteur Spotify depuis le terminal](assets/cli-connect-demo.gif)
+La première requête peut être plus lente pendant la découverte et la mise en cache des requêtes du lecteur Web.
 
-<p align="center"><sub>Connect · Recherchez, naviguez et pilotez un lecteur Spotify existant depuis votre terminal. Spotify lit l'audio ; SpotAPI envoie les commandes.</sub></p>
-
-La démonstration Connect repose sur la même bibliothèque. La recherche publique, les liens Spotify, les crédits et les métadonnées des playlists publiques ne nécessitent pas d'application développeur. La première requête peut être plus lente pendant la découverte et la mise en cache des requêtes du lecteur Web.
-
-**Vous préférez une interface de navigation ?** Ouvrez l'explorateur interactif dans le terminal :
+Essayez l'explorateur interactif dans le terminal :
 
 ```bash
 python -m pip install "spotapi[demo]"
@@ -85,7 +81,11 @@ Ces commandes fonctionnent sans clé API développeur. Les opérations liées à
 
 Connect rassemble la recherche, la sélection d'appareil, la file d'attente, la lecture et un journal d'activité en direct dans une interface de terminal pensée pour le clavier. Il commande un lecteur Spotify existant sur lequel vous êtes connecté ; il ne **diffuse, télécharge ni déchiffre** les morceaux.
 
-Lancez Connect avec l'interface de terminal facultative :
+![SpotAPI Connect pilotant un véritable lecteur Spotify depuis le terminal](assets/cli-connect-demo.gif)
+
+<p align="center"><sub>Connect · Recherchez, naviguez et pilotez un lecteur Spotify existant depuis votre terminal. Spotify lit l'audio ; SpotAPI envoie les commandes.</sub></p>
+
+Lancez Connect :
 
 ```bash
 python -m pip install "spotapi[connect,browser]"
@@ -95,9 +95,7 @@ python -m spotapi connect
 
 Ces commandes permettent une première connexion via le navigateur. Vous utilisez déjà `SPOTIFY_COOKIE` ou un profil Connect enregistré ? Installez uniquement `spotapi[connect]` et évitez le téléchargement du navigateur.
 
-Utilisez `search Daft Punk` pour trouver de la musique, `queue 1` pour ajouter un résultat à la file d'attente, ou `pause`, `next` et `seek 1:30` pour contrôler la lecture. Ouvrez `/devices` pour voir les lecteurs disponibles ; `/use 2` en sélectionne un sans transférer la lecture, tandis que `/transfer 2` effectue le transfert. `Ctrl+P` ouvre la palette de commandes.
-
-Connect nécessite votre session Spotify pour piloter la lecture. Pour vous connecter via un navigateur, l'extra `browser` et l'installation de Chromium avec Playwright peuvent aussi être nécessaires ; consultez le [guide Connect](docs/connect.md) pour la configuration.
+Utilisez `search Daft Punk`, `queue 1`, `pause`, `next` ou `seek 1:30`. `Ctrl+P` ouvre la palette de commandes. Consultez le [guide Connect](docs/connect.md) pour la sélection des appareils et la configuration.
 
 ## Découvrez ses autres possibilités
 
@@ -116,40 +114,28 @@ Studio utilise une WebView native. La [configuration de Studio](https://spotapi.
 
 ## Soutenir SpotAPI
 
-SpotAPI est gratuit et open source. Le parrainage finance la maintenance, les tests et la documentation sans modifier le fonctionnement de la bibliothèque ni ajouter de fonctionnalités payantes.
-
-**Vous créez des outils pour les développeurs ?** [Découvrez les possibilités de parrainage](SPONSORSHIP.md) dès 50 USD pour 30 jours. Les emplacements payants sont clairement signalés et placés après les démonstrations du produit.
-
-<!-- Placez les parrainages actifs, clairement identifiés, sous cette ligne. Restez concis et positionnez-les après les démonstrations du produit. -->
+Les sponsors contribuent à maintenir SpotAPI gratuit et financent la maintenance, les tests et la documentation. [Devenir sponsor](SPONSORSHIP.md).
 
 <details open>
 <summary><strong>Sponsors</strong></summary>
 
-**[RapidProxy](https://www.rapidproxy.io/?code=Z89BQULDV)** — Proxys résidentiels fiables pour l'automatisation en Python et la collecte de données Web. Plus de 90 millions d'adresses IP, ciblage mondial, sessions rotatives et persistantes et prise en charge de HTTP(S)/SOCKS5.
+<!-- Each sponsor gets a separate table. Add new cards before the closing details tag. -->
 
-<sub>Sponsor rémunéré · Lien affilié. SpotAPI peut percevoir une commission sur les achats.</sub>
+<table>
+  <tr>
+    <td width="100%">
+      <p><strong><a href="https://www.rapidproxy.io/?code=Z89BQULDV">RapidProxy</a></strong></p>
+      <p>Proxys résidentiels fiables pour l'automatisation en Python et la collecte de données Web. Plus de 90 millions d'adresses IP, ciblage mondial, sessions rotatives et persistantes et prise en charge de HTTP(S)/SOCKS5.</p>
+      <sub>Sponsor rémunéré · Lien affilié. SpotAPI peut percevoir une commission sur les achats.</sub>
+    </td>
+  </tr>
+</table>
 
 </details>
 
 ## Développer avec Python
 
-Les démonstrations en terminal sont des exemples. **SpotAPI est avant tout une bibliothèque Python :** opérations asynchrones, résultats typés, appels réseau explicites et sessions réutilisables.
-
-```python
-import asyncio
-from spotapi import Public
-
-
-async def main() -> None:
-    results = await Public.search("Daft Punk", limit=5)
-    for track in results.tracks:
-        print(track.name, track.uri)
-
-
-asyncio.run(main())
-```
-
-Pour plusieurs opérations liées, réutilisez une seule session de catalogue :
+Réutilisez une session de catalogue pour les opérations liées :
 
 ```python
 import asyncio
