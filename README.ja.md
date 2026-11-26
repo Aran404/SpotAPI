@@ -17,7 +17,7 @@
   <a href="#はじめに">はじめに</a> ·
   <a href="#ターミナルで探索する">探索</a> ·
   <a href="#python-で開発する">Python API</a> ·
-  <a href="https://spotapi.readthedocs.io/">ドキュメント</a> ·
+  <a href="https://the-open-odyssey.pages.dev/docs/spotapi/">ドキュメント</a> ·
   <a href="SPONSORSHIP.md">スポンサー</a>
 </p>
 
@@ -63,7 +63,7 @@ python -m pip install "spotapi[demo]"
 python -m spotapi discover "Daft Punk"
 ```
 
-サインインせずに、検索結果、アートワーク、Spotify リンクをナビゲートできます。[Discover の例](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py) · [トラブルシューティング](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
+サインインせずに、検索結果、アートワーク、Spotify リンクをナビゲートできます。[Discover の例](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py) · [トラブルシューティング](https://the-open-odyssey.pages.dev/docs/spotapi/troubleshooting/)
 
 ## ターミナルで探索する
 
@@ -75,7 +75,7 @@ python -m spotapi get SPOTIFY_URL
 python -m spotapi playlist items PLAYLIST_ID --limit 10
 ```
 
-これらは開発者 API キーなしで動作します。アカウント操作 (お気に入りの曲、非公開プレイリスト、既存の Spotify プレーヤーの操作) には、ご自身の Spotify セッションが必要です。[アカウントガイド](https://spotapi.readthedocs.io/en/latest/account/)と[プレーヤーガイド](https://spotapi.readthedocs.io/en/latest/player/)を参照してください。
+これらは開発者 API キーなしで動作します。アカウント操作 (お気に入りの曲、非公開プレイリスト、既存の Spotify プレーヤーの操作) には、ご自身の Spotify セッションが必要です。[アカウントガイド](https://the-open-odyssey.pages.dev/docs/spotapi/account/)と[プレーヤーガイド](https://the-open-odyssey.pages.dev/docs/spotapi/player/)を参照してください。
 
 ### Connect: Spotify プレーヤーを操作する
 
@@ -110,7 +110,7 @@ python -m pip install "spotapi[studio]"
 python -m spotapi studio
 ```
 
-Studio はネイティブの WebView を使用します。プラットフォームの要件と Spotify へのサインインについては [Studio のセットアップ](https://spotapi.readthedocs.io/en/latest/studio/)で説明しています。歌詞を利用できるかどうかはソースとアカウントの権利によって異なります。シークには認証済みで操作可能なプレーヤーが必要です。
+Studio はネイティブの WebView を使用します。プラットフォームの要件と Spotify へのサインインについては [Studio のセットアップ](https://the-open-odyssey.pages.dev/docs/spotapi/studio/)で説明しています。歌詞を利用できるかどうかはソースとアカウントの権利によって異なります。シークには認証済みで操作可能なプレーヤーが必要です。
 
 ## SpotAPI を支援する
 
@@ -159,10 +159,10 @@ asyncio.run(main())
 
 | 作りたいもの | まずはここから |
 |---|---|
-| 音楽検索や公開メタデータのツール | [公開カタログ](https://spotapi.readthedocs.io/en/latest/catalogue/) |
-| 重複トラックを正しく扱うプレイリスト整理ツール | [Playlist API](https://spotapi.readthedocs.io/en/latest/account/) |
+| 音楽検索や公開メタデータのツール | [公開カタログ](https://the-open-odyssey.pages.dev/docs/spotapi/catalogue/) |
+| 重複トラックを正しく扱うプレイリスト整理ツール | [Playlist API](https://the-open-odyssey.pages.dev/docs/spotapi/account/) |
 | 再生中の曲のライブ表示やコントローラー | [プレーヤーの例](https://github.com/Aran404/SpotAPI/blob/main/examples/player.py) |
-| 個人用の音楽ダッシュボード | [アカウントと統計](https://spotapi.readthedocs.io/en/latest/account/) |
+| 個人用の音楽ダッシュボード | [アカウントと統計](https://the-open-odyssey.pages.dev/docs/spotapi/account/) |
 | テンポとハーモニックキーを使った DJ クレート | [Playlist crate](https://github.com/Aran404/SpotAPI/blob/main/examples/playlist_crate.py) |
 | 実験的なローカル音楽レコメンダー | [Taste Lab](https://github.com/Aran404/SpotAPI/blob/main/examples/taste_lab/README.md) |
 
@@ -174,11 +174,11 @@ asyncio.run(main())
 - **読み取り専用のメタデータにとどまりません。** 認証済みのセッションがあれば、保存した音楽の管理、プレイリスト内の項目の編集、既存プレーヤーの操作ができます。
 - **探索のための設計。** コードに組み込む前に、CLI、Discover、Studio を使って機能を把握できます。
 
-SpotAPI は非公式の Spotify Web プレーヤーのエンドポイントを使用しているため、Spotify がそれらのエンドポイントを変更すると動作が変わる可能性があります。あらゆるユースケースで公式の Web API の代わりになるものでは**なく**、公開データへのアクセスと認証済みの再生へのアクセスは別物です。[API を比較する](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [検証の範囲](https://spotapi.readthedocs.io/en/latest/release-checks/#boundaries)
+SpotAPI は非公式の Spotify Web プレーヤーのエンドポイントを使用しているため、Spotify がそれらのエンドポイントを変更すると動作が変わる可能性があります。あらゆるユースケースで公式の Web API の代わりになるものでは**なく**、公開データへのアクセスと認証済みの再生へのアクセスは別物です。[API を比較する](https://the-open-odyssey.pages.dev/docs/spotapi/from-spotipy/) · [検証の範囲](https://the-open-odyssey.pages.dev/docs/spotapi/release-checks/#boundaries)
 
 ## ドキュメントと移行
 
-[クイックスタート](https://spotapi.readthedocs.io/en/latest/quickstart/) · [API リファレンス](https://spotapi.readthedocs.io/en/latest/reference/) · [Spotipy から移行する](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [CLI とディスカバリー](https://spotapi.readthedocs.io/en/latest/discovery/) · [トラブルシューティング](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
+[クイックスタート](https://the-open-odyssey.pages.dev/docs/spotapi/quickstart/) · [API リファレンス](https://the-open-odyssey.pages.dev/docs/spotapi/reference/) · [Spotipy から移行する](https://the-open-odyssey.pages.dev/docs/spotapi/from-spotipy/) · [CLI とディスカバリー](https://the-open-odyssey.pages.dev/docs/spotapi/discovery/) · [トラブルシューティング](https://the-open-odyssey.pages.dev/docs/spotapi/troubleshooting/)
 
 **v1 からアップグレードしますか？** SpotAPI 2 は非同期ファーストで、互換性のない変更を含みます。既存の v1 アプリは移行中に `spotapi==1.2.8` に固定するか、新しい同期スクリプトでは `SyncCatalogue` を使用できます。[移行ガイド](MIGRATION.md)をお読みください。
 

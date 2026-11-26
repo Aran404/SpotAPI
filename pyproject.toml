@@ -69,7 +69,7 @@ dev = [
 
 [project.urls]
 Homepage     = "https://github.com/Aran404/SpotAPI"
-Documentation = "https://spotapi.readthedocs.io/"
+Documentation = "https://the-open-odyssey.pages.dev/docs/spotapi/"
 Repository   = "https://github.com/Aran404/SpotAPI"
 "Bug Tracker" = "https://github.com/Aran404/SpotAPI/issues"
 Changelog    = "https://github.com/Aran404/SpotAPI/blob/main/CHANGELOG.md"

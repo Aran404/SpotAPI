@@ -17,7 +17,7 @@
   <a href="#comece-agora">Comece agora</a> ·
   <a href="#explore-pelo-terminal">Explore</a> ·
   <a href="#desenvolva-com-python">API Python</a> ·
-  <a href="https://spotapi.readthedocs.io/">Documentação</a> ·
+  <a href="https://the-open-odyssey.pages.dev/docs/spotapi/">Documentação</a> ·
   <a href="SPONSORSHIP.md">Patrocine</a>
 </p>
 
@@ -63,7 +63,7 @@ python -m pip install "spotapi[demo]"
 python -m spotapi discover "Daft Punk"
 ```
 
-Navegue pelos resultados de busca, capas e links do Spotify sem fazer login. [Exemplo do Discover](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py) · [Solução de problemas](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
+Navegue pelos resultados de busca, capas e links do Spotify sem fazer login. [Exemplo do Discover](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py) · [Solução de problemas](https://the-open-odyssey.pages.dev/docs/spotapi/troubleshooting/)
 
 ## Explore pelo terminal
 
@@ -75,7 +75,7 @@ python -m spotapi get SPOTIFY_URL
 python -m spotapi playlist items PLAYLIST_ID --limit 10
 ```
 
-Esses comandos funcionam sem chave de API de desenvolvedor. Operações de conta — músicas curtidas, playlists privadas e controle do seu player existente do Spotify — exigem sua própria sessão do Spotify. Consulte o [guia de conta](https://spotapi.readthedocs.io/en/latest/account/) e o [guia do player](https://spotapi.readthedocs.io/en/latest/player/).
+Esses comandos funcionam sem chave de API de desenvolvedor. Operações de conta — músicas curtidas, playlists privadas e controle do seu player existente do Spotify — exigem sua própria sessão do Spotify. Consulte o [guia de conta](https://the-open-odyssey.pages.dev/docs/spotapi/account/) e o [guia do player](https://the-open-odyssey.pages.dev/docs/spotapi/player/).
 
 ### Connect: controle seu player do Spotify
 
@@ -110,7 +110,7 @@ python -m pip install "spotapi[studio]"
 python -m spotapi studio
 ```
 
-O Studio usa uma WebView nativa. A [configuração do Studio](https://spotapi.readthedocs.io/en/latest/studio/) explica os requisitos da plataforma e o login no Spotify. A disponibilidade das letras depende da fonte e dos direitos da conta; avançar para um trecho exige um player autenticado que aceite o comando.
+O Studio usa uma WebView nativa. A [configuração do Studio](https://the-open-odyssey.pages.dev/docs/spotapi/studio/) explica os requisitos da plataforma e o login no Spotify. A disponibilidade das letras depende da fonte e dos direitos da conta; avançar para um trecho exige um player autenticado que aceite o comando.
 
 ## Apoie o SpotAPI
 
@@ -159,10 +159,10 @@ asyncio.run(main())
 
 | O que desenvolver | Comece aqui |
 |---|---|
-| Ferramentas de busca musical ou metadados públicos | [Catálogo público](https://spotapi.readthedocs.io/en/latest/catalogue/) |
-| Organizador de playlists que lida corretamente com faixas duplicadas | [API de playlists](https://spotapi.readthedocs.io/en/latest/account/) |
+| Ferramentas de busca musical ou metadados públicos | [Catálogo público](https://the-open-odyssey.pages.dev/docs/spotapi/catalogue/) |
+| Organizador de playlists que lida corretamente com faixas duplicadas | [API de playlists](https://the-open-odyssey.pages.dev/docs/spotapi/account/) |
 | Visor ou controlador em tempo real da música atual | [Exemplo do player](https://github.com/Aran404/SpotAPI/blob/main/examples/player.py) |
-| Painel pessoal de músicas | [Conta e estatísticas](https://spotapi.readthedocs.io/en/latest/account/) |
+| Painel pessoal de músicas | [Conta e estatísticas](https://the-open-odyssey.pages.dev/docs/spotapi/account/) |
 | Coleção de DJ baseada em BPM e tonalidades harmônicas | [Coleção de playlist](https://github.com/Aran404/SpotAPI/blob/main/examples/playlist_crate.py) |
 | Recomendador experimental e local de músicas | [Taste Lab](https://github.com/Aran404/SpotAPI/blob/main/examples/taste_lab/README.md) |
 
@@ -174,11 +174,11 @@ asyncio.run(main())
 - **Mais que metadados somente de leitura.** Com uma sessão autenticada, gerencie músicas salvas, edite ocorrências em playlists e controle players existentes.
 - **Feito para explorar.** Use a CLI, o Discover e o Studio para conhecer os recursos antes de integrá-los ao código.
 
-O SpotAPI usa endpoints não oficiais do web player do Spotify; portanto, seu comportamento pode mudar quando o Spotify altera esses endpoints. Ele **não** substitui a Web API oficial em todos os casos, e o acesso a dados públicos é diferente do acesso autenticado à reprodução. [Compare as APIs](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [Limites de verificação](https://spotapi.readthedocs.io/en/latest/release-checks/#boundaries)
+O SpotAPI usa endpoints não oficiais do web player do Spotify; portanto, seu comportamento pode mudar quando o Spotify altera esses endpoints. Ele **não** substitui a Web API oficial em todos os casos, e o acesso a dados públicos é diferente do acesso autenticado à reprodução. [Compare as APIs](https://the-open-odyssey.pages.dev/docs/spotapi/from-spotipy/) · [Limites de verificação](https://the-open-odyssey.pages.dev/docs/spotapi/release-checks/#boundaries)
 
 ## Documentação e migração
 
-[Introdução rápida](https://spotapi.readthedocs.io/en/latest/quickstart/) · [Referência da API](https://spotapi.readthedocs.io/en/latest/reference/) · [Migrando do Spotipy](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [CLI e descoberta](https://spotapi.readthedocs.io/en/latest/discovery/) · [Solução de problemas](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
+[Introdução rápida](https://the-open-odyssey.pages.dev/docs/spotapi/quickstart/) · [Referência da API](https://the-open-odyssey.pages.dev/docs/spotapi/reference/) · [Migrando do Spotipy](https://the-open-odyssey.pages.dev/docs/spotapi/from-spotipy/) · [CLI e descoberta](https://the-open-odyssey.pages.dev/docs/spotapi/discovery/) · [Solução de problemas](https://the-open-odyssey.pages.dev/docs/spotapi/troubleshooting/)
 
 **Atualizando da v1?** O SpotAPI 2 prioriza operações assíncronas e tem mudanças incompatíveis. Aplicativos existentes da v1 podem fixar `spotapi==1.2.8` durante a migração, ou usar `SyncCatalogue` em novos scripts síncronos. Leia o [guia de migração](MIGRATION.md).
 

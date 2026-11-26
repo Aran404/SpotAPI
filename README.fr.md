@@ -17,7 +17,7 @@
   <a href="#bien-démarrer">Bien démarrer</a> ·
   <a href="#explorer-dans-le-terminal">Explorer</a> ·
   <a href="#développer-avec-python">API Python</a> ·
-  <a href="https://spotapi.readthedocs.io/">Documentation</a> ·
+  <a href="https://the-open-odyssey.pages.dev/docs/spotapi/">Documentation</a> ·
   <a href="SPONSORSHIP.md">Parrainer</a>
 </p>
 
@@ -63,7 +63,7 @@ python -m pip install "spotapi[demo]"
 python -m spotapi discover "Daft Punk"
 ```
 
-Parcourez les résultats de recherche, les pochettes et les liens Spotify sans vous connecter. [Exemple Discover](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py) · [Dépannage](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
+Parcourez les résultats de recherche, les pochettes et les liens Spotify sans vous connecter. [Exemple Discover](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py) · [Dépannage](https://the-open-odyssey.pages.dev/docs/spotapi/troubleshooting/)
 
 ## Explorer dans le terminal
 
@@ -75,7 +75,7 @@ python -m spotapi get SPOTIFY_URL
 python -m spotapi playlist items PLAYLIST_ID --limit 10
 ```
 
-Ces commandes fonctionnent sans clé API développeur. Les opérations liées à votre compte — titres aimés, playlists privées et pilotage de votre lecteur Spotify existant — nécessitent votre propre session Spotify. Consultez le [guide du compte](https://spotapi.readthedocs.io/en/latest/account/) et le [guide du lecteur](https://spotapi.readthedocs.io/en/latest/player/).
+Ces commandes fonctionnent sans clé API développeur. Les opérations liées à votre compte — titres aimés, playlists privées et pilotage de votre lecteur Spotify existant — nécessitent votre propre session Spotify. Consultez le [guide du compte](https://the-open-odyssey.pages.dev/docs/spotapi/account/) et le [guide du lecteur](https://the-open-odyssey.pages.dev/docs/spotapi/player/).
 
 ### Connect : pilotez votre lecteur Spotify
 
@@ -110,7 +110,7 @@ python -m pip install "spotapi[studio]"
 python -m spotapi studio
 ```
 
-Studio utilise une WebView native. La [configuration de Studio](https://spotapi.readthedocs.io/en/latest/studio/) décrit les prérequis de chaque plateforme et la connexion à Spotify. La disponibilité des paroles dépend de leur source et des droits du compte ; se déplacer dans un morceau nécessite un lecteur authentifié et contrôlable.
+Studio utilise une WebView native. La [configuration de Studio](https://the-open-odyssey.pages.dev/docs/spotapi/studio/) décrit les prérequis de chaque plateforme et la connexion à Spotify. La disponibilité des paroles dépend de leur source et des droits du compte ; se déplacer dans un morceau nécessite un lecteur authentifié et contrôlable.
 
 ## Soutenir SpotAPI
 
@@ -159,10 +159,10 @@ asyncio.run(main())
 
 | Votre projet | Par où commencer |
 |---|---|
-| Outils de recherche musicale ou de métadonnées publiques | [Catalogue public](https://spotapi.readthedocs.io/en/latest/catalogue/) |
-| Organisateur de playlists gérant correctement les doublons | [API Playlists](https://spotapi.readthedocs.io/en/latest/account/) |
+| Outils de recherche musicale ou de métadonnées publiques | [Catalogue public](https://the-open-odyssey.pages.dev/docs/spotapi/catalogue/) |
+| Organisateur de playlists gérant correctement les doublons | [API Playlists](https://the-open-odyssey.pages.dev/docs/spotapi/account/) |
 | Affichage du morceau en cours ou télécommande en direct | [Exemple de lecteur](https://github.com/Aran404/SpotAPI/blob/main/examples/player.py) |
-| Tableau de bord musical personnel | [Compte et statistiques](https://spotapi.readthedocs.io/en/latest/account/) |
+| Tableau de bord musical personnel | [Compte et statistiques](https://the-open-odyssey.pages.dev/docs/spotapi/account/) |
 | Sélection DJ basée sur le tempo et les tonalités harmoniques | [Sélection de playlist](https://github.com/Aran404/SpotAPI/blob/main/examples/playlist_crate.py) |
 | Moteur expérimental local de recommandations musicales | [Taste Lab](https://github.com/Aran404/SpotAPI/blob/main/examples/taste_lab/README.md) |
 
@@ -174,11 +174,11 @@ asyncio.run(main())
 - **Au-delà des métadonnées en lecture seule.** Avec votre session authentifiée, gérez les titres enregistrés, modifiez les occurrences dans les playlists et contrôlez les lecteurs existants.
 - **Conçu pour l'exploration.** Utilisez la CLI, Discover et Studio pour découvrir les fonctionnalités avant de les intégrer à votre code.
 
-SpotAPI utilise des points de terminaison non officiels du lecteur Web de Spotify ; son comportement peut donc changer si Spotify les modifie. Il ne remplace **pas** l'API Web officielle pour tous les usages, et l'accès aux données publiques diffère de l'accès authentifié aux fonctions de lecture. [Comparer les API](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [Limites des vérifications](https://spotapi.readthedocs.io/en/latest/release-checks/#boundaries)
+SpotAPI utilise des points de terminaison non officiels du lecteur Web de Spotify ; son comportement peut donc changer si Spotify les modifie. Il ne remplace **pas** l'API Web officielle pour tous les usages, et l'accès aux données publiques diffère de l'accès authentifié aux fonctions de lecture. [Comparer les API](https://the-open-odyssey.pages.dev/docs/spotapi/from-spotipy/) · [Limites des vérifications](https://the-open-odyssey.pages.dev/docs/spotapi/release-checks/#boundaries)
 
 ## Documentation et migration
 
-[Démarrage rapide](https://spotapi.readthedocs.io/en/latest/quickstart/) · [Référence de l'API](https://spotapi.readthedocs.io/en/latest/reference/) · [Migration depuis Spotipy](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [CLI et découverte](https://spotapi.readthedocs.io/en/latest/discovery/) · [Dépannage](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
+[Démarrage rapide](https://the-open-odyssey.pages.dev/docs/spotapi/quickstart/) · [Référence de l'API](https://the-open-odyssey.pages.dev/docs/spotapi/reference/) · [Migration depuis Spotipy](https://the-open-odyssey.pages.dev/docs/spotapi/from-spotipy/) · [CLI et découverte](https://the-open-odyssey.pages.dev/docs/spotapi/discovery/) · [Dépannage](https://the-open-odyssey.pages.dev/docs/spotapi/troubleshooting/)
 
 **Vous venez de la v1 ?** SpotAPI 2 privilégie l'asynchrone et comporte des changements incompatibles. Les applications v1 existantes peuvent fixer la version `spotapi==1.2.8` pendant la migration, ou utiliser `SyncCatalogue` pour de nouveaux scripts synchrones. Lisez le [guide de migration](MIGRATION.md).
 
