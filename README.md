@@ -17,7 +17,7 @@
   <a href="#get-started">Get started</a> ·
   <a href="#explore-in-the-terminal">Explore</a> ·
   <a href="#build-with-python">Python API</a> ·
-  <a href="https://spotapi.readthedocs.io/">Documentation</a> ·
+  <a href="https://the-open-odyssey.pages.dev/docs/spotapi/">Documentation</a> ·
   <a href="SPONSORSHIP.md">Sponsor</a>
 </p>
 
@@ -63,7 +63,7 @@ python -m pip install "spotapi[demo]"
 python -m spotapi discover "Daft Punk"
 ```
 
-Navigate search results, artwork and Spotify links without signing in. [Discover example](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py) · [Troubleshooting](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
+Navigate search results, artwork and Spotify links without signing in. [Discover example](https://github.com/Aran404/SpotAPI/blob/main/examples/discover.py) · [Troubleshooting](https://the-open-odyssey.pages.dev/docs/spotapi/troubleshooting/)
 
 ## Explore in the terminal
 
@@ -75,7 +75,7 @@ python -m spotapi get SPOTIFY_URL
 python -m spotapi playlist items PLAYLIST_ID --limit 10
 ```
 
-These work without a developer API key. Account operations—liked music, private playlists and control of your existing Spotify player—require your own Spotify session. See the [account guide](https://spotapi.readthedocs.io/en/latest/account/) and [player guide](https://spotapi.readthedocs.io/en/latest/player/).
+These work without a developer API key. Account operations—liked music, private playlists and control of your existing Spotify player—require your own Spotify session. See the [account guide](https://the-open-odyssey.pages.dev/docs/spotapi/account/) and [player guide](https://the-open-odyssey.pages.dev/docs/spotapi/player/).
 
 ### Connect: control your Spotify player
 
@@ -110,7 +110,7 @@ python -m pip install "spotapi[studio]"
 python -m spotapi studio
 ```
 
-Studio uses a native WebView. [Studio setup](https://spotapi.readthedocs.io/en/latest/studio/) explains platform requirements and Spotify sign-in. Lyric availability depends on the source and account entitlements; seeking needs an authenticated, controllable player.
+Studio uses a native WebView. [Studio setup](https://the-open-odyssey.pages.dev/docs/spotapi/studio/) explains platform requirements and Spotify sign-in. Lyric availability depends on the source and account entitlements; seeking needs an authenticated, controllable player.
 
 ## Support SpotAPI
 
@@ -159,10 +159,10 @@ asyncio.run(main())
 
 | Build | Start here |
 |---|---|
-| Music search or public metadata tools | [Public catalogue](https://spotapi.readthedocs.io/en/latest/catalogue/) |
-| A playlist organizer that handles duplicate tracks correctly | [Playlist API](https://spotapi.readthedocs.io/en/latest/account/) |
+| Music search or public metadata tools | [Public catalogue](https://the-open-odyssey.pages.dev/docs/spotapi/catalogue/) |
+| A playlist organizer that handles duplicate tracks correctly | [Playlist API](https://the-open-odyssey.pages.dev/docs/spotapi/account/) |
 | A live now-playing display or controller | [Player example](https://github.com/Aran404/SpotAPI/blob/main/examples/player.py) |
-| A personal music dashboard | [Account and statistics](https://spotapi.readthedocs.io/en/latest/account/) |
+| A personal music dashboard | [Account and statistics](https://the-open-odyssey.pages.dev/docs/spotapi/account/) |
 | A DJ crate using tempo and harmonic keys | [Playlist crate](https://github.com/Aran404/SpotAPI/blob/main/examples/playlist_crate.py) |
 | An experimental local music recommender | [Taste Lab](https://github.com/Aran404/SpotAPI/blob/main/examples/taste_lab/README.md) |
 
@@ -174,11 +174,11 @@ asyncio.run(main())
 - **More than read-only metadata.** With your authenticated session, manage saved music, edit playlist occurrences and control existing players.
 - **Designed for exploration.** Use the CLI, Discover and Studio to understand capabilities before integrating them into code.
 
-SpotAPI uses unofficial Spotify web-player endpoints, so behavior can change when Spotify changes those endpoints. It is **not** a substitute for the official Web API in every use case, and public-data access is different from authenticated playback access. [Compare the APIs](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [Verification boundaries](https://spotapi.readthedocs.io/en/latest/release-checks/#boundaries)
+SpotAPI uses unofficial Spotify web-player endpoints, so behavior can change when Spotify changes those endpoints. It is **not** a substitute for the official Web API in every use case, and public-data access is different from authenticated playback access. [Compare the APIs](https://the-open-odyssey.pages.dev/docs/spotapi/from-spotipy/) · [Verification boundaries](https://the-open-odyssey.pages.dev/docs/spotapi/release-checks/#boundaries)
 
 ## Documentation and migration
 
-[Quickstart](https://spotapi.readthedocs.io/en/latest/quickstart/) · [API reference](https://spotapi.readthedocs.io/en/latest/reference/) · [Coming from Spotipy](https://spotapi.readthedocs.io/en/latest/from-spotipy/) · [CLI and discovery](https://spotapi.readthedocs.io/en/latest/discovery/) · [Troubleshooting](https://spotapi.readthedocs.io/en/latest/troubleshooting/)
+[Quickstart](https://the-open-odyssey.pages.dev/docs/spotapi/quickstart/) · [API reference](https://the-open-odyssey.pages.dev/docs/spotapi/reference/) · [Coming from Spotipy](https://the-open-odyssey.pages.dev/docs/spotapi/from-spotipy/) · [CLI and discovery](https://the-open-odyssey.pages.dev/docs/spotapi/discovery/) · [Troubleshooting](https://the-open-odyssey.pages.dev/docs/spotapi/troubleshooting/)
 
 **Upgrading from v1?** SpotAPI 2 is async-first and contains breaking changes. Existing v1 apps can pin `spotapi==1.2.8` while migrating, or use `SyncCatalogue` for new synchronous scripts. Read the [migration guide](MIGRATION.md).
 
