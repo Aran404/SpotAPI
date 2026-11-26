@@ -107,7 +107,7 @@ are explicit operations; constructing an account never triggers them.
 
 <!-- CapSolver: 30-day trial from publication; remove unless renewed. -->
 
-**Maintainer's note:** I've personally used CapSolver for several years, and it's one option I'd consider for authorized CAPTCHA workflows. CapSolver is providing account credits for this placement, and I may earn a commission through my [referral link](https://dashboard.capsolver.com/passport/register?inviteCode=2aMq4nxxiQJX).
+**Maintainer's note:** I've personally used CapSolver for several years, and it's one option I'd consider for authorized CAPTCHA workflows. I receive compensation for this placement and may earn a commission through my [referral link](https://dashboard.capsolver.com/passport/register?inviteCode=2aMq4nxxiQJX).
 
 Using CapSolver is entirely optional. SpotAPI remains provider-neutral and does not guarantee compatibility.
 
