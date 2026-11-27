@@ -68,6 +68,8 @@ Screen {
     background: #0d1713;
     border: solid #24382b;
 }
+/* Playback is centered; list content remains left-aligned. */
+#eyebrow, #track, #artist, #progress, #details { text-align: center; }
 #eyebrow {
     height: 1;
     color: #83d794;
@@ -94,11 +96,11 @@ Screen {
 }
 #transport {
     height: 3;
-    margin-bottom: 0;
+    margin-bottom: 1;
 }
 .transport-link {
     width: 1fr;
-    min-width: 8;
+    min-width: 3;
     height: 3;
     margin-right: 1;
     background: #213226;
@@ -261,15 +263,18 @@ Screen {
 .narrow #split { layout: vertical; }
 .narrow #player-pane {
     width: 100%;
-    height: 17;
+    height: 1fr;
     margin: 0 0 1 0;
+    padding: 0 1;
 }
-.narrow #activity-pane { width: 100%; height: 1fr; }
+.narrow #activity-pane { width: 100%; height: 6; padding: 0 1; }
+.narrow #track { height: 1; }
+.narrow .tab-button { width: 1fr; min-width: 0; height: 1; margin: 0; padding: 0; }
 .narrow #context-content { max-height: 4; }
 .narrow #context-options { min-height: 2; }
 .narrow #artist, .narrow #details { height: 1; }
 .narrow #progress { height: 1; }
-.narrow #context-tabs { margin-top: 0; }
+.narrow #context-tabs { height: 2; }
 .narrow #transport { margin-bottom: 0; }
 .short #account-strip { height: 2; padding-top: 0; }
 .short #shortcut-hint { height: 1; padding-top: 0; }
@@ -280,11 +285,17 @@ Screen {
 .short #eyebrow { height: 1; }
 .short #player-pane { padding: 0 1; }
 .short #activity-pane { padding: 0 1; }
-.narrow.short #player-pane { height: 13; }
+.short #transport { margin-bottom: 0; }
+.narrow.short #header { height: 2; }
+.narrow.short #account-strip { height: 1; }
+.narrow.short #shortcut-hint, .narrow.short #eyebrow, .narrow.short #details,
+.narrow.short #activity-subtitle { display: none; }
+.narrow.short #player-pane { margin-bottom: 0; }
+.narrow.short #activity-pane { height: 4; }
+.narrow.short #activity-header { height: 1; }
 .short #context-content { min-height: 1; }
 .tiny #account-strip { display: none; }
 .tiny #shortcut-hint { display: none; }
 .tiny #context-content, .tiny #context-label, .tiny #context-tabs { display: none; }
 .tiny #artist, .tiny #details { display: none; }
-.narrow.tiny #player-pane { height: 7; }
 .tiny #activity-subtitle { display: none; }
