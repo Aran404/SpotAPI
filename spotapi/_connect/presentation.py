@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from rich.cells import cell_len, set_cell_size
+
 from spotapi.models import PlaybackTrack
 from spotapi.models.catalogue.track import Track
 from spotapi.models.playback import Device
@@ -73,7 +75,7 @@ class Identity:
 def _short(value: str, width: int) -> str:
     """Keep interactive rows scannable even in an IDE terminal."""
     value = value.replace("\r", " ").replace("\n", " ").strip()
-    return value if len(value) <= width else value[: width - 1].rstrip() + "…"
+    return value if cell_len(value) <= width else set_cell_size(value, width - 1).rstrip() + "…"
 
 
 def search_row(index: int, hit: Track) -> str:

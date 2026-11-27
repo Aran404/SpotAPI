@@ -199,6 +199,16 @@ def test_search_results_have_useful_optional_metadata() -> None:
     assert search_row(1, Track(id="x", name="Unknown", uri="spotify:track:x")) == "01  Unknown"
 
 
+def test_display_truncation_uses_terminal_cells() -> None:
+    from rich.cells import cell_len
+
+    from spotapi._connect.presentation import _short
+
+    assert _short("abc", 3) == "abc"
+    assert _short("日本語", 5) == "日本…"
+    assert cell_len(_short("日本語", 4)) <= 4
+
+
 def test_device_rows_distinguish_playing_target_and_idle() -> None:
     from spotapi._connect.presentation import device_row
     from spotapi.models.playback import Device
@@ -292,3 +302,12 @@ async def test_results_and_devices_are_keyboard_navigable(
         await pilot.press("escape")
         await pilot.pause()
         assert application.focused is application.query_one("#command", Input)
+
+        for width, height in ((80, 32), (60, 24), (40, 20), (120, 39)):
+            await pilot.resize_terminal(width, height)
+            await pilot.pause()
+            assert application.has_class("narrow") == (width < 90)
+            assert application.has_class("short") == (height < 30)
+            assert application.has_class("tiny") == (height < 23)
+            assert application.query_one("#command", Input).region.bottom <= height
+            assert application.focused is application.query_one("#command", Input)

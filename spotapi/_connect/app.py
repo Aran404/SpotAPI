@@ -208,26 +208,26 @@ class ConnectApp(App[None]):
                 yield Static("device / waiting for Spotify", id="device")
             with Horizontal(id="split"):
                 with Vertical(id="player-pane"):
-                    yield Static("01   /   NOW PLAYING", id="eyebrow")
+                    yield Static("NOW PLAYING", id="eyebrow")
                     yield Static("Waiting for Spotify", id="track")
                     yield Static("Start a song on any Spotify player", id="artist")
                     yield Static("", id="progress")
                     yield Static("", id="details")
                     with Horizontal(id="transport"):
-                        yield Button("◀  prev", id="previous", classes="transport-link")
-                        yield Button("Ⅱ  pause", id="toggle", classes="transport-link primary")
-                        yield Button("next  ▶", id="next", classes="transport-link")
+                        yield Button("|◀", id="previous", classes="transport-link")
+                        yield Button("Ⅱ", id="toggle", classes="transport-link primary")
+                        yield Button("▶|", id="next", classes="transport-link")
                     with Horizontal(id="context-tabs"):
                         yield Button("queue", id="tab-queue", classes="tab-button active")
                         yield Button("results", id="tab-search", classes="tab-button")
                         yield Button("devices", id="tab-devices", classes="tab-button")
                         yield Button("help", id="tab-help", classes="tab-button")
-                    yield Static("UP NEXT   /   SPOTIFY SNAPSHOT", id="context-label")
+                    yield Static("Upcoming tracks reported by Spotify", id="context-label")
                     yield Static("No upcoming tracks reported by Spotify.", id="context-content")
                     yield ContextOptions(id="context-options", compact=True, markup=False)
                 with Vertical(id="activity-pane"):
                     with Horizontal(id="activity-header"):
-                        yield Static("02   /   ACTIVITY", id="channel-label")
+                        yield Static("ACTIVITY", id="channel-label")
                         yield Button("logs  F2", id="logs-toggle", classes="subtle-link")
                     yield Static(
                         "Commands and Spotify events  ·  scroll to inspect",
@@ -254,6 +254,8 @@ class ConnectApp(App[None]):
         self.query_one("#command", CommandInput).suggestions_menu = menu
         self.query_one("#context-options", ContextOptions).display = False
         self.query_one("#diagnostics", RichLog).display = False
+        self.query_one("#previous", Button).tooltip = "Previous track"
+        self.query_one("#next", Button).tooltip = "Next track"
         self._ui_ready = True
         try:
             await self.catalogue.__aenter__()
@@ -362,9 +364,10 @@ class ConnectApp(App[None]):
         )
         for button_id in ("previous", "toggle", "next"):
             self.query_one(f"#{button_id}", Button).disabled = not actionable
-        self.query_one("#toggle", Button).label = (
-            "▶  resume" if state is None or state.is_paused else "Ⅱ  pause"
-        )
+        toggle = self.query_one("#toggle", Button)
+        paused = state is None or state.is_paused
+        toggle.label = "▶" if paused else "Ⅱ"
+        toggle.tooltip = "Resume" if paused else "Pause"
         if not actionable:
             self.query_one("#track", Static).update(
                 "Control a selected device"
@@ -387,12 +390,15 @@ class ConnectApp(App[None]):
                 "  ·  ".join(part for part in (state.track.artist, state.track.album) if part)
             )
             meter = self.query_one("#progress", Static)
-            width = max(8, min(23, meter.size.width - 18))
+            elapsed = clock(state.position_ms)
+            duration = clock(state.duration_ms)
+            width = max(0, min(40, meter.size.width - len(elapsed) - len(duration) - 4))
+            bar = f"  {progress_bar(state.progress, width=width)}  " if width else " / "
             meter.update(
                 Text.assemble(
-                    (clock(state.position_ms), "bold #a8f3b5"),
-                    (f"  {progress_bar(state.progress, width=width)}  ", "#6fce91"),
-                    (clock(state.duration_ms), "#7f9292"),
+                    (elapsed, "bold #a8f3b5"),
+                    (bar, "#6fce91"),
+                    (duration, "#7f9292"),
                 )
             )
             vol = device.volume_percent if device else None
@@ -429,9 +435,7 @@ class ConnectApp(App[None]):
         rows: tuple[tuple[str, str], ...] = ()
         match self._active_panel:
             case "devices":
-                label.update(
-                    f"DEVICES / {len(self.player.devices)} FOUND  ·  ENTER TARGET  ·  T TRANSFER"
-                )
+                label.update(f"{len(self.player.devices)} found · Enter target · T transfer")
                 state = self.player.state
                 active = state.active_device_id if state is not None else None
                 target = self.player.target_device_id
@@ -444,14 +448,14 @@ class ConnectApp(App[None]):
                 )
                 content.update("No devices found. Open Spotify on an existing player.")
             case "search":
-                label.update(f"RESULTS   /   {len(self.hits)} TRACKS   ·   ENTER PLAY · Q QUEUE")
+                label.update(f"{len(self.hits)} tracks · Enter play · Q queue")
                 rows = tuple(
                     (f"track:{index}", search_row(index, hit))
                     for index, hit in enumerate(self.hits, 1)
                 )
                 content.update("Search for an artist or track: search Radiohead")
             case "help":
-                label.update("HELP   /   TYPE ANY COMMAND AT THE PROMPT")
+                label.update("Type any command at the prompt")
                 content.update(
                     "SEARCH   search Daft Punk · play 1 · queue 1\n"
                     "PLAYER   pause · resume · toggle · next · previous\n"
@@ -462,7 +466,7 @@ class ConnectApp(App[None]):
                     "         ↑↓ select · Enter play · Q queue · T transfer"
                 )
             case "queue":
-                label.update("UP NEXT   /   OBSERVED SPOTIFY QUEUE")
+                label.update("Upcoming tracks reported by Spotify")
                 content.update(queue_rows(self._queue_items, limit=8))
 
         if rows != self._context_options:
