@@ -435,9 +435,7 @@ class ConnectApp(App[None]):
         rows: tuple[tuple[str, str], ...] = ()
         match self._active_panel:
             case "devices":
-                label.update(
-                    f"{len(self.player.devices)} found · Enter target · T transfer"
-                )
+                label.update(f"{len(self.player.devices)} found · Enter target · T transfer")
                 state = self.player.state
                 active = state.active_device_id if state is not None else None
                 target = self.player.target_device_id
